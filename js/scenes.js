@@ -38,7 +38,7 @@
       title: T.scenes.bodywashUse,
       tool: 'bodywash', action: 'foam', hint: T.hints.dragWash,
       gauge: 'rise', gaugeFrom: 0, gaugeTo: 0.5,
-      surfactant: true, surfactantGrow: true },
+      surfactant: true, surfactantGrow: true, surfactantMood: 'playful' },
 
     // 장면 ③-2 — STEP1 ②: 샤워기로 헹구기 (거품만 사라지고 계면이는 그대로 남음)
     //   "깨끗이 씻은 것처럼 보이지만 실제로는 계면활성제가 남아 있다."
@@ -46,7 +46,7 @@
       title: T.scenes.bodywashRinse,
       tool: 'shower', action: 'rinse', hint: T.hints.dragShower,
       gauge: 'rise', gaugeFrom: 0.5, gaugeTo: 1,
-      surfactant: true, surfactantFrom: 1, surfactantTo: 1 },
+      surfactant: true, surfactantFrom: 1, surfactantTo: 1, surfactantMood: 'clinging' },
 
     // 장면 ④ — 설명: 민감도 100% 경고 (STEP 배지·제목 없음, 게이지만 유지)
     { id: 'warning', type: 'warning', phase: 1 },
@@ -64,14 +64,14 @@
       title: T.scenes.esloUse,
       tool: 'eslo', action: 'foam', hint: T.hints.dragWashEslo,
       gauge: 'fall', gaugeFrom: 1, gaugeTo: 0.5,
-      surfactant: true, surfactantGrow: true },
+      surfactant: true, surfactantGrow: true, surfactantMood: 'anxious' },
 
     // 장면 ⑧ — STEP3: 샤워 (거품과 계면이가 함께 씻겨 내려가 모두 사라짐)
     { id: 'esloRinse', type: 'drag', phase: 3, step: 3,
       title: T.scenes.esloRinse,
       tool: 'shower', action: 'rinse', hint: T.hints.dragRinse,
       gauge: 'fall', gaugeFrom: 0.5, gaugeTo: 0,
-      surfactant: true, surfactantFrom: 1, surfactantTo: 0,
+      surfactant: true, surfactantFrom: 1, surfactantTo: 0, surfactantMood: 'panic',
       requireGaugeZero: true },
 
     // 장면 ⑨ — MISSION 성공! (웃는 아이 + 반짝임, 제품 이미지 없음)

@@ -471,6 +471,7 @@
   // 민감도 100% 경고 — v0.3.2: 게이지 제거, 경고 문구 2줄 + 큰 비상 경고등 + 울상 아이
   function renderWarning(scene) {
     showScreen(function (el) {
+      el.classList.add('warning-scene');   // v0.4.1: 경고 연출(엣지 글로우·가벼운 흔들림) 트리거
       // 메인 경고 문구는 카드 제목(빨강)으로 표시
       shell(el, scene, CFG.texts.gauge.warn, function (body) {   // 경고! 피부 자극 위험!
         // 추가 문구
@@ -536,6 +537,9 @@
         var isRinse = scene.action === 'rinse';
         setFoam(bubbles, isRinse ? 1 : 0);
 
+        // v0.4.1: 샤워(헹굼) 장면은 아래로 흐르는 물 연출 추가 (STEP1②·STEP3)
+        if (isRinse) { stage.classList.add('is-rinsing'); addWaterFlow(stage, 10); }
+
         // 계면이 연출 (v0.3.3):
         //   surfactantGrow  : 문지를수록 계면이가 하나씩 생겨남 (거품과 동시) — STEP1①/STEP2
         //   surfactantFrom/To: 헹굼 진행도에 따라 씻겨나가는 비율 (STEP3: 1→0 모두 제거)
@@ -546,6 +550,10 @@
         if (scene.surfactant) {
           var surfCount = CFG.gauge.surfactantCount;   // 총 계면이 개수 (표시 최대치)
           surfEls = addSurfactants(childBody, surfCount);
+          // v0.4.1: 장면별 감정 모션 (playful/clinging/anxious/panic)
+          if (scene.surfactantMood) {
+            surfEls.forEach(function (s) { s.classList.add('mood-' + scene.surfactantMood); });
+          }
           if (surfGrow) {
             // 처음엔 모두 숨김 → 진행도에 따라 등장
             surfEls.forEach(function (s) { s.classList.add('is-pending'); });
@@ -836,7 +844,8 @@
       b.style.height = size + 'px';
       b.style.left = (8 + Math.random() * 84) + '%';
       b.style.top = (6 + Math.random() * 88) + '%';
-      b.style.display = 'none';
+      b.style.opacity = '0';                          // v0.4.1: 부드럽게 나타남(opacity 전환)
+      b.style.animationDelay = (Math.random() * 3).toFixed(2) + 's';  // 살짝 떠오르는 흔들림 변주
       layer.appendChild(b);
       arr.push(b);
     }
@@ -844,17 +853,21 @@
   }
   function setFoam(bubbles, ratio) {
     var n = Math.round(bubbles.length * ratio);
-    bubbles.forEach(function (b, i) { b.style.display = i < n ? 'block' : 'none'; });
+    bubbles.forEach(function (b, i) { b.style.opacity = i < n ? '1' : '0'; });
   }
 
+  // 계면이: outer(위치·씻김) + inner(감정 모션) 래퍼 구조 (v0.4.1)
   function addSurfactants(parent, n) {
     var arr = [];
     for (var i = 0; i < n; i++) {
-      var s = C.createAsset({ src: CFG.assets.surfactant, label: CFG.placeholders.surfactant, shape: 'germ', className: 'surfactant' });
-      s.style.left = (14 + Math.random() * 68) + '%';
-      s.style.top = (14 + Math.random() * 66) + '%';
-      parent.appendChild(s);
-      arr.push(s);
+      var wrap = div('surfactant');
+      wrap.style.left = (14 + Math.random() * 68) + '%';
+      wrap.style.top = (14 + Math.random() * 66) + '%';
+      var inner = C.createAsset({ src: CFG.assets.surfactant, label: CFG.placeholders.surfactant, shape: 'germ', className: 'surfactant-inner' });
+      inner.style.animationDelay = (Math.random() * 0.5).toFixed(2) + 's';  // 감정 모션 변주
+      wrap.appendChild(inner);
+      parent.appendChild(wrap);
+      arr.push(wrap);
     }
     return arr;
   }
@@ -867,6 +880,19 @@
   function revealSurfactants(surfEls, r) {
     var shown = Math.round(surfEls.length * clamp01(r));
     surfEls.forEach(function (s, i) { s.classList.toggle('is-shown', i < shown); });
+  }
+  // v0.4.1: 샤워 물줄기(아래로 흐르는 물방울) — 장식용, 드래그 방해 없음
+  function addWaterFlow(stage, n) {
+    var layer = div('water-layer');
+    for (var i = 0; i < n; i++) {
+      var w = div('water-drop');
+      w.style.left = (10 + Math.random() * 80) + '%';
+      w.style.height = (14 + Math.random() * 14).toFixed(0) + 'px';   // 길이 변주
+      w.style.animationDelay = (Math.random() * 1.6).toFixed(2) + 's';
+      w.style.animationDuration = (0.9 + Math.random() * 0.7).toFixed(2) + 's';
+      layer.appendChild(w);
+    }
+    stage.appendChild(layer);
   }
   // 문지를수록 계면이가 약해지는(옅어지는) 느낌
   function weakenSurfactants(surfEls, r) {

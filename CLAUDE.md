@@ -14,7 +14,7 @@
 
 ## 현재 버전
 
-**v0.4.0-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.4.1-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
 ※ 이 저장소는 운영본과 분리된 **beta 미러**입니다.
 - STEP 화면 민감도 게이지는 사용자 화면에 미표시(내부 로직/`buildGauge`는 유지).
 - STEP 연출: 제품(바디워시/이슬로) 문지르면 거품+계면이 동시 생성(`surfactantGrow`).
@@ -23,6 +23,9 @@
 - **관리자 대시보드**(v0.4.0-beta): 우측 하단 톱니바퀴 → 비밀번호(`config.admin.password`) → 통계.
   수집은 `js/analytics.js`(LocalStorage `eslo_admin_v1`, Firebase 확장 가능), UI는 `js/admin.js`.
   game.js 훅은 startGame/renderScene/renderGate 3곳뿐(게임 로직 불변).
+- **연출(v0.4.1-beta)**: 화면 전환(페이드+슬라이드), 계면이 감정 모션(outer+inner 래퍼, `surfactantMood`),
+  거품 opacity 전환·떠오름, 샤워 물줄기(`.water-drop`), 경고 엣지 글로우/흔들림(`.warning-scene`), 성공 팝.
+  전부 transform/opacity 기반(경량). 애니메이션은 백그라운드 탭에서 멈춰 보일 수 있으나 실제 브라우저는 정상.
 
 ## 실행 방식
 
