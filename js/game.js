@@ -84,6 +84,20 @@
    * ------------------------------------------------------------------- */
   var PHASES = CFG.texts.phases;
 
+  // v0.3.0 — STEP별 컬러 테마 (game.js 가 .screen 에 theme-* 클래스 부여).
+  // Scene 구조/문구는 건드리지 않고, 장면 id 로 분위기 색만 매핑 (시각 전용).
+  var SCENE_THEME = {
+    missionIntro:   'mint',
+    bodywashUse:    'blue',
+    warning:        'red',
+    residue:        'red',
+    esloIntro:      'mint',
+    esloUse:        'sky',
+    esloRinse:      'orange',
+    missionSuccess: 'success',
+    brandFinal:     'brand',
+  };
+
   // 각 phase 가 시작되는 장면 index (클릭 이동용)
   function firstSceneOfPhase(p) {
     for (var i = 0; i < SCENES.length; i++) {
@@ -134,6 +148,9 @@
   //   titleMod   : 'warn' 등 제목 스타일 변형 (선택)
   function shell(el, opts, title, buildBody, titleMod) {
     opts = opts || {};
+
+    // v0.3.0 — STEP별 컬러 테마 클래스를 화면(screen)에 부여 (게이트는 기본 blue)
+    el.classList.add('theme-' + (SCENE_THEME[opts.id] || 'blue'));
 
     var card = div('scene-card');
 
@@ -296,18 +313,27 @@
     ending: renderEnding,       // (보존 — 현재 흐름 미사용)
   };
 
-  // MISSION 인트로 (v0.2.5) — MISSION 배지 + 미션 문구
+  // MISSION 인트로 (v0.2.5) — 미션 문구 + 아이 캐릭터(v0.3.0, 욕조/거품 느낌)
   function renderMissionIntro(scene) {
     showScreen(function (el) {
       shell(el, scene, '', function (body) {
-        var badge = div('mission-badge');
+        var badge = div('mission-badge');           // (v0.3.0: 헤더 배지로 대체, CSS로 숨김)
         badge.textContent = PHASES[0];              // "MISSION"
 
         var goal = div('mission-goal');
         goal.textContent = scene.title;
 
+        // 아이 캐릭터 (레퍼런스처럼 미션 화면 중앙에 배치)
+        var stage = div('stage');
+        var childBody = C.createAsset({
+          src: CFG.assets.childHappy, label: CFG.placeholders.childHappy,
+          shape: 'baby', variant: 'happy', className: 'child-body',
+        });
+        stage.appendChild(childBody);
+
         body.appendChild(badge);
         body.appendChild(goal);
+        body.appendChild(stage);
         body.appendChild(makeHint(CFG.texts.hints.tapNext));
       });
       tapAdvance(el);
