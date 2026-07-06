@@ -89,6 +89,7 @@
   var SCENE_THEME = {
     missionIntro:   'mint',
     bodywashUse:    'blue',
+    bodywashRinse:  'blue',
     warning:        'red',
     residue:        'red',
     esloIntro:      'mint',
@@ -154,27 +155,17 @@
 
     var card = div('scene-card');
 
-    // 카드 상단 헤더: 좌측 "처음으로" 미니 버튼(사용자용) + 중앙 STEP/MISSION 배지
-    // (게이트에는 헤더 없음 — opts.phase 가 있을 때만)
+    // 카드 상단 헤더: 중앙 STEP/MISSION 배지 (게이트에는 헤더 없음)
+    // v0.3.1: 카드 내부 "처음으로" 미니 버튼 삭제 — 좌측 고정 컨트롤의 처음으로로 일원화.
     if (opts.phase != null) {
-      var header = div('card-header');
-
-      var homeMini = document.createElement('button');
-      homeMini.className = 'card-home';
-      var chIco = div('ch-ico'); chIco.textContent = '🏠';
-      var chLbl = div('ch-lbl'); chLbl.textContent = CFG.texts.homeButton;
-      homeMini.appendChild(chIco);
-      homeMini.appendChild(chLbl);
-      homeMini.addEventListener('click', function (e) { e.stopPropagation(); goHome(); });
-      header.appendChild(homeMini);
-
       var badge = badgeLabel(opts);
       if (badge) {
+        var header = div('card-header');
         var bd = div('card-badge');
         bd.textContent = badge;
         header.appendChild(bd);
+        card.appendChild(header);
       }
-      card.appendChild(header);
     }
 
     if (title) {

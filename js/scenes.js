@@ -32,11 +32,19 @@
     { id: 'missionIntro', type: 'missionIntro', phase: 0,
       title: T.scenes.missionIntro },
 
-    // 장면 ③ — STEP1: 바디워시 사용 (게이지 0% → 100%, 빨강)
+    // 장면 ③ — STEP1 ①: 바디워시로 거품 (게이지 0% → 50%, 파랑→주황)
+    //   v0.3.1: STEP1을 STEP2/3 처럼 "제품 사용 → 샤워" 2단계로 분리.
     { id: 'bodywashUse', type: 'drag', phase: 1, step: 1,
       title: T.scenes.bodywashUse,
       tool: 'bodywash', action: 'foam', hint: T.hints.dragWash,
-      gauge: 'rise', gaugeFrom: 0, gaugeTo: 1 },
+      gauge: 'rise', gaugeFrom: 0, gaugeTo: 0.5 },
+
+    // 장면 ③-2 — STEP1 ②: 샤워기로 헹구기 (게이지 50% → 100%, 주황→빨강)
+    //   나쁜 바디워시는 헹궈도 계면활성제가 남아 자극이 100%까지 오름.
+    { id: 'bodywashRinse', type: 'drag', phase: 1, step: 1,
+      title: T.scenes.bodywashRinse,
+      tool: 'shower', action: 'rinse', hint: T.hints.dragShower,
+      gauge: 'rise', gaugeFrom: 0.5, gaugeTo: 1 },
 
     // 장면 ④ — 설명: 민감도 100% 경고 (STEP 배지·제목 없음, 게이지만 유지)
     { id: 'warning', type: 'warning', phase: 1 },
