@@ -11,6 +11,74 @@
 
 ---
 
+## [v0.2.7] - 2026-07-06
+### UI 개선 — 카드뉴스형 화면 · 하단 페이지 인디케이터 · "다음" 컨트롤 추가
+게임 기능을 새로 추가하는 작업이 아니라, 현재 화면의 형태와 조작 편의성을 개선.
+기존 config·assets·placeholder·모바일/세로·GitHub Pages·PWA·share.html 구조는 모두 유지.
+
+### Changed
+- **경고 화면 문구 변경**: 게이지 경고 문구를 `민감도 100% · 피부 자극 위험!`
+  → **`경고! 피부 자극 위험!`** 로 수정 (`config.texts.gauge.warn`, 구버전은 주석 보존).
+  게이지 100% 표시·민감도 라벨은 유지.
+- **카드뉴스형 UI**: 중앙의 큰 흰색 카드 배경(`.scene-card`) 제거 → 욕실 배경 위에
+  콘텐츠가 자연스럽게 배치되는 카드뉴스 슬라이드 느낌으로 변경.
+  - 제목·게이트 문구·미션 목표·성공 문구·힌트 등 **텍스트 영역에만 작은 반투명 박스/그림자**를
+    적용해 가독성 확보 (완전 투명으로 안 보이는 문제 방지)
+  - STEP 배지(카드 상단 STEP1~3)는 그대로 유지
+- **진행 표시 → 하단 페이지 인디케이터(A안)**: 상단의 큰 라벨 나열(MISSION/STEP1..)을
+  하단 중앙의 작고 깔끔한 원형 인디케이터로 정리.
+  - 현재 페이지: 진한 파랑 알약 + 라벨(작게) / 나머지: 연한 파랑 점
+  - 각 항목 클릭 시 해당 구간 첫 장면으로 이동 (`stepNavigationEnabled` 잠금 유지 —
+    false면 클릭 비활성)
+  - 라벨 텍스트는 `config.texts.phases` 로 계속 관리
+- **PWA 캐시 버전 갱신**: `sw.js` `CACHE_NAME` → `eslo-game-v0.2.7` (변경분 재캐싱)
+
+### Added
+- **좌측 컨트롤 "다음(→)" 버튼 추가**: 기존 처음으로(🏠)/플레이(▶)/정지(⏸) + **다음(→)**.
+  - 자동 진행 대기 없이 현재 장면을 건너뛰고 **즉시 다음 장면으로 이동**
+  - 건너뛴 게이지 값은 목표값으로 보정(`irritationForIndex`)
+  - **마지막 장면에서는 비활성화**(흐릿하게 표시)
+  - 외부 제어 API `Game.next()` 추가
+  - 터치 영역 유지(모바일 4버튼 하단 가로 배치, 인디케이터는 컨트롤 위에 배치해 겹침 방지)
+
+### 보존(삭제 아님)
+- 상단 진행 표시(`.top-bar`/`.phase-list`) 렌더링은 하단 인디케이터로 대체했으나 CSS는 보존
+- 구버전 상단 STEP 표시(step-badge/step-numbers/progress-bar) CSS도 복구 대비 유지
+
+---
+
+## [v0.2.6] - 2026-07-06
+### 공유 및 현장 접속 편의성 개선 — 공유 QR 페이지 · PWA · 배포 안내
+GitHub Pages 배포 완료(https://manzzi3215-droid.github.io/eslobaby-game2/) 후,
+현장/내부 공유와 모바일 접속을 쉽게 하기 위한 편의 기능 추가.
+기존 게임 기능·config·assets·placeholder·모바일/세로 대응·STEP 클릭 이동·
+처음으로/플레이/정지·자동 진행·오프라인 실행 구조는 모두 유지.
+
+### Added
+- **공유용 QR 페이지 (`share.html`)**: 제목·안내문·배포 URL·QR·"게임 바로가기" 버튼
+  - 용도: 회사 내부 공유 / 베이비페어 현장 테스트 / 모바일 접속 안내
+  - 접속: https://manzzi3215-droid.github.io/eslobaby-game2/share.html
+  - 전용 스타일 `css/share.css`, 로직 `js/share.js`
+- **QR 코드 생성기 (`js/qrcode.js`)**: 외부 라이브러리 없이 실제 스캔 가능한 QR을
+  생성(바이트 모드 인코딩 + Reed-Solomon 오류정정 + 자동 버전/마스크 선택). 오프라인 동작.
+  - 배포 URL 기준 자동 생성. 실제 QR 이미지(`assets/qr/share-qr.png`)를 넣으면 자동 교체.
+- **PWA 기본 설정**
+  - `manifest.webmanifest`: 앱 이름 "이슬로 베이비 미니게임", short_name "이슬로게임",
+    start_url `./index.html`, display `standalone`, background/theme_color 파스텔 블루(`#eaf6ff`/`#7fbce6`)
+  - `assets/icons/icon.svg`: placeholder 아이콘(추후 PNG 192/512로 교체 가능)
+  - `sw.js`: 서비스워커(기본 캐싱 수준 — precache + cache-first). 상대경로라 하위 경로에서도 동작
+  - `index.html`에 PWA 메타태그 추가(manifest 연결, theme-color, apple-mobile-web-app-*,
+    apple-touch-icon) + 서비스워커 등록 스크립트 (기존 스크립트 로딩 순서 유지, file:// 실행 시 자동 무시)
+- **README 배포 안내**: GitHub Pages 접속 링크·공유 QR 페이지·모바일 접속·홈 화면 추가 방법·
+  배포 방식(GitHub Actions Pages)·수정 후 배포 방법 정리 (섹션 0 신설)
+
+### Notes
+- 경로는 상대경로 중심으로 작성 → GitHub Pages 하위 경로 `/eslobaby-game2/` 에서 정상 동작
+- `index.html` 더블클릭(오프라인) 실행은 그대로 유지. (SW는 http(s)/localhost에서만 등록)
+- PWA 완전 설치(일부 브라우저)용 PNG 아이콘(192/512)은 실제 로고 준비 시 추가 예정
+
+---
+
 ## [v0.2.5] - 2026-07-06
 ### 시놉시스 개편 — STEP 3단계 + MISSION 구조 (레퍼런스 반영)
 게임 시나리오와 STEP 구성을 전면 수정. Scene(내부 관리용)과 STEP(사용자 표시용)을 분리하고,

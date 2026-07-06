@@ -14,8 +14,9 @@
   var TOTAL_STEPS = SCENES.length + 1;   // 게이트(STEP 1) 포함
 
   var app;
-  var brandLogo, bottomHint;             // 항상 떠있는 요소들
-  var controlPanel, playBtn, pauseBtn;   // 좌측 컨트롤 (처음으로/플레이/정지)
+  var brandLogo, bottomHint;                     // 항상 떠있는 요소들
+  var controlPanel, playBtn, pauseBtn, nextBtn;  // 좌측 컨트롤 (처음으로/플레이/정지/다음)
+  var pageIndicator;                             // 하단 페이지 인디케이터 (진행 표시)
   var currentScreen = null;
   var timers = [];
   var cleanups = [];
@@ -72,10 +73,14 @@
     }
   }
 
-  /* ---------- 공통 레이아웃: 상단 진행 표시 + 카드(STEP 배지 + 제목) ----- */
-  // v0.2.5 — 상단 진행 표시는 MISSION → STEP1 → STEP2 → STEP3 → MISSION 성공!
-  // 5개 항목으로 표시. 현재 진행 위치만 활성화, 나머지는 비활성.
-  // 클릭 시 해당 구간의 첫 장면으로 이동 (stepNavigationEnabled 잠금 유지).
+  /* ---------- 진행 표시 (v0.2.7: 하단 페이지 인디케이터, 카드뉴스형) -----
+   * v0.2.5까지는 상단에 큰 라벨(MISSION/STEP1..)을 나열했으나,
+   * v0.2.7부터 하단 중앙의 작고 깔끔한 원형 인디케이터로 변경.
+   *   - 현재 페이지: 진한 파랑 + 라벨(작게) 표시
+   *   - 나머지 페이지: 연한 파랑 점
+   *   - 클릭 시 해당 구간 첫 장면으로 이동 (stepNavigationEnabled 잠금 유지)
+   * (라벨 텍스트는 config.texts.phases 로 관리 — 그대로 유지)
+   * ------------------------------------------------------------------- */
   var PHASES = CFG.texts.phases;
 
   // 각 phase 가 시작되는 장면 index (클릭 이동용)
@@ -86,15 +91,16 @@
     return 0;
   }
 
-  function buildTopBar(phase) {
-    var wrap = div('top-bar');
-    var list = div('phase-list');
+  // 하단 페이지 인디케이터를 현재 phase 기준으로 다시 그림
+  function updatePageIndicator(phase) {
+    if (!pageIndicator) return;
+    pageIndicator.innerHTML = '';
     var navOn = CFG.options.stepNavigationEnabled;
     for (var i = 0; i < PHASES.length; i++) {
-      var cls = 'phase-item' + (i === phase ? ' is-current' : '');
+      var isCurrent = (i === phase);
+      var cls = 'page-dot' + (isCurrent ? ' is-current' : '');
       var n;
       if (navOn) {
-        // 클릭 가능한 버튼 (해당 구간 첫 장면으로 즉시 이동)
         n = document.createElement('button');
         n.className = cls + ' is-clickable';
         n.addEventListener('click', (function (target) {
@@ -106,20 +112,23 @@
       } else {
         n = div(cls);
       }
-      n.textContent = PHASES[i];
-      list.appendChild(n);
+      n.title = PHASES[i];                // 툴팁으로 라벨 안내
+      // 현재 페이지만 라벨 텍스트를 함께 표시 (나머지는 점)
+      if (isCurrent) {
+        var lbl = div('page-dot-label');
+        lbl.textContent = PHASES[i];
+        n.appendChild(lbl);
+      }
+      pageIndicator.appendChild(n);
     }
-    wrap.appendChild(list);
-    return wrap;
   }
 
-  // el 에 상단 진행 표시 + 카드(STEP 배지 + 제목 + 본문) 구성
-  //   opts.phase : 상단 진행 표시 위치 (null 이면 진행 표시 숨김 — 게이트)
+  // el 에 카드(STEP 배지 + 제목 + 본문) 구성 — 진행 표시는 하단 인디케이터가 담당
+  //   opts.phase : 진행 표시 위치 (null 이면 인디케이터 숨김 — 게이트)
   //   opts.step  : 카드 상단 STEP 배지 번호 (1~3, 없으면 배지 미표시)
   //   titleMod   : 'warn' 등 제목 스타일 변형 (선택)
   function shell(el, opts, title, buildBody, titleMod) {
     opts = opts || {};
-    if (opts.phase != null) el.appendChild(buildTopBar(opts.phase));
 
     var card = div('scene-card');
 
@@ -180,6 +189,17 @@
   }
   function goHome() { clearScene(); renderGate(); }
 
+  // → 다음: 자동 진행 대기 없이 현재 장면을 건너뛰고 즉시 다음 장면으로 이동.
+  //   (마지막 장면에서는 버튼이 비활성화되어 동작 안 함)
+  function goNext() {
+    if (index >= SCENES.length - 1) return;      // 마지막 장면: 이동 없음
+    clearScene();
+    queuedNext = false;
+    index++;
+    state.irritation = irritationForIndex(index); // 건너뛴 게이지 값을 목표값으로 보정
+    renderScene();
+  }
+
   // ⏸ 정지: 자동 진행(타이머 전환)만 멈춤. 드래그 인터랙션은 계속 가능.
   function pauseGame() {
     paused = true;
@@ -194,6 +214,12 @@
   function updateCtrlButtons() {
     if (playBtn) playBtn.classList.toggle('is-active', !paused);
     if (pauseBtn) pauseBtn.classList.toggle('is-active', paused);
+    // 다음 버튼: 마지막 장면에서는 비활성화
+    if (nextBtn) {
+      var atLast = index >= SCENES.length - 1;
+      nextBtn.disabled = atLast;
+      nextBtn.classList.toggle('is-disabled', atLast);
+    }
   }
 
   // 대상 장면 시작 시점의 게이지 값을 계산
@@ -224,6 +250,8 @@
     clearScene();
     toggleChrome(true);
     var scene = SCENES[index];
+    updatePageIndicator(scene.phase);    // 하단 진행 표시 갱신
+    updateCtrlButtons();                 // 다음 버튼 활성/비활성 갱신
     (RENDERERS[scene.type] || RENDERERS.message)(scene);
   }
 
@@ -817,9 +845,10 @@
     var d = show ? '' : 'none';
     if (controlPanel) controlPanel.style.display = d;
     if (bottomHint) bottomHint.style.display = d;
+    if (pageIndicator) pageIndicator.style.display = show ? '' : 'none';
   }
 
-  /* ---------- 좌측 컨트롤 패널 (처음으로/플레이/정지) ----------------- */
+  /* ---------- 좌측 컨트롤 패널 (처음으로/플레이/정지/다음) ----------------- */
   function makeCtrlButton(icon, label, onClick) {
     var b = document.createElement('button');
     b.className = 'ctrl-btn';
@@ -837,12 +866,21 @@
     var homeB = makeCtrlButton('🏠', CFG.texts.homeButton, goHome);
     playBtn = makeCtrlButton('▶', '플레이', playGame);
     pauseBtn = makeCtrlButton('⏸', '정지', pauseGame);
+    nextBtn = makeCtrlButton('→', '다음', goNext);   // v0.2.7 — 다음 장면으로 즉시 이동
     controlPanel.appendChild(homeB);
     controlPanel.appendChild(playBtn);
     controlPanel.appendChild(pauseBtn);
+    controlPanel.appendChild(nextBtn);
     controlPanel.style.display = 'none';
     updateCtrlButtons();
     app.appendChild(controlPanel);
+  }
+
+  /* ---------- 하단 페이지 인디케이터 (진행 표시) --------------------- */
+  function buildPageIndicator() {
+    pageIndicator = div('page-indicator');
+    pageIndicator.style.display = 'none';
+    app.appendChild(pageIndicator);
   }
 
   /* ---------- 초기화 ------------------------------------------------- */
@@ -874,9 +912,12 @@
     brandLogo = C.createAsset({ src: CFG.assets.logo, label: CFG.placeholders.logo, shape: 'logo', className: 'brand-logo' });
     app.appendChild(brandLogo);
 
-    // 좌측 컨트롤 패널: 처음으로/플레이/정지 (게임 중 표시)
+    // 좌측 컨트롤 패널: 처음으로/플레이/정지/다음 (게임 중 표시)
     // (v0.2.1까지의 좌상단 "처음으로" 버튼을 이 패널로 통합)
     buildControlPanel();
+
+    // 하단 페이지 인디케이터 (게임 중 표시)
+    buildPageIndicator();
 
     // 하단 안내 (게임 중)
     bottomHint = div('bottom-hint');
@@ -894,5 +935,6 @@
     goHome: goHome,
     play: playGame,
     pause: pauseGame,
+    next: goNext,        // v0.2.7 — 다음 장면으로 즉시 이동
   };
 })();

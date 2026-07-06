@@ -91,6 +91,56 @@ body {
 button.phase-item.is-clickable { cursor: pointer; }
 button.phase-item.is-clickable:active { transform: scale(0.92); }
 
+/* ----- 하단 페이지 인디케이터 (v0.2.7: 카드뉴스형 진행 표시) ----------
+ * 작고 깔끔한 원형 점 + 현재 페이지만 진한 파랑 알약(라벨 표시).
+ * 클릭 이동은 config.options.stepNavigationEnabled 로 잠금 가능. ------- */
+.page-indicator {
+  position: fixed;
+  left: 50%;
+  bottom: clamp(10px, 2vh, 18px);
+  transform: translateX(-50%);
+  z-index: 16;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(6px, 1.2vw, 10px);
+  padding: 6px clamp(10px, 1.6vw, 14px);
+  background: rgba(255, 255, 255, 0.62);
+  border-radius: 999px;
+  box-shadow: var(--shadow-card);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  max-width: 92vw;
+}
+.page-dot {
+  width: clamp(9px, 1.4vw, 12px);
+  height: clamp(9px, 1.4vw, 12px);
+  border-radius: 999px;
+  background: #cfe2f0;                    /* 연한 파랑 (지난/이후 페이지) */
+  border: none;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--t-fast), transform var(--t-fast);
+}
+.page-dot.is-current {
+  width: auto;
+  height: auto;
+  background: var(--color-blue-deep);     /* 진한 파랑 (현재 페이지) */
+  padding: 4px clamp(10px, 1.6vw, 14px);
+  border-radius: 999px;
+}
+.page-dot-label {
+  font-size: clamp(10px, 1.4vw, 13px);
+  font-weight: 800;
+  color: var(--color-text-invert);
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+}
+button.page-dot.is-clickable { cursor: pointer; font-family: inherit; }
+button.page-dot.is-clickable:active { transform: scale(0.9); }
+
 /* ----- (구버전 상단 진행 점 — v0.2.3, 복구 대비 보존) ----------------- */
 .top-bar {
   width: 100%;
@@ -182,22 +232,26 @@ button.step-num.is-clickable:active { transform: scale(0.9); }
   white-space: nowrap;
 }
 
-/* ----- 장면 카드 ----------------------------------------------------- */
+/* ----- 장면 카드 (v0.2.7: 카드뉴스형 — 흰색 큰 박스 제거, 배경 위 자연 배치) -
+ * 큰 흰색 패널 대신 욕실 배경 위에 콘텐츠를 그대로 올리고,
+ * 텍스트 영역에만 작은 반투명 박스/그림자로 가독성을 확보한다.
+ * (레이아웃 컨테이너 역할은 유지 — 삭제 아님) ------------------------- */
 .scene-card {
   flex: 1;
   width: min(92vw, 720px);
   min-height: 0;
-  margin-bottom: clamp(30px, 5vh, 54px);   /* 하단 안내 자리 */
-  background: rgba(255, 255, 255, 0.92);
-  border: 3px solid #ffffff;
-  border-radius: clamp(22px, 3.4vw, 36px);
-  box-shadow: 0 16px 44px rgba(74, 144, 194, 0.20);
-  padding: clamp(16px, 3vw, 34px);
+  margin-bottom: clamp(30px, 5vh, 54px);   /* 하단 인디케이터/안내 자리 */
+  background: transparent;                  /* 흰색 큰 박스 삭제 */
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  padding: clamp(10px, 2vw, 24px);
   display: flex;
   flex-direction: column;
   align-items: center;
-  overflow: hidden;
+  overflow: visible;
 }
+/* 제목: 배경 위에서도 잘 보이도록 작은 반투명 박스 + 그림자 */
 .card-title {
   font-size: clamp(22px, 3.6vw, 40px);
   font-weight: 800;
@@ -205,9 +259,19 @@ button.step-num.is-clickable:active { transform: scale(0.9); }
   text-align: center;
   white-space: pre-line;
   line-height: 1.3;
-  margin-bottom: clamp(6px, 1.4vh, 14px);
+  margin-bottom: clamp(8px, 1.6vh, 16px);
+  max-width: 96%;
+  background: rgba(255, 255, 255, 0.74);
+  border-radius: var(--radius-md);
+  padding: clamp(8px, 1.4vh, 14px) clamp(16px, 3vw, 28px);
+  box-shadow: var(--shadow-card);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
 }
-.card-title.is-warn { color: var(--color-warn); }   /* 민감도 100% 경고 */
+.card-title.is-warn {                                 /* 경고 화면 제목 */
+  color: var(--color-warn);
+  background: rgba(255, 240, 240, 0.82);
+}
 .screen-body {
   position: relative;
   flex: 1;
@@ -253,6 +317,11 @@ button.step-num.is-clickable:active { transform: scale(0.9); }
   text-align: center;
   white-space: pre-line;
   animation: pulse 2s ease-in-out infinite;
+  /* 카드뉴스형: 배경 위 가독성 확보용 반투명 알약 */
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 999px;
+  padding: 4px 14px;
+  box-shadow: var(--shadow-card);
 }
 
 /* =============================================================================
@@ -335,6 +404,11 @@ button.step-num.is-clickable:active { transform: scale(0.9); }
   background: linear-gradient(135deg, var(--color-blue) 0%, var(--color-blue-deep) 100%);
   border-color: var(--color-blue-deep);
 }
+/* 다음 버튼 비활성화 (마지막 장면) */
+.ctrl-btn:disabled,
+.ctrl-btn.is-disabled { opacity: 0.4; cursor: default; }
+.ctrl-btn:disabled:active,
+.ctrl-btn.is-disabled:active { transform: none; }
 .ctrl-ico { font-size: clamp(18px, 2.4vw, 24px); line-height: 1; }
 .ctrl-lbl { font-size: clamp(10px, 1.3vw, 13px); font-weight: 700; white-space: nowrap; }
 
@@ -349,7 +423,7 @@ button.step-num.is-clickable:active { transform: scale(0.9); }
 
 .bottom-hint {
   position: fixed;
-  bottom: clamp(6px, 1.2vh, 12px);
+  bottom: clamp(46px, 7vh, 62px);   /* 하단 페이지 인디케이터 위쪽에 배치 */
   left: 50%;
   transform: translateX(-50%);
   z-index: 15;
@@ -365,7 +439,16 @@ button.step-num.is-clickable:active { transform: scale(0.9); }
 /* =============================================================================
  * 게이트 (카카오 채널)
  * ========================================================================== */
-.gate-title { font-size: var(--fs-title); font-weight: 800; text-align: center; white-space: pre-line; line-height: 1.4; }
+.gate-title {
+  font-size: var(--fs-title); font-weight: 800; text-align: center;
+  white-space: pre-line; line-height: 1.4;
+  background: rgba(255, 255, 255, 0.74);
+  border-radius: var(--radius-md);
+  padding: clamp(10px, 1.6vh, 16px) clamp(18px, 3vw, 30px);
+  box-shadow: var(--shadow-card);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
 .gate-desc { font-size: var(--fs-body); color: var(--color-text-soft); text-align: center; white-space: pre-line; line-height: 1.5; }
 .qr-box {
   width: clamp(160px, 28vw, 240px);
@@ -404,7 +487,16 @@ button.step-num.is-clickable:active { transform: scale(0.9); }
   border-radius: 999px;
   box-shadow: var(--shadow-card);
 }
-.mission-goal { font-size: clamp(24px, 4.2vw, 44px); font-weight: 800; text-align: center; white-space: pre-line; color: var(--color-text); }
+.mission-goal {
+  font-size: clamp(24px, 4.2vw, 44px); font-weight: 800; text-align: center;
+  white-space: pre-line; color: var(--color-text); max-width: 96%;
+  background: rgba(255, 255, 255, 0.74);
+  border-radius: var(--radius-md);
+  padding: clamp(10px, 1.6vh, 16px) clamp(18px, 3vw, 30px);
+  box-shadow: var(--shadow-card);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
 .mission-target {
   display: flex;
   align-items: center;
@@ -552,8 +644,15 @@ button.step-num.is-clickable:active { transform: scale(0.9); }
   animation: twinkle 1.6s ease-in-out infinite;
   z-index: 3;
 }
-.success-title { font-size: clamp(30px, 6.5vw, 60px); font-weight: 800; text-align: center; color: var(--color-blue-deep); animation: fadeUp var(--t-slow) ease both; }
-.success-desc { font-size: var(--fs-ment); font-weight: 800; text-align: center; white-space: pre-line; color: var(--color-mint-deep); }
+.success-title { font-size: clamp(30px, 6.5vw, 60px); font-weight: 800; text-align: center; color: var(--color-blue-deep); animation: fadeUp var(--t-slow) ease both; text-shadow: 0 2px 6px rgba(255,255,255,0.9); }
+.success-desc {
+  font-size: var(--fs-ment); font-weight: 800; text-align: center; white-space: pre-line;
+  color: var(--color-mint-deep); max-width: 96%;
+  background: rgba(255, 255, 255, 0.74);
+  border-radius: var(--radius-md);
+  padding: clamp(8px, 1.4vh, 14px) clamp(16px, 3vw, 26px);
+  box-shadow: var(--shadow-card);
+}
 .confetti-layer { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
 .confetti {
   position: absolute;
@@ -652,7 +751,14 @@ button.step-num.is-clickable:active { transform: scale(0.9); }
 }
 .product-card .card-visual { width: 100%; height: clamp(110px, 16vh, 160px); }
 .product-card .card-name { font-size: var(--fs-hint); font-weight: 700; text-align: center; white-space: pre-line; color: var(--color-text); }
-.ending-sub { font-size: var(--fs-body); color: var(--color-text-soft); white-space: pre-line; text-align: center; line-height: 1.5; }
+.ending-sub {
+  font-size: var(--fs-body); color: var(--color-text-soft); white-space: pre-line;
+  text-align: center; line-height: 1.5; max-width: 96%;
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: var(--radius-md);
+  padding: clamp(8px, 1.4vh, 14px) clamp(16px, 3vw, 26px);
+  box-shadow: var(--shadow-card);
+}
 
 /* =============================================================================
  * (미사용이지만 보존) 돋보기/피부원 — 이전 흐름 복구 대비
@@ -711,7 +817,7 @@ button.step-num.is-clickable:active { transform: scale(0.9); }
   .screen {
     overflow-y: auto;
     justify-content: flex-start;
-    padding: 8px 8px 96px;                /* 하단은 컨트롤 패널 자리 */
+    padding: 8px 8px 132px;               /* 하단: 페이지 인디케이터 + 컨트롤 패널 자리 */
   }
   .scene-card {
     flex: none;                            /* 내용만큼 늘어나고 스크롤 */
@@ -758,16 +864,21 @@ button.step-num.is-clickable:active { transform: scale(0.9); }
   .cards.is-compact .product-card { width: clamp(64px, 22vw, 90px); flex-direction: column; gap: 0; }
   .cards.is-compact .card-visual { width: 100%; height: clamp(80px, 24vw, 110px); }
 
-  /* 컨트롤 패널: 좌측 세로 → 하단 좌측 가로 배치 */
+  /* 컨트롤 패널: 좌측 세로 → 하단 중앙 가로 배치 (4버튼) */
   .control-panel {
     top: auto;
     bottom: calc(10px + env(safe-area-inset-bottom, 0px));
     left: 50%;
     transform: translateX(-50%);
     flex-direction: row;
-    gap: 12px;
+    gap: 10px;
   }
-  .ctrl-btn { min-width: 60px; min-height: 56px; }
+  .ctrl-btn { min-width: 56px; min-height: 54px; }
+
+  /* 페이지 인디케이터: 컨트롤 패널 바로 위에 배치 (겹침 방지) */
+  .page-indicator {
+    bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+  }
 
   /* 하단 안내는 컨트롤과 겹치므로 세로 모드에서 숨김 */
   .bottom-hint { display: none !important; }
