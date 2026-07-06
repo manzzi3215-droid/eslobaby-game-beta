@@ -1139,6 +1139,36 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
 }
 
 /* =============================================================================
+ * ★ v0.3.3-beta — 페이지 번호 + 계면이 생성 연출
+ * ========================================================================== */
+
+/* 화면 하단 페이지 번호 (작고 차분하게, 콘텐츠 방해 X, 모든 장면 동일 위치) */
+.page-num {
+  margin-top: clamp(3px, 0.8vh, 7px);
+  font-size: clamp(10px, 1.3vw, 13px);
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  color: var(--color-text-soft);
+  opacity: 0.66;
+  user-select: none;
+}
+
+/* 계면이 생성(등장) 연출: 문지를수록 하나씩 팝업 */
+.surfactant.is-pending {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.2);
+}
+.surfactant.is-shown {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  animation: germPop 300ms cubic-bezier(.2,.9,.3,1.2) both;
+}
+@keyframes germPop {
+  from { opacity: 0; transform: translate(-50%, -50%) scale(0.2); }
+  to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}
+
+/* =============================================================================
  * 반응형: 태블릿 가로 / 모바일 / 세로 모드
  * - 가로: 기존 카드 UI 유지
  * - 세로: 위→아래로 흐르는 모바일 게임 UI (필요 시 스크롤 허용)

@@ -177,8 +177,14 @@
     buildBody(body);
     card.appendChild(body);
 
-    // 카드 하단 페이지 인디케이터 (게이트 제외)
-    if (opts.phase != null) card.appendChild(buildPageDots(opts.phase));
+    // 카드 하단 페이지 인디케이터 + 페이지 번호 (게이트 제외)
+    if (opts.phase != null) {
+      card.appendChild(buildPageDots(opts.phase));
+      // v0.3.3: 화면 하단 작은 페이지 번호 (예: "Page 1 / 10") — 모든 장면 동일 위치
+      var pageNum = div('page-num');
+      pageNum.textContent = CFG.texts.page + ' ' + (index + 1) + ' / ' + SCENES.length;
+      card.appendChild(pageNum);
+    }
 
     el.appendChild(card);
   }
@@ -524,19 +530,27 @@
         var isRinse = scene.action === 'rinse';
         setFoam(bubbles, isRinse ? 1 : 0);
 
-        // 계면이 — surfactantFrom(시작 잔량 비율) 만큼 표시하고,
-        // surfactantTo(목표 잔량 비율) 까지 문지르는 진행도에 따라 씻겨나감
-        //   STEP2: 1 → 0.5 (절반 제거) / STEP3: 0.5 → 0 (모두 제거)
+        // 계면이 연출 (v0.3.3):
+        //   surfactantGrow  : 문지를수록 계면이가 하나씩 생겨남 (거품과 동시) — STEP1①/STEP2
+        //   surfactantFrom/To: 헹굼 진행도에 따라 씻겨나가는 비율 (STEP3: 1→0 모두 제거)
+        //   (STEP1②는 From=To=1 → 씻기지 않고 그대로 남음: 거품만 사라지는 연출)
         var surfEls = [];
-        var surfFrom = scene.surfactantFrom != null ? clamp01(scene.surfactantFrom) : 1;
+        var surfGrow = !!scene.surfactantGrow;
         var surfWashFraction = 0;   // 이번 장면에서 씻어낼 비율 (표시 개수 기준)
         if (scene.surfactant) {
-          var surfCount = Math.max(1, Math.round(CFG.gauge.surfactantCount * surfFrom));
+          var surfCount = CFG.gauge.surfactantCount;   // 총 계면이 개수 (표시 최대치)
           surfEls = addSurfactants(childBody, surfCount);
-          if (scene.surfactantTo != null && surfFrom > 0) {
-            surfWashFraction = clamp01(1 - clamp01(scene.surfactantTo) / surfFrom);
-          } else if (isRinse) {
-            surfWashFraction = 1;   // (구버전 호환: rinse 는 전부 씻겨나감)
+          if (surfGrow) {
+            // 처음엔 모두 숨김 → 진행도에 따라 등장
+            surfEls.forEach(function (s) { s.classList.add('is-pending'); });
+            revealSurfactants(surfEls, scene.surfactantFrom != null ? clamp01(scene.surfactantFrom) : 0);
+          } else {
+            var surfFrom = scene.surfactantFrom != null ? clamp01(scene.surfactantFrom) : 1;
+            if (scene.surfactantTo != null && surfFrom > 0) {
+              surfWashFraction = clamp01(1 - clamp01(scene.surfactantTo) / surfFrom);
+            } else if (isRinse) {
+              surfWashFraction = 1;   // (구버전 호환: rinse 는 전부 씻겨나감)
+            }
           }
         }
 
@@ -582,17 +596,19 @@
           tool: tool, body: childBody, stage: stage,
           onProgress: function (r) {
             fill.style.width = (r * 100) + '%';
-            setFoam(bubbles, isRinse ? (1 - r) : r);
+            setFoam(bubbles, isRinse ? (1 - r) : r);   // 거품: 생성(foam) 또는 씻김(rinse)
+            if (surfGrow) revealSurfactants(surfEls, r);            // 계면이 점점 생성
             if (scene.weaken) weakenSurfactants(surfEls, r);
-            if (surfWashFraction > 0) washSurfactants(surfEls, r * surfWashFraction);
+            if (surfWashFraction > 0) washSurfactants(surfEls, r * surfWashFraction);  // 계면이 씻김
             applyGauge(r);
           },
           onComplete: function () {
-            // 게이지를 목표값으로 확정 (STEP1→100%, STEP2→50%, STEP3→0%)
+            // 게이지(내부)를 목표값으로 확정
             if (gauge) {
               gauge.set(endLevel);
               if (mode !== 'hold') state.irritation = endLevel;
             }
+            if (surfGrow) revealSurfactants(surfEls, 1);            // 계면이 모두 생성
             if (scene.weaken) weakenSurfactants(surfEls, 1);
             if (surfWashFraction > 0) washSurfactants(surfEls, surfWashFraction);
 
@@ -840,6 +856,11 @@
   function washSurfactants(surfEls, r) {
     var washed = Math.round(surfEls.length * clamp01(r));
     surfEls.forEach(function (s, i) { if (i < washed) s.classList.add('is-washed'); });
+  }
+  // v0.3.3: 문지를수록 계면이가 하나씩 생겨나는 연출 (진행도 r 만큼 표시)
+  function revealSurfactants(surfEls, r) {
+    var shown = Math.round(surfEls.length * clamp01(r));
+    surfEls.forEach(function (s, i) { s.classList.toggle('is-shown', i < shown); });
   }
   // 문지를수록 계면이가 약해지는(옅어지는) 느낌
   function weakenSurfactants(surfEls, r) {
