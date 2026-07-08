@@ -11,6 +11,18 @@
 
 ---
 
+## [v0.5.0-motion-test] - 2026-07-07
+### 모션인식 연구용 실험 브랜치 분리 (feature/motion-test)
+카메라/모션 인식 실험을 안정본과 분리하기 위한 브랜치 생성 단계.
+**기능 구현 없음** — 버전 표기(config·README·CHANGELOG·CLAUDE)만 최소 변경했습니다.
+안정본은 master의 v0.4.5-beta이며 그대로 유지됩니다. 운영본(eslobaby-game2)은 변경하지 않습니다.
+
+### Changed
+- `config.meta.version` → `v0.5.0-motion-test` (feature/motion-test 브랜치 전용)
+- README/CLAUDE.md 버전 표기 및 실험 브랜치 안내 추가
+
+---
+
 ## [v0.4.5-beta] - 2026-07-07
 ### 로고 배경 제거 · 제품 가로 배치 · 타이포/폰트 개선 (beta 저장소)
 디자인/UI만 개선. 게임 로직·판정·점수·자동 진행·타이밍·Scene 순서·관리자 기능 불변.

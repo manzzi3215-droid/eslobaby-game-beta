@@ -19,7 +19,7 @@
 window.ESLO_CONFIG = {
   /* --- 프로젝트 메타 --------------------------------------------------- */
   meta: {
-    version: 'v0.4.5-beta',
+    version: 'v0.5.0-motion-test',
     title: '이슬로(eslo) 베이비 미니게임',
   },
 
