@@ -1738,3 +1738,185 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
 @media (prefers-reduced-motion: reduce) {
   .shake-emph { animation: none; }
 }
+
+/* =============================================================================
+ * ★ v0.7.x — PAGE 5/7/10 텍스트·이미지·강조 (전부 페이지 한정 클래스, 전역 영향 없음)
+ * ========================================================================== */
+/* PAGE 5(경고) 제목만 조금 크게 (다른 페이지 제목 불변) */
+.warning-scene .card-title { font-size: clamp(28px, 5vw, 54px); }
+
+/* PAGE 7 — 단일 제품(eslo-bath) + 주변 말풍선 키워드 + 제품명 */
+.eslo-single-stage {
+  position: relative;
+  width: min(94%, 460px);
+  min-height: clamp(220px, 40vh, 330px);
+  margin: clamp(2px, 0.8vh, 8px) auto 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.eslo-hero-single {
+  width: clamp(84px, 15vw, 118px);
+  height: auto;
+  aspect-ratio: 499 / 1000;
+  filter: drop-shadow(0 12px 22px rgba(70, 120, 160, 0.24));
+  animation: heroFloat 5s ease-in-out infinite alternate;   /* 은은한 둥실둥실 */
+  z-index: 1;
+}
+.eslo-hero-single > img { object-fit: contain; }
+@keyframes heroFloat {
+  from { transform: translateY(0) rotate(-0.6deg); }
+  to   { transform: translateY(-6px) rotate(0.9deg); }
+}
+/* 키워드 말풍선 (KEY COLOR pill, 연한 스카이 배경, 얇은 키컬러 border) */
+.kw-bubble {
+  position: absolute;
+  font-size: clamp(11px, 1.5vw, 15px);
+  font-weight: 800;
+  line-height: 1.3;
+  color: var(--key-deep);
+  background: rgba(240, 246, 255, 0.96);
+  border: 1.5px solid var(--key-soft);
+  border-radius: 999px;
+  padding: 6px 12px;
+  box-shadow: 0 4px 10px rgba(78, 134, 236, 0.16);
+  white-space: nowrap;
+  max-width: 34%;
+  z-index: 2;
+  animation: fadeUp 360ms ease both;
+}
+.kw-1 { left: 1%;  top: 11%; }                                   /* 왼쪽 위: 생분해 */
+.kw-2 { left: 0%;  top: 58%; white-space: normal; max-width: 34%; border-radius: 16px; }  /* 왼쪽 아래: 긴 문구(2줄 허용) */
+.kw-3 { right: 0%; top: 37%; }                                   /* 오른쪽 중간: 안심 베이비케어 */
+/* 제품명 캡션 (제목보다 작고 본문보다 명확, 짙은 네이비) */
+.eslo-product-name {
+  margin-top: clamp(6px, 1.4vh, 12px);
+  font-size: clamp(15px, 2vw, 22px);
+  font-weight: 800;
+  color: var(--color-text);
+  text-align: center;
+  letter-spacing: -0.2px;
+  word-break: keep-all;
+}
+@media (orientation: portrait) {
+  .eslo-single-stage { width: 100%; min-height: clamp(230px, 42vh, 330px); }
+  .eslo-hero-single { width: clamp(78px, 24vw, 112px); }
+  .kw-bubble { font-size: clamp(11px, 3vw, 14px); padding: 5px 10px; max-width: 33%; }
+  .kw-2 { max-width: 33%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .eslo-hero-single { animation: none; }
+}
+
+/* PAGE 10 — '생분해' 강조 (KEY COLOR + 은은한 glow + 진입 시 1회 shine) */
+.success-emph {
+  display: inline-block;      /* transform(scale) 적용 위해 */
+  color: var(--key);
+  font-weight: 900;
+  text-shadow: 0 0 10px rgba(109, 161, 255, 0.42);
+  animation: emphShine 0.9s ease-out 1 both;
+}
+@keyframes emphShine {
+  0%   { text-shadow: 0 0 0 rgba(109, 161, 255, 0); transform: scale(0.98); }
+  45%  { text-shadow: 0 0 15px rgba(109, 161, 255, 0.7); transform: scale(1.05); }
+  100% { text-shadow: 0 0 10px rgba(109, 161, 255, 0.42); transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .success-emph { animation: none; text-shadow: 0 0 8px rgba(109, 161, 255, 0.32); }
+}
+
+/* =============================================================================
+ * ★ v0.7.x — PAGE 10-1(영상 placeholder) · PAGE 10-2(비포/애프터 비교)
+ *   전부 페이지 한정 클래스, 전역 영향 없음. 기존 카드/영상 영역 스타일 재사용.
+ * ========================================================================== */
+/* 키컬러 강조(차분·모션 없음) — PAGE 10-1/10-2 공통 */
+.key-emph {
+  color: var(--key);
+  font-weight: 900;
+  text-shadow: 0 0 8px rgba(109, 161, 255, 0.28);
+}
+
+/* PAGE 10-1 — 영상 미첨부 placeholder (PAGE 6 영상 영역과 동일 4:3, 은은) */
+.info-video.is-placeholder {
+  aspect-ratio: 4 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-style: dashed;
+  border-color: var(--key-soft);
+}
+.video-ph-text {
+  color: var(--key-deep);
+  font-size: clamp(13px, 1.8vw, 18px);
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  opacity: 0.7;
+}
+
+/* PAGE 10-2 — 비포/애프터 비교 */
+.compare-title { margin-bottom: clamp(8px, 1.6vh, 16px); }
+.compare-row {
+  display: flex;
+  align-items: stretch;
+  justify-content: center;
+  gap: clamp(6px, 1.6vw, 16px);
+  width: 100%;
+}
+.compare-card {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(6px, 1vh, 10px);
+  padding: clamp(8px, 1.6vw, 14px);
+  border-radius: clamp(14px, 2.2vw, 20px);
+  border: 1.5px solid;
+  box-shadow: 0 6px 16px rgba(70, 120, 160, 0.14);
+}
+.compare-bad {
+  background: linear-gradient(170deg, #fff2ee, #ffe6df);   /* 피치/소프트 레드(warning 톤) */
+  border-color: rgba(239, 115, 115, 0.5);
+}
+.compare-good {
+  background: linear-gradient(170deg, var(--sky-050), var(--sky-100));
+  border-color: var(--key-soft);
+}
+.compare-label {
+  font-weight: 800;
+  font-size: clamp(12px, 1.6vw, 17px);
+  line-height: 1.3;
+  text-align: center;
+  white-space: pre-line;
+  word-break: keep-all;
+  min-height: 2.5em;                 /* 좌1줄/우2줄 높이 정렬 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.compare-bad .compare-label  { color: #d9705f; }   /* 소프트 레드 */
+.compare-good .compare-label { color: var(--key-deep); }
+.compare-img {
+  width: clamp(78px, 15vw, 128px);
+  height: auto;
+  aspect-ratio: 481 / 705;           /* baby-sad/happy 원본 비율(둘 다 481×705) */
+}
+.compare-img > img { object-fit: contain; }
+.compare-vs {
+  align-self: center;
+  flex: 0 0 auto;
+  font-weight: 900;
+  font-size: clamp(14px, 2.4vw, 24px);
+  color: var(--key);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+@media (orientation: portrait) {
+  .compare-img { width: clamp(72px, 22vw, 118px); }
+  .compare-label { font-size: clamp(11px, 3vw, 15px); }
+  .compare-row { gap: clamp(4px, 2vw, 10px); }
+}
+/* 아주 좁은 화면(≤360px): 2열이 좁으면 세로 스택(일반→VS→이슬로) */
+@media (max-width: 360px) {
+  .compare-row { flex-direction: column; align-items: stretch; }
+  .compare-card { flex-direction: row; justify-content: center; gap: 12px; }
+  .compare-label { min-height: 0; }
+  .compare-img { width: clamp(70px, 26vw, 96px); }
+}

@@ -99,6 +99,8 @@
     esloUse:        'sky',
     esloRinse:      'orange',
     missionSuccess: 'success',
+    biodegradeInfo: 'brand',
+    beforeAfterCompare: 'brand',
     brandFinal:     'brand',
   };
 
@@ -311,7 +313,8 @@
     drag: renderDrag,
     warning: renderWarning,
     closeup: renderCloseup,
-    video: renderVideo,                     // v0.6.x — PAGE 5-1 설명 영상(prof.mp4)
+    video: renderVideo,                     // v0.6.x — PAGE 5-1 설명 영상(prof.mp4) / v0.7.x PAGE 10-1(placeholder)
+    compare: renderCompare,                 // v0.7.x — PAGE 10-2 비포/애프터 비교
     brand: renderBrand,
     missionSuccess: renderMissionSuccess,   // v0.2.5 — MISSION 성공!
     brandFinal: renderBrandFinal,           // v0.2.5 — 최종 브랜드 페이지
@@ -379,7 +382,18 @@
         title.textContent = PHASES[4];              // "MISSION 성공!"
 
         var desc = div('success-desc');
-        desc.textContent = scene.title;
+        // v0.7.x: '생분해' 등 강조 단어만 span 분리 (KEY COLOR·짧은 shine 1회). 나머지는 DOM 텍스트.
+        if (scene.emph && scene.title.indexOf(scene.emph) >= 0) {
+          var parts = scene.title.split(scene.emph);
+          desc.appendChild(document.createTextNode(parts[0]));
+          var sp = document.createElement('span');
+          sp.className = 'success-emph';
+          sp.textContent = scene.emph;
+          desc.appendChild(sp);
+          desc.appendChild(document.createTextNode(parts.slice(1).join(scene.emph)));
+        } else {
+          desc.textContent = scene.title;
+        }
 
         var stage = div('stage');
         var childBody = C.createAsset({
@@ -705,44 +719,100 @@
     });
   }
 
-  // PAGE 5-1 (v0.6.x) — 설명 영상 페이지 (residue 를 prof.mp4 영상으로 교체).
-  //   기존 shell(카드/배지/페이지 표시/전환) 재사용. 본문 = 문구(마지막 줄 강조·살짝 흔들림) + 영상.
-  //   video: autoplay·muted·loop·playsinline (모바일 autoplay 정책 대응). 씬 이탈 시 cleanups 로 정지·해제.
+  // 설명 영상 페이지 (v0.6.x PAGE 5-1 / v0.7.x PAGE 10-1).
+  //   기존 shell(카드/배지/페이지 표시/전환) 재사용. 본문 = 문구(강조 span) + 영상 or placeholder.
+  //   scene.video 지정 → autoplay·muted·loop·playsinline 영상(씬 이탈 시 cleanups 로 정지).
+  //   scene.video 미지정 → video 요소/네트워크 요청 없이 placeholder 만 렌더(404 없음).
+  //   scene.emphClass: 강조 span 클래스(기본 shake-emph=소프트 레드/흔들림, 'key-emph'=키컬러/차분).
   function renderVideo(scene) {
     showScreen(function (el) {
       shell(el, scene, '', function (body) {
-        // 문구: 앞 2줄(본문 스타일) + 마지막 줄 강조 span(소프트 레드·진입 시 살짝 흔들림)
-        var cap = div('card-title video-caption');
-        cap.appendChild(document.createTextNode(scene.lead || ''));
-        var emph = document.createElement('span');
-        emph.className = 'shake-emph';
-        emph.textContent = scene.emph || '';
-        cap.appendChild(emph);
-        body.appendChild(cap);
+        // 문구: lead(본문) + 강조 span(+선택 tail)
+        if (scene.lead || scene.emph) {
+          var cap = div('card-title video-caption');
+          if (scene.lead) cap.appendChild(document.createTextNode(scene.lead));
+          if (scene.emph) {
+            var emph = document.createElement('span');
+            emph.className = scene.emphClass || 'shake-emph';
+            emph.textContent = scene.emph;
+            cap.appendChild(emph);
+          }
+          if (scene.tail) cap.appendChild(document.createTextNode(scene.tail));
+          body.appendChild(cap);
+        }
 
-        // 영상 (원본 비율 유지·잘림 없음·둥근 모서리·은은한 border/shadow, fallback 배경)
+        // 영상 or placeholder (영역 크기·스타일 동일)
         var vwrap = div('info-video');
-        var v = document.createElement('video');
-        v.muted = true; v.defaultMuted = true;           // muted 는 src 전에 (autoplay 허용)
-        v.loop = true; v.autoplay = true;
-        v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
-        v.setAttribute('preload', 'auto'); v.setAttribute('aria-hidden', 'true');
-        v.src = CFG.assets[scene.video] || scene.video;
-        vwrap.appendChild(v);
+        var src = scene.video ? (CFG.assets[scene.video] || scene.video) : null;
+        if (src) {
+          var v = document.createElement('video');
+          v.muted = true; v.defaultMuted = true;           // muted 는 src 전에 (autoplay 허용)
+          v.loop = true; v.autoplay = true;
+          v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
+          v.setAttribute('preload', 'auto'); v.setAttribute('aria-hidden', 'true');
+          v.src = src;
+          vwrap.appendChild(v);
+          var tryPlay = function () { var p = v.play(); if (p && p.catch) p.catch(function () {}); };
+          v.addEventListener('loadeddata', tryPlay);
+          tryPlay();
+          // 씬 이탈 시 영상 정지·해제 (재진입 시 새 요소로 처음부터 재생)
+          cleanups.push(function () { try { v.pause(); v.removeAttribute('src'); v.load(); } catch (_) {} });
+        } else {
+          // v0.7.x: 영상 미첨부 → placeholder (video/네트워크 요청 없음)
+          vwrap.classList.add('is-placeholder');
+          var ph = div('video-ph-text');
+          ph.textContent = CFG.texts.scenes.videoPlaceholder || '';
+          vwrap.appendChild(ph);
+        }
         body.appendChild(vwrap);
         body.appendChild(makeHint(CFG.texts.hints.tapNext));
-
-        // 자동재생 (일부 브라우저는 명시 play 필요) — muted 라 대부분 허용, 실패해도 무시
-        var tryPlay = function () { var p = v.play(); if (p && p.catch) p.catch(function () {}); };
-        v.addEventListener('loadeddata', tryPlay);
-        tryPlay();
-
-        // 씬 이탈 시 영상 정지·해제 (재진입 시 새 요소로 처음부터 재생)
-        cleanups.push(function () { try { v.pause(); v.removeAttribute('src'); v.load(); } catch (_) {} });
       });
       tapAdvance(el);
-      // 영상(약 6.4초)을 보기 전에 넘어가지 않도록 살짝 길게 자동 전환 (탭/다음으로 즉시 이동 가능)
+      // 영상을 보기 전에 넘어가지 않도록 살짝 길게 자동 전환 (탭/다음으로 즉시 이동 가능)
       setTimer(next, 7200);
+    });
+  }
+
+  // PAGE 10-2 (v0.7.x) — 비포/애프터 비교 (일반 바디워시 vs 이슬로). 기존 shell 재사용.
+  //   본문 = 메인 문구(강조 span) + 좌(baby-sad)·VS·우(baby-happy) 비교 카드. 텍스트는 DOM 렌더.
+  function renderCompare(scene) {
+    showScreen(function (el) {
+      shell(el, scene, '', function (body) {
+        var T = CFG.texts.scenes;
+        // 메인 문구: lead + 강조(생분해 계면활성제) + tail
+        var title = div('card-title compare-title');
+        title.appendChild(document.createTextNode(T.compareLead || ''));
+        var em = document.createElement('span'); em.className = 'key-emph'; em.textContent = T.compareEmph || '';
+        title.appendChild(em);
+        title.appendChild(document.createTextNode(T.compareTail || ''));
+        body.appendChild(title);
+
+        // 비교 섹션 (접근성: role/aria-label)
+        var row = div('compare-row');
+        row.setAttribute('role', 'group');
+        row.setAttribute('aria-label', '일반 바디워시와 이슬로 베이비 비교');
+
+        function makeCard(cls, labelText, imgSrc, imgLabel) {
+          var card = div('compare-card ' + cls);
+          var lab = div('compare-label');
+          lab.textContent = labelText;
+          var img = C.createAsset({ src: imgSrc, label: imgLabel, shape: 'baby', className: 'compare-img' });
+          card.appendChild(lab);
+          card.appendChild(img);
+          return card;
+        }
+        var left  = makeCard('compare-bad',  T.compareBadLabel,  CFG.assets.childSad,   CFG.placeholders.childSad);
+        var vs    = div('compare-vs'); vs.textContent = T.compareVs || 'VS'; vs.setAttribute('aria-hidden', 'true');
+        var right = makeCard('compare-good', T.compareGoodLabel, CFG.assets.childHappy, CFG.placeholders.childHappy);
+
+        row.appendChild(left);
+        row.appendChild(vs);
+        row.appendChild(right);
+        body.appendChild(row);
+        body.appendChild(makeHint(CFG.texts.hints.tapNext));
+      });
+      tapAdvance(el);
+      setTimer(next, CFG.timings.missionAutoAdvance);
     });
   }
 
@@ -751,17 +821,38 @@
   function renderBrand(scene) {
     showScreen(function (el) {
       shell(el, scene, scene.title, function (body) {
-        var hero = buildProductHero();
-
-        var list = div('keyword-list');
-        (scene.keywords || []).forEach(function (k) {
-          var row = div('keyword');
-          row.textContent = '✔ ' + k;
-          list.appendChild(row);
-        });
-
-        body.appendChild(hero);
-        body.appendChild(list);
+        if (scene.single) {
+          // v0.7.x (PAGE 7 전용): 단일 제품(eslo-bath) + 주변 말풍선 키워드 3개 + 제품명.
+          var stage = div('eslo-single-stage');
+          var prod = C.createAsset({
+            src: CFG.assets.ending[scene.single] || CFG.assets.ending.bath,
+            label: CFG.placeholders.endBath, shape: 'product', variant: 'mint',
+            className: 'eslo-hero-single',
+          });
+          stage.appendChild(prod);
+          // 말풍선 배치: 왼쪽위(kw-1) / 왼쪽아래(kw-2) / 오른쪽중간(kw-3) — 텍스트는 DOM 텍스트로(접근성)
+          (scene.keywords || []).slice(0, 3).forEach(function (k, i) {
+            var b = div('kw-bubble kw-' + (i + 1));
+            b.textContent = k;
+            stage.appendChild(b);
+          });
+          body.appendChild(stage);
+          if (scene.productName) {
+            var pn = div('eslo-product-name');
+            pn.textContent = scene.productName;
+            body.appendChild(pn);
+          }
+        } else {
+          var hero = buildProductHero();
+          var list = div('keyword-list');
+          (scene.keywords || []).forEach(function (k) {
+            var row = div('keyword');
+            row.textContent = '✔ ' + k;
+            list.appendChild(row);
+          });
+          body.appendChild(hero);
+          body.appendChild(list);
+        }
         body.appendChild(makeHint(CFG.texts.hints.tapNext));
       });
       tapAdvance(el);

@@ -65,7 +65,8 @@
 
     // 장면 ⑥ — 설명: 이슬로 소개 (제품 + 키워드)
     { id: 'esloIntro', type: 'brand', phase: 2,
-      title: T.scenes.esloIntro, keywords: T.esloKeywords },
+      title: T.scenes.esloIntro, keywords: T.esloKeywords,
+      single: 'bath', productName: T.scenes.esloProductName },   // v0.7.x: 단일 제품(eslo-bath) + 말풍선 키워드 + 제품명
 
     // 장면 ⑦ — STEP2: 이슬로 사용 (문지를수록 거품+계면이 함께 생성 — STEP1①과 동일)
     { id: 'esloUse', type: 'drag', phase: 2, step: 2,
@@ -86,7 +87,15 @@
 
     // 장면 ⑨ — MISSION 성공! (웃는 아이 + 반짝임, 제품 이미지 없음)
     { id: 'missionSuccess', type: 'missionSuccess', phase: 4,
-      title: T.scenes.missionSuccess },
+      title: T.scenes.missionSuccess, emph: T.scenes.missionSuccessEmph },   // v0.7.x: '생분해' 강조
+
+    // 장면 ⑨-2 (PAGE 10-1) — 생분해 설명 영상 (영상은 추후 추가, 현재 placeholder)
+    //   video 타입 재사용. scene.video 미지정 → video 요소/요청 없이 placeholder 렌더.
+    { id: 'biodegradeInfo', type: 'video', phase: 4,
+      lead: T.scenes.bioLead, emph: T.scenes.bioEmph, emphClass: 'key-emph' },
+
+    // 장면 ⑨-3 (PAGE 10-2) — 비포/애프터 비교 (일반 바디워시 vs 이슬로)
+    { id: 'beforeAfterCompare', type: 'compare', phase: 4 },
 
     // 장면 ⑩ — 최종 브랜드 페이지 (제품 3종 + 문구 + 다시하기)
     { id: 'brandFinal', type: 'brandFinal', phase: 4,

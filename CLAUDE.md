@@ -14,8 +14,13 @@
 
 ## 현재 버전
 
-**v0.7.0-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
-※ v0.7.0-beta(minor): STEP1 흐름 확장 + 계면이 배치 개선 + 영상 설명 페이지. 총 11페이지.
+**v0.8.0-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.8.0-beta(minor): 신규 2페이지(PAGE 10-1 생분해 설명 placeholder, PAGE 10-2 비포/애프터 비교) + PAGE 5·7·8·9·10 개선. **총 13페이지.**
+  - PAGE 10-1 `biodegradeInfo`(type `video`): `scene.video` 미지정 → `renderVideo`가 video 요소/요청 없이 placeholder(`.info-video.is-placeholder`, 4:3, "영상 준비 중") 렌더. 추후 `scene.video` asset key만 넣으면 영상 교체.
+  - PAGE 10-2 `beforeAfterCompare`(type `compare`, `renderCompare`): 좌 baby-sad(일반 바디워시)/VS/우 baby-happy(이슬로) 비교 카드. `.compare-*` 페이지 한정 클래스, 375px 2열 유지·≤360px 세로 스택.
+  - PAGE 5 경고 제목 확대(`.warning-scene .card-title`)·본문 2줄·baby-sad 계면이 5. PAGE 7 단일 제품(eslo-bath)+말풍선 키워드 3(`.kw-bubble`)+제품명+floating. PAGE 8/9 문구 2줄. PAGE 10 '생분해' 강조(`.success-emph`).
+  - 강조: `.key-emph`(키컬러·정적 glow·모션 없음, 10-1/10-2), `.success-emph`(shine 1회), `.shake-emph`(P5-1). 모두 reduced-motion 대응.
+※ v0.7.0-beta(minor): STEP1 흐름 확장 + 계면이 배치 개선 + 영상 설명 페이지.
   - PAGE 1-1(신규 `info` 타입): "먼저 일반 바디워시를…" + `normal_wash.png`.
   - PAGE 2 `bodywashUse`=일반 바디워시 거품, PAGE 3 `bodywashRinse`=샤워 씻어냄. 제품 `products.bodywash`=normal_wash, `products.shower`=washhead(핸드 샤워헤드). 샤워기 `toolLeft/toolTop`으로 좌측 이동(얼굴 비가림).
   - 계면이: `addSurfactants`가 **안전 슬롯**(BODY_SLOTS/PANEL_SLOTS)+얼굴보호(x16~84,y28~56)+좌우균형+충돌검사. PAGE 2·3·5는 `MOOD_FACES` playful/clinging/residue=[1,2,4](gyemeon2/3/5). PAGE 5(warning)에 baby-sad 주변 계면이 5개(mood-float).

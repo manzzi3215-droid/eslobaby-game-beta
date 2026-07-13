@@ -19,7 +19,7 @@
 window.ESLO_CONFIG = {
   /* --- 프로젝트 메타 --------------------------------------------------- */
   meta: {
-    version: 'v0.7.0-beta',
+    version: 'v0.8.0-beta',
     title: '이슬로(eslo) 베이비 미니게임',
   },
 
@@ -106,8 +106,8 @@ window.ESLO_CONFIG = {
       target: '나쁜 계면이를 모두 씻어내세요!',
     },
 
-    // eslo 핵심 키워드 (전환 장면)
-    esloKeywords: ['생분해', '피부에 남지 않는 계면활성제', '안심 베이비 케어'],
+    // eslo 핵심 키워드 (PAGE 7 제품 주변 말풍선 — 순서: 왼쪽위 / 왼쪽아래 / 오른쪽중간)
+    esloKeywords: ['생분해', '피부에 남지 않는 계면활성제', '안심 베이비케어'],
 
     success: {
       title: '🎉 미션 성공!',
@@ -126,10 +126,23 @@ window.ESLO_CONFIG = {
       residueVideoLead: '일반 바디워시 속 계면활성제는\n물에 씻기지 않고 피부에 남아\n',
       residueVideoEmph: '자극을 유발해요!',
       // (구버전 보존 v0.2.5~v0.3.0) residue: '바디워시 속 나쁜 계면활성제는 피부에 남아 자극을 유발해요!'
-      esloIntro:    '이제 이슬로 베이비로\n순한 세정을 시작해보세요.',
-      esloUse:      '이슬로 바디 제품으로\n거품을 내어 씻겨주세요',
-      esloRinse:    '샤워기로\n깨끗하게 헹궈주세요',
-      missionSuccess: '깨끗해진 피부,\n이슬로의 남지 않는\n착한 계면활성제 덕분이예요!',
+      esloIntro:    '이제 이슬로 베이비\n생분해 워시로 씻어볼까요?',
+      esloProductName: '이슬로 생분해 바스앤샴푸',   // PAGE 7 제품명 캡션
+      esloUse:      '이슬로 바디워시로\n거품을 내어 씻겨주세요',
+      esloRinse:    '샤워기로 깨끗하게\n씻어내 주세요',
+      missionSuccess: '깨끗해진 피부,\n이슬로의 생분해 기술 덕분이에요!',
+      missionSuccessEmph: '생분해',   // PAGE 10 강조 단어 (span 분리)
+
+      // v0.7.x — PAGE 10-1(영상 설명, 현재 placeholder) / PAGE 10-2(비포·애프터 비교)
+      bioLead: '이슬로의 착한 계면활성제는\n물에 분해되어 씻겨 내려가\n',   // 앞 2줄(본문)
+      bioEmph: '피부에 남지 않아요!',                                       // 마지막 줄 강조(키컬러)
+      videoPlaceholder: '영상 준비 중',                                     // 영상 미첨부 시 안내
+      compareLead: '민감한 아이 피부일수록\n',
+      compareEmph: '생분해 계면활성제',
+      compareTail: '는 필수입니다!',
+      compareBadLabel: '일반 바디워시',
+      compareGoodLabel: '이슬로 베이비\n생분해 바스앤샴푸',
+      compareVs: 'VS',
       brandFinalTitle: '착한 계면활성제로\n우리 아이 피부를 지키는\n안심 생분해 케어, 이슬로',
       brandFinalDesc:  '이슬로와 함께\n안심하고 사용할 수 있는\n클린한 생분해 케어,\n시작해볼까요?',
 
@@ -169,7 +182,7 @@ window.ESLO_CONFIG = {
     gauge: {
       title: '민감도 게이지',
       warn:  '경고! 피부 자극 위험!',
-      warnSub: '우리 아이 피부가 불편해요!',   // v0.3.2: 경고 화면 추가 문구
+      warnSub: '피부에 남은 나쁜 계면활성제가\n트러블을 유발했어요!',   // v0.7.x: 경고 화면 본문(2줄)
       calm:  '피부 진정 완료!',
       // (구버전 보존) warn: '민감도 100% · 피부 자극 위험!'
     },

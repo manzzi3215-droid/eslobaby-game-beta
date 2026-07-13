@@ -11,6 +11,32 @@
 
 ---
 
+## [v0.8.0-beta] - 2026-07-13
+### 신규 페이지 2개 추가(생분해 설명·Before/After 비교) + 화면 개선 (총 13페이지)
+성공 화면(PAGE 10) 다음에 생분해 설명·비포/애프터 비교 페이지 2개를 추가하고,
+PAGE 5·7·8·9·10의 문구·이미지·강조를 다듬었습니다. 게임 로직·드래그·계면이·배경·디자인 시스템은 불변.
+
+### Added
+- PAGE 10-1 생분해 설명 페이지(`biodegradeInfo`, video 렌더러 확장 — 영상 추후 첨부, 현재 4:3 placeholder "영상 준비 중")
+- PAGE 10-2 Before / After 비교 페이지(`beforeAfterCompare`, `renderCompare` — 일반 바디워시(baby-sad) vs 이슬로(baby-happy))
+
+### Changed
+- PAGE 5 경고 화면 개선(제목 확대·본문 2줄·baby-sad 주변 계면이)
+- PAGE 7 제품 소개 리디자인(단일 제품 eslo-bath + 말풍선 키워드 3 + 제품명 + floating)
+- PAGE 8 문구 변경("이슬로 바디워시로…")
+- PAGE 9 문구 변경("샤워기로 깨끗하게 씻어내 주세요")
+- PAGE 10 성공 문구 변경 + '생분해' 강조
+- `sw.js` CACHE_NAME → `eslo-game-v0.8.0-beta`
+- 버전 표기 동기화(config/README/CHANGELOG/CLAUDE) → v0.8.0-beta
+
+### Improved
+- 전체 11 → **13페이지** 구조(페이지 번호/총계 자동 반영, 마지막 버튼 비활성)
+- 모바일 레이아웃·반응형(비교 375px 2열 유지·≤360px 세로 스택, 말풍선 겹침 방지)
+- 제품 소개 UI(말풍선 pill·제품명·floating)
+- 접근성: 이미지 alt·비교 섹션 aria-label, `prefers-reduced-motion` 대응(모든 강조/모션)
+
+---
+
 ## [v0.7.0-beta] - 2026-07-13
 ### STEP1 흐름 확장 · 계면이 배치 개선 · 계면활성제 설명 영상 페이지
 STEP1(일반 바디워시) 구간을 확장하고, 계면이 배치를 안전 슬롯 기반으로 개선했으며,
