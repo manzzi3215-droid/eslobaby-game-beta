@@ -19,7 +19,7 @@
 window.ESLO_CONFIG = {
   /* --- 프로젝트 메타 --------------------------------------------------- */
   meta: {
-    version: 'v0.5.0-motion-test',
+    version: 'v0.6.0-beta',
     title: '이슬로(eslo) 베이비 미니게임',
   },
 
@@ -33,7 +33,8 @@ window.ESLO_CONFIG = {
     child:     'assets/images/baby-basic.png',  // 기본 상태
     childSad:  'assets/images/baby-sad.png',    // 피부 자극·실패(울상+발진)
     childHappy:'assets/images/baby-happy.png',  // 미션 성공·깨끗해진 상태
-    background:'assets/images/background.png',   // 욕실 배경 (비우면 SVG 욕실 연출)
+    background:'assets/images/background-v2.png',   // 욕실 배경(세로/모바일, v2: 변기 제거) — 비우면 SVG 욕실 연출
+    backgroundWide:'assets/images/background-wide-v2.webp', // 욕실 배경(가로/데스크톱, v2: 변기 제거) — 비우면 세로 배경 사용
     magnifier: 'assets/images/magnifier.png',   // 돋보기 (현재 흐름 미사용)
     bubble:    'assets/images/bubble.png',      // 거품 (비우면 도형 거품)
     warningLight: 'assets/images/warning-light.png', // 경고등/비상등 (게이지 100%)

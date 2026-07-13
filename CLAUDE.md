@@ -14,9 +14,16 @@
 
 ## 현재 버전
 
-**v0.5.0-motion-test** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
-※ 이 버전은 **모션인식 연구용 실험 브랜치 `feature/motion-test`** 전용 표기입니다.
-  안정본은 master의 **v0.4.5-beta**이며, 이 브랜치는 아직 **기능 변경 없이 버전 표기만** 바꾼 상태입니다.
+**v0.6.0-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ `feature/motion-test` 브랜치에서 진행한 **안정 릴리스**입니다(실험 표기 -motion-test → -beta 로 전환).
+  욕실 배경 시스템·반응형 배경·**KEY COLOR #6DA1FF 디자인 시스템**을 도입했으며, 게임 로직/문구/관리자 기능은 불변.
+  모션인식·Idle 애니메이션·효과음 등 추가 기능은 다음 버전 예정.
+※ **배경(v0.6.0-beta)**: 세로(모바일) `assets/images/background-v2.png`, 가로(데스크톱) `assets/images/background-wide-v2.webp`.
+  전환은 CSS `@media (min-aspect-ratio: 1/1)` + `--bg-portrait`/`--bg-wide`(game.js `init`), 경로는 `config.assets.background`/`backgroundWide`.
+  (Higgsfield outpaint로 가로 확장, nano_banana inpaint로 변기 제거. v1 원본 `background.png`/`background-wide.webp`도 보존.)
+※ **디자인 시스템(v0.6.0-beta)**: 색 토큰은 `css/theme.css`의 `--key`(#6DA1FF)/`--key-deep`/`--key-soft`/`--sky-*`/`--mint-*` 기준.
+  컴포넌트 리파인은 `css/game.css` 맨 끝 "v0.5.0-motion-test 브랜드 리파인" 레이어(카드/버튼/게이지/타이포/앰비언트).
+  STEP별 `theme-*`(game.js `SCENE_THEME`)는 전부 키컬러로 수렴(경고=소프트 레드만 예외).
 ※ 폰트는 **Jua**(Google Fonts, index/share 로드). 로고는 투명 PNG(흰 배경 flood-fill 제거).
   제품 3종은 가로 일렬(`buildProductHero`). 문구 줄바꿈은 config `\n`.
 ※ 이 저장소는 운영본과 분리된 **beta 미러**입니다.

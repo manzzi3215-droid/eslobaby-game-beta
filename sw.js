@@ -11,7 +11,7 @@
  * ========================================================================== */
 'use strict';
 
-var CACHE_NAME = 'eslo-game-v0.4.5-beta';
+var CACHE_NAME = 'eslo-game-v0.6.0-beta';
 
 // 미리 캐싱할 핵심 파일 (상대경로)
 var PRECACHE = [
@@ -51,6 +51,9 @@ var PRECACHE = [
   './assets/images/eslo-bath.png',
   './assets/images/eslo-cleanser.png',
   './assets/images/eslo-lotion.png',
+  // v0.6.0: 욕실 배경(세로/가로, 변기 제거 v2) — 오프라인 첫 로드에도 배경 표시
+  './assets/images/background-v2.png',
+  './assets/images/background-wide-v2.webp',
 ];
 
 self.addEventListener('install', function (e) {

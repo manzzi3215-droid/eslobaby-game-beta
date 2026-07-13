@@ -1075,7 +1075,13 @@
       var probe = new Image();
       probe.onload = function () {
         bg.innerHTML = '';
-        bg.style.backgroundImage = 'url(' + CFG.assets.background + ')';
+        // 세로(모바일)·가로(데스크톱) 배경을 CSS 변수로 넘기고, 전환은 CSS 미디어쿼리가 담당.
+        // 변수 안의 url()은 소비되는 CSS 파일(css/) 기준으로 상대해석되므로, 절대 URL로 고정한다.
+        var toUrl = function (p) { return 'url("' + new URL(p, document.baseURI).href + '")'; };
+        bg.style.setProperty('--bg-portrait', toUrl(CFG.assets.background));
+        if (CFG.assets.backgroundWide) {
+          bg.style.setProperty('--bg-wide', toUrl(CFG.assets.backgroundWide));
+        }
         bg.classList.add('has-image');
       };
       probe.src = CFG.assets.background;

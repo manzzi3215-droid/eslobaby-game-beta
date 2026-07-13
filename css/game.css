@@ -29,7 +29,15 @@ body {
   pointer-events: none;
 }
 .bg-layer > svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
-.bg-layer.has-image { background-size: cover; background-position: center; }
+.bg-layer.has-image {
+  background-image: var(--bg-portrait);   /* 기본: 세로(모바일) 배경 */
+  background-size: cover;
+  background-position: center;
+}
+/* 가로(데스크톱) 화면에서는 가로형 배경으로 자동 전환 (없으면 세로 배경 유지) */
+@media (min-aspect-ratio: 1 / 1) {
+  .bg-layer.has-image { background-image: var(--bg-wide, var(--bg-portrait)); }
+}
 
 .bg-bubble {
   position: absolute;
@@ -1490,3 +1498,155 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
 .hint         { line-height: 1.55; letter-spacing: 0; }
 /* Jua 는 획이 굵고 둥글어 아주 작은 글씨는 살짝 키워 가독성 확보 */
 .page-num     { font-size: clamp(11px, 1.4vw, 14px); letter-spacing: 0.3px; }
+
+/* =============================================================================
+ * ★ v0.5.0-motion-test — 브랜드 디자인 리파인 (KEY COLOR #6DA1FF)
+ *   "프리미엄 베이비 스킨케어 체험" 톤앤무드로 통일. 시각 레이어만(기능/구조/문구 불변).
+ *   원본·이전 레이어 뒤 → 동일 특이도에서 최종 우선 적용.
+ * ========================================================================== */
+
+/* ---- STEP 테마를 KEY COLOR 체계로 통일 (경고=소량의 소프트 레드만 예외) ---- */
+.screen {
+  --accent:      var(--key);
+  --accent-deep: var(--key-deep);
+  --accent-soft: rgba(169, 200, 255, 0.30);
+  --accent-2:    #cfe4ff;
+  --glow:        rgba(109, 161, 255, 0.20);
+}
+/* 진행 단계(STEP1~3·소개)는 모두 키컬러 — 하나의 톤으로 (기존 mint/blue/sky/orange 통일) */
+.theme-mint, .theme-blue, .theme-sky, .theme-orange {
+  --accent:      var(--key);
+  --accent-deep: var(--key-deep);
+  --accent-soft: rgba(169, 200, 255, 0.30);
+  --accent-2:    #cfe4ff;
+  --glow:        rgba(109, 161, 255, 0.20);
+}
+/* 성공/브랜드: 키컬러 강조 + '깨끗함'의 연한 민트 광원(허용 보조색) */
+.theme-success, .theme-brand {
+  --accent:      var(--key);
+  --accent-deep: var(--key-deep);
+  --accent-soft: rgba(190, 232, 216, 0.32);
+  --accent-2:    #c7efdf;
+  --glow:        rgba(120, 205, 178, 0.20);
+}
+/* 경고(자극)만 소프트 레드 유지 — 학습 메시지상 필요, 단 채도/강도 완화 */
+.theme-red {
+  --accent:      #ff9a9a;
+  --accent-deep: #ef7373;
+  --accent-soft: rgba(255, 206, 206, 0.32);
+  --accent-2:    #ffd3d3;
+  --glow:        rgba(255, 138, 138, 0.22);
+}
+
+/* ---- 배경을 더 보여주기(#6): 카드 뒤 테마 광원 완화 ---- */
+.screen::before {
+  width: min(110vw, 800px);
+  height: min(106vh, 660px);
+  top: 48%;
+  opacity: 0.85;
+}
+
+/* ---- 유리카드(#1): 더 가볍고 투명하게(배경 비침) · 프리미엄 그림자 ---- */
+.scene-card {
+  width: min(92vw, 680px);
+  margin-bottom: clamp(12px, 2.4vh, 26px);
+  padding: clamp(14px, 2.3vw, 26px) clamp(16px, 2.7vw, 32px);
+  background: linear-gradient(180deg, rgba(255,255,255,0.60) 0%, rgba(233,243,255,0.46) 100%);
+  border: 1px solid rgba(255,255,255,0.72);
+  border-radius: clamp(24px, 3.2vw, 32px);
+  box-shadow:
+    0 14px 40px rgba(77, 134, 236, 0.15),
+    inset 0 1px 0 rgba(255,255,255,0.60);
+  -webkit-backdrop-filter: blur(16px) saturate(1.12);
+  backdrop-filter: blur(16px) saturate(1.12);
+  animation: cardIn 420ms cubic-bezier(.2,.8,.25,1) both;   /* 조금 더 느긋한 등장 */
+}
+.scene-card::before { height: 36%; background: linear-gradient(180deg, rgba(255,255,255,0.40), transparent); }
+
+/* ---- 타이포 계층 명확화(#5): 제목 > 강조문장 > 설명 ---- */
+.card-title { color: var(--color-text); font-weight: 900; text-shadow: 0 1px 0 rgba(255,255,255,0.45); }   /* 제목: 가장 진하고 굵게 */
+.ment       { color: var(--key-deep); }                                                                    /* 강조 문장: 키컬러 */
+.hint, .gate-desc, .ending-sub, .ending-caption { color: var(--color-text-soft); font-weight: 600; }       /* 설명: 차분한 muted */
+
+/* ---- 배지/키워드/페이지 pill(#4): 키컬러 알약 통일 ---- */
+.card-badge { background: linear-gradient(165deg, var(--key), var(--key-deep)); box-shadow: 0 5px 14px rgba(78,134,236,0.28), inset 0 1px 0 rgba(255,255,255,0.55); }
+.card-home  { color: var(--key-deep); background: rgba(255,255,255,0.62); border: 1px solid rgba(255,255,255,0.85); }
+.keyword    { color: var(--key-deep); background: rgba(255,255,255,0.78); border: 1px solid var(--key-soft); }
+.pdot.is-current { background: linear-gradient(90deg, var(--key), var(--key-deep)); }
+.phase-item.is-current { background: var(--key); border-color: var(--key); }
+
+/* ---- 버튼(#2): KEY COLOR 통일 + hover/active/pressed/disabled ---- */
+.btn-primary {
+  color: #fff;
+  background: linear-gradient(135deg, var(--key-soft) 0%, var(--key) 52%, var(--key-deep) 100%);
+  box-shadow: 0 10px 24px rgba(109,161,255,0.32), inset 0 1px 0 rgba(255,255,255,0.45);
+  transition: transform var(--t-fast) cubic-bezier(.3,.8,.3,1), box-shadow var(--t-fast), filter var(--t-fast);
+}
+@media (hover:hover) { .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 16px 30px rgba(109,161,255,0.40); filter: brightness(1.03); } }
+.btn-primary:active { transform: translateY(0) scale(0.97); box-shadow: 0 6px 16px rgba(78,134,236,0.32); filter: brightness(0.98); }
+.btn-primary:disabled, .btn-primary.is-disabled { background: linear-gradient(135deg, #c9d9f2, #b8cbeb); color: #eef4ff; box-shadow: none; opacity: 0.75; cursor: default; transform: none; filter: none; }
+
+/* 컨트롤 버튼: 유리 + 키컬러 활성/다음 · 배경 더 비치게 · disabled 명확 */
+.ctrl-btn {
+  color: var(--key-deep);
+  background: rgba(255,255,255,0.58);
+  border: 1px solid rgba(255,255,255,0.82);
+  box-shadow: 0 6px 16px rgba(93,132,180,0.15), inset 0 1px 0 rgba(255,255,255,0.9);
+}
+.ctrl-btn.is-active, .ctrl-btn.is-next { color: #fff; background: linear-gradient(140deg, var(--key), var(--key-deep)); border-color: rgba(255,255,255,0.5); box-shadow: 0 8px 20px rgba(78,134,236,0.30), inset 0 1px 0 rgba(255,255,255,0.4); }
+.ctrl-btn:disabled, .ctrl-btn.is-disabled { opacity: 0.36; }
+
+/* ---- 진행 게이지(#3): 둥글고 은은한 glow + 부드러운 상승 ---- */
+.gauge-bar {
+  height: clamp(18px, 2.5vh, 28px);
+  background: rgba(255,255,255,0.55);
+  border: none;
+  border-radius: 999px;
+  box-shadow: inset 0 2px 6px rgba(77,120,175,0.16), 0 1px 0 rgba(255,255,255,0.8);
+}
+.gauge-fill {
+  border-radius: 999px;
+  box-shadow: 0 0 12px rgba(255,255,255,0.5), 0 0 8px rgba(109,161,255,0.28);
+  transition: width 420ms cubic-bezier(.35,.82,.35,1), background 380ms ease;   /* 더 부드럽게 */
+}
+.gauge-wrap.is-calm .gauge-bar { box-shadow: inset 0 2px 6px rgba(77,120,175,0.14), 0 0 0 3px rgba(109,161,255,0.22); }
+
+/* ---- POINT 안내: 노란 톤 → 브랜드(연한 스카이)로 통일 ---- */
+.point-box { background: rgba(240,246,255,0.94); border: 1px solid var(--key-soft); }
+.point-box .pb-title { background: var(--key); color: #fff; }
+.point-box .pb-body { color: var(--key-deep); }
+
+/* ---- 애니메이션 완화(#7): 갑작스러운 흔들림 줄이기(힐링 무드) ---- */
+@keyframes warnShake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
+.warning-scene .scene-card { animation: cardIn 420ms cubic-bezier(.2,.8,.25,1) both, warnShake 0.5s ease 0.4s 1; }  /* 2회 → 1회 */
+.gauge-wrap.is-warning .gauge-bar { animation: gaugePulse 1.6s ease-in-out infinite; }   /* 더 느리게 */
+.hint      { animation: pulse 2.8s ease-in-out infinite; }   /* 힌트 깜빡임 완화 */
+.mini-germ { animation: wobble 2.2s ease-in-out infinite; }
+.card-badge::after { animation: badgeShine 5s ease-in-out infinite; }   /* shine 더 느긋하게 */
+
+/* ---- 은은한 앰비언트(#8): 배경 위 느린 부유 빛/물방울 (DOM 추가 없이 의사요소, CSS-only)
+ *   배경 이미지 로드 시 bg 내부 DOM(bg-bubble)은 제거되므로 ::after 로 구현. 매우 은은/느리게. */
+.bg-layer.has-image::after {
+  content: "";
+  position: absolute;
+  inset: -10%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(closest-side, rgba(255,255,255,0.55), transparent 70%) 18% 28% / 130px 130px no-repeat,
+    radial-gradient(closest-side, rgba(255,255,255,0.42), transparent 70%) 80% 60% / 96px 96px no-repeat,
+    radial-gradient(closest-side, rgba(206,228,255,0.50), transparent 70%) 56% 16% / 74px 74px no-repeat,
+    radial-gradient(closest-side, rgba(255,255,255,0.38), transparent 70%) 40% 78% / 84px 84px no-repeat;
+  opacity: 0.5;
+  mix-blend-mode: screen;
+  animation: ambientDrift 18s ease-in-out infinite alternate,
+             ambientTwinkle 6s ease-in-out infinite;
+}
+@keyframes ambientDrift {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(0, -2.4%, 0); }
+}
+@keyframes ambientTwinkle {
+  0%, 100% { opacity: 0.34; }
+  50%      { opacity: 0.60; }
+}
