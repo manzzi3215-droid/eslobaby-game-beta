@@ -330,10 +330,11 @@
         goal.textContent = scene.title;
 
         // 아이 캐릭터 (레퍼런스처럼 미션 화면 중앙에 배치)
+        // v0.6.x: Page1 대표 이미지 = 양손에 바디워시·이슬로를 든 아기(baby-wonder). 없으면 childHappy 폴백.
         var stage = div('stage');
         var childBody = C.createAsset({
-          src: CFG.assets.childHappy, label: CFG.placeholders.childHappy,
-          shape: 'baby', variant: 'happy', className: 'child-body',
+          src: CFG.assets.childWonder || CFG.assets.childHappy, label: CFG.placeholders.childHappy,
+          shape: 'baby', variant: 'happy', className: 'child-body child-wonder',
         });
         stage.appendChild(childBody);
 

@@ -19,7 +19,7 @@
 window.ESLO_CONFIG = {
   /* --- 프로젝트 메타 --------------------------------------------------- */
   meta: {
-    version: 'v0.6.0-beta',
+    version: 'v0.6.1-beta',
     title: '이슬로(eslo) 베이비 미니게임',
   },
 
@@ -33,6 +33,7 @@ window.ESLO_CONFIG = {
     child:     'assets/images/baby-basic.png',  // 기본 상태
     childSad:  'assets/images/baby-sad.png',    // 피부 자극·실패(울상+발진)
     childHappy:'assets/images/baby-happy.png',  // 미션 성공·깨끗해진 상태
+    childWonder:'assets/images/baby-wonder.png', // Page1(MISSION): 양손에 바디워시·이슬로 제품 (662×744)
     background:'assets/images/background-v2.png',   // 욕실 배경(세로/모바일, v2: 변기 제거) — 비우면 SVG 욕실 연출
     backgroundWide:'assets/images/background-wide-v2.webp', // 욕실 배경(가로/데스크톱, v2: 변기 제거) — 비우면 세로 배경 사용
     magnifier: 'assets/images/magnifier.png',   // 돋보기 (현재 흐름 미사용)
@@ -115,7 +116,7 @@ window.ESLO_CONFIG = {
     scenes: {
       /* --- v0.2.5 시놉시스 문구 (★ 원문 그대로 — 임의 수정 금지) ------- */
       // v0.4.5: 의미 단위 줄바꿈으로 가독성 개선 (문구 단어는 그대로, \n만 추가)
-      missionIntro: '민감한 우리 아이 샤워,\n어떤 제품을 써야 좋을까요?',
+      missionIntro: '민감한 우리 아이 샤워,\n어떤 바디워시를 써야 할까요?',
       bodywashUse:  '바디워시로 거품을 내어\n씻겨주세요.',
       bodywashRinse: '샤워기로\n깨끗하게 헹궈주세요',   // v0.3.1: STEP1 ② 샤워 단계
       residue:      '바디워시 속 나쁜 계면활성제가\n피부에 남아\n자극을 유발했어요!',

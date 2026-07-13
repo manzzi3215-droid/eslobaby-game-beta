@@ -1650,3 +1650,18 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
   0%, 100% { opacity: 0.34; }
   50%      { opacity: 0.60; }
 }
+
+/* =============================================================================
+ * ★ v0.6.x — Page1(MISSION) 대표 이미지: baby-wonder (양손에 바디워시·이슬로)
+ *   원본 비율 662:744 로 표시(object-fit:contain → 잘림 없음). child-body 의
+ *   세로 비율(481:705)·크기만 이 이미지에 맞게 오버라이드. 다른 페이지 영향 없음.
+ * ========================================================================== */
+.child-wonder {
+  aspect-ratio: 662 / 744;
+  width: clamp(200px, 34vw, 296px);
+  height: auto;
+}
+.child-wonder > img { object-fit: contain; }
+@media (orientation: portrait) {
+  .child-wonder { width: clamp(210px, 58vw, 300px); }
+}

@@ -14,7 +14,8 @@
 
 ## 현재 버전
 
-**v0.6.0-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.6.1-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.6.1-beta(패치): Page1(MISSION) 문구 "…어떤 바디워시를 써야 할까요?" + 대표 이미지 `baby-wonder.png`(양손에 바디워시·이슬로, `.child-wonder`). 그 외 v0.6.0-beta와 동일.
 ※ `feature/motion-test` 브랜치에서 진행한 **안정 릴리스**입니다(실험 표기 -motion-test → -beta 로 전환).
   욕실 배경 시스템·반응형 배경·**KEY COLOR #6DA1FF 디자인 시스템**을 도입했으며, 게임 로직/문구/관리자 기능은 불변.
   모션인식·Idle 애니메이션·효과음 등 추가 기능은 다음 버전 예정.
