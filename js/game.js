@@ -15,14 +15,13 @@
 
   var app;
   var brandLogo, bottomHint;                     // 항상 떠있는 요소들
-  var controlPanel, playBtn, pauseBtn, nextBtn;  // 좌측 컨트롤 (처음으로/플레이/정지/다음)
+  var controlPanel, playBtn, pauseBtn, prevBtn, nextBtn;  // 좌측 컨트롤 (처음으로/플레이/이전/정지/다음)
   var currentScreen = null;
   var timers = [];
   var cleanups = [];
   var index = 0;
   var busy = false;
-  var paused = false;                    // 정지(⏸): 자동 진행만 멈춤 (드래그는 유지)
-  var queuedNext = false;                // 정지 중 발생한 자동 전환을 기억했다가 플레이 시 재개
+  var paused = false;                    // 정지(⏸): v0.8.x — 현재 화면의 영상·CSS 애니메이션 일시정지 (페이지 이동과 무관)
 
   // 장면 간 유지되는 게임 상태 (자극 게이지 값 등)
   var state = { irritation: 0 };
@@ -200,8 +199,7 @@
     if (window.Analytics) window.Analytics.endSession();   // v0.4.0: 진행 중 세션 종료
     index = 0;
     state.irritation = 0;
-    paused = false;            // 게이트 복귀 시 자동 진행 상태 초기화
-    queuedNext = false;
+    paused = false;            // 게이트 복귀 시 정지 상태 초기화
     updateCtrlButtons();
     toggleChrome(false);
     showScreen(function (el) {
@@ -224,50 +222,61 @@
 
   /* ---------- 진행 제어 --------------------------------------------- */
   function startGame() {
-    index = 0; state.irritation = 0;
+    index = 0; state.irritation = 0; paused = false;
     if (window.Analytics) window.Analytics.startSession();   // v0.4.0: 플레이 세션 시작
-    renderScene();
-  }
-  function next() {
-    if (busy) return;
-    if (paused) { queuedNext = true; return; }   // 정지 중: 전환을 보류
-    clearScene();
-    index++;
-    if (index >= SCENES.length) return;
     renderScene();
   }
   function goHome() { clearScene(); renderGate(); }
 
-  // → 다음: 자동 진행 대기 없이 현재 장면을 건너뛰고 즉시 다음 장면으로 이동.
-  //   (마지막 장면에서는 버튼이 비활성화되어 동작 안 함)
+  // ---- 공통 페이지 이동 (v0.8.x) — 탭 / 다음 / 이전 모두 이 두 함수만 사용 ----
+  //   clearScene(타이머·영상·cleanup 정리) → index 변경 → 게이지 보정 → renderScene(버튼/페이지 갱신).
+  //   자동 전환은 없다. 사용자가 탭 또는 다음/이전을 눌러야만 이동.
   function goNext() {
+    if (busy) return;
     if (index >= SCENES.length - 1) return;      // 마지막 장면: 이동 없음
     clearScene();
-    queuedNext = false;
     index++;
     state.irritation = irritationForIndex(index); // 건너뛴 게이지 값을 목표값으로 보정
     renderScene();
   }
+  function goPrev() {
+    if (busy) return;
+    if (index <= 0) return;                       // PAGE 1: 이전 없음(비활성)
+    clearScene();
+    index--;
+    state.irritation = irritationForIndex(index); // 되돌아간 장면 진입 시점 게이지로 보정
+    renderScene();
+  }
 
-  // ⏸ 정지: 자동 진행(타이머 전환)만 멈춤. 드래그 인터랙션은 계속 가능.
-  function pauseGame() {
-    paused = true;
-    updateCtrlButtons();
+  // ⏸ 정지 / ▶ 플레이 (v0.8.x): 현재 화면의 영상·CSS 애니메이션만 일시정지/재개. 페이지 이동과 무관.
+  function applyPauseState() {
+    var scr = currentScreen;
+    if (!scr) return;
+    scr.classList.toggle('is-anim-paused', paused);      // CSS: 장면 애니메이션 일시정지
+    var v = scr.querySelector('video');
+    if (v) {
+      if (paused) { v.pause(); }
+      else { var p = v.play(); if (p && p.catch) p.catch(function () {}); }
+    }
   }
-  // ▶ 플레이: 정지 중 보류된 전환이 있으면 이어서 진행.
-  function playGame() {
-    paused = false;
-    updateCtrlButtons();
-    if (queuedNext) { queuedNext = false; next(); }
-  }
+  function pauseGame() { paused = true; applyPauseState(); updateCtrlButtons(); }
+  function playGame() { paused = false; applyPauseState(); updateCtrlButtons(); }
+
   function updateCtrlButtons() {
     if (playBtn) playBtn.classList.toggle('is-active', !paused);
     if (pauseBtn) pauseBtn.classList.toggle('is-active', paused);
-    // 다음 버튼: 마지막 장면에서는 비활성화
+    // 이전: PAGE 1(index 0)에서 비활성 / 다음: 마지막 장면에서 비활성
+    if (prevBtn) {
+      var atFirst = index <= 0;
+      prevBtn.disabled = atFirst;
+      prevBtn.classList.toggle('is-disabled', atFirst);
+      prevBtn.setAttribute('aria-disabled', atFirst ? 'true' : 'false');
+    }
     if (nextBtn) {
       var atLast = index >= SCENES.length - 1;
       nextBtn.disabled = atLast;
       nextBtn.classList.toggle('is-disabled', atLast);
+      nextBtn.setAttribute('aria-disabled', atLast ? 'true' : 'false');
     }
   }
 
@@ -288,7 +297,6 @@
   // step: 1=게이트, 2~=장면 순서 (내부 Scene 번호 — 사용자 표시 STEP1~3과 별개)
   function goToStep(step) {
     clearScene();
-    queuedNext = false;
     if (step <= 1) { renderGate(); return; }
     index = Math.min(step - 2, SCENES.length - 1);
     state.irritation = irritationForIndex(index);
@@ -304,6 +312,7 @@
     sfx('scene');                        // v0.4.3: Scene 시작 효과음
     // 진행 표시(페이지 점)는 카드 안쪽에서 shell 이 직접 그림 (v0.2.8)
     (RENDERERS[scene.type] || RENDERERS.message)(scene);
+    applyPauseState();                   // v0.8.x: 정지 상태면 새 화면의 영상·애니메이션도 정지 유지
   }
 
   /* ---------- 타입별 렌더러 ------------------------------------------ */
@@ -349,9 +358,7 @@
         body.appendChild(stage);
         body.appendChild(makeHint(CFG.texts.hints.tapNext));
       });
-      tapAdvance(el);
-      setTimer(next, CFG.timings.missionAutoAdvance);
-    });
+      tapAdvance(el);    });
   }
 
   // STEP 안내(정보) 페이지 (v0.6.x, PAGE 1-1) — 배지 + 문구 + 제품 이미지 1개.
@@ -366,9 +373,7 @@
         body.appendChild(asset);
         body.appendChild(makeHint(CFG.texts.hints.tapNext));
       });
-      tapAdvance(el);
-      setTimer(next, CFG.timings.missionAutoAdvance);
-    });
+      tapAdvance(el);    });
   }
 
   // MISSION 성공! (v0.2.5) — 웃는 아이 + 반짝임 (제품 이미지 없음)
@@ -410,9 +415,7 @@
         body.appendChild(makeHint(CFG.texts.hints.tapNext));
       });
       sfx('success');                      // v0.4.3: 성공 효과음
-      tapAdvance(el);
-      setTimer(next, CFG.timings.successHold);
-    });
+      tapAdvance(el);    });
   }
 
   // 최종 브랜드 페이지 (v0.2.5) — 제품 3종 + 브랜드 문구 + 다시하기
@@ -462,9 +465,7 @@
         body.appendChild(target);
         body.appendChild(makeHint(CFG.texts.hints.tapNext));
       });
-      tapAdvance(el);
-      setTimer(next, CFG.timings.missionAutoAdvance);
-    });
+      tapAdvance(el);    });
   }
 
   // 멘트형 (보존 — 현재 흐름 미사용)
@@ -474,9 +475,7 @@
         body.appendChild(C.createMent(scene.text, scene.strong));
         body.appendChild(makeHint(CFG.texts.hints.tapNext));
       });
-      tapAdvance(el);
-      setTimer(next, CFG.timings.messageAutoAdvance);
-    });
+      tapAdvance(el);    });
   }
 
   // 아이 반응 (울상/미소) — (보존 — 현재 흐름 미사용)
@@ -501,9 +500,7 @@
         body.appendChild(stage);
         body.appendChild(makeHint(CFG.texts.hints.tapNext));
       });
-      tapAdvance(el);
-      setTimer(next, CFG.timings.inspectAutoAdvance);
-    });
+      tapAdvance(el);    });
   }
 
   // 민감도 100% 경고 — v0.3.2: 게이지 제거, 경고 문구 2줄 + 큰 비상 경고등 + 울상 아이
@@ -540,9 +537,7 @@
         body.appendChild(makeHint(CFG.texts.hints.tapNext));
       }, 'warn');
       sfx('warn');                         // v0.4.3: 경고/실패 효과음
-      tapAdvance(el);
-      setTimer(next, CFG.timings.warningHold + 800);
-    });
+      tapAdvance(el);    });
   }
 
   // 드래그형 (거품 + 게이지 + 계면이)
@@ -681,21 +676,17 @@
             if (scene.weaken) weakenSurfactants(surfEls, 1);
             if (surfWashFraction > 0) washSurfactants(surfEls, surfWashFraction, washFaceSrc);
 
-            // requireGaugeZero: 게이지가 0%인지 확인한 뒤에만 다음 단계로
-            // ("진정 완료" 연출(calmHold)은 0%까지 내려가는 장면에서만 —
-            //  STEP2 는 50%에서 멈추므로 짧은 완료 대기만)
-            var reachesZero = mode === 'fall' && endLevel <= CFG.gauge.calmThreshold;
-            var proceed = function () { setTimer(next, reachesZero ? CFG.timings.calmHold
-                                                    : CFG.timings.completePause); };
+            // v0.8.x: 자동 페이지 전환 제거 — 드래그를 완료해도 자동으로 넘어가지 않는다.
+            //   requireGaugeZero 게이지 확정만 유지. 다음 이동은 사용자가 탭 또는 다음 버튼으로.
             if (scene.requireGaugeZero && state.irritation > CFG.gauge.calmThreshold) {
               state.irritation = 0;
               if (gauge) gauge.set(0);
             }
-            proceed();
           },
         });
         cleanups.push(cleanup);
       });
+      tapAdvance(el);   // v0.8.x: 드래그 화면도 빈 영역 탭으로 다음 이동(도구 탭·드래그는 제외)
     });
   }
 
@@ -714,9 +705,7 @@
         body.appendChild(panel);
         body.appendChild(makeHint(CFG.texts.hints.tapNext));
       });
-      tapAdvance(el);
-      setTimer(next, CFG.timings.inspectAutoAdvance);
-    });
+      tapAdvance(el);    });
   }
 
   // 설명 영상 페이지 (v0.6.x PAGE 5-1 / v0.7.x PAGE 10-1).
@@ -755,6 +744,8 @@
           var tryPlay = function () { var p = v.play(); if (p && p.catch) p.catch(function () {}); };
           v.addEventListener('loadeddata', tryPlay);
           tryPlay();
+          // v0.8.x: 영상 영역 탭 → 재생/정지 토글만(페이지 이동 없음, 전역 정지 상태와 동기화)
+          v.addEventListener('click', function (e) { e.stopPropagation(); (paused ? playGame : pauseGame)(); });
           // 씬 이탈 시 영상 정지·해제 (재진입 시 새 요소로 처음부터 재생)
           cleanups.push(function () { try { v.pause(); v.removeAttribute('src'); v.load(); } catch (_) {} });
         } else {
@@ -768,8 +759,6 @@
         body.appendChild(makeHint(CFG.texts.hints.tapNext));
       });
       tapAdvance(el);
-      // 영상을 보기 전에 넘어가지 않도록 살짝 길게 자동 전환 (탭/다음으로 즉시 이동 가능)
-      setTimer(next, 7200);
     });
   }
 
@@ -811,9 +800,7 @@
         body.appendChild(row);
         body.appendChild(makeHint(CFG.texts.hints.tapNext));
       });
-      tapAdvance(el);
-      setTimer(next, CFG.timings.missionAutoAdvance);
-    });
+      tapAdvance(el);    });
   }
 
   // 이슬로 소개 (제품 3종 히어로 + 키워드 — 설명 화면, STEP 배지 없음)
@@ -855,9 +842,7 @@
         }
         body.appendChild(makeHint(CFG.texts.hints.tapNext));
       });
-      tapAdvance(el);
-      setTimer(next, CFG.timings.missionAutoAdvance);
-    });
+      tapAdvance(el);    });
   }
 
   // 이슬로 베이비 3종 (v0.4.5: 가로 일렬 나란히 배치 — 겹침 없이 모두 잘 보이게)
@@ -897,9 +882,7 @@
         body.appendChild(desc);
         body.appendChild(makeHint(CFG.texts.hints.tapNext));
       });
-      tapAdvance(el);
-      setTimer(next, CFG.timings.successHold);
-    });
+      tapAdvance(el);    });
   }
 
   // 구 엔딩 (보존 — 현재 흐름 미사용, missionSuccess + brandFinal 로 분리)
@@ -1005,8 +988,29 @@
     h.textContent = text || '';
     return h;
   }
+  // v0.8.x: 화면 탭 → 다음 (공통 goNext). 인터랙티브 요소/드래그/스와이프는 제외.
+  //   - pointerdown 이 인터랙티브(버튼·드래그도구·영상·제품)에서 시작하면 이동 금지
+  //   - pointerdown→up 이동거리가 임계 초과면 탭 아님(드래그/스와이프 오인 방지)
+  var TAP_MOVE_MAX = 12;   // px
+  function isInteractiveTarget(t) {
+    return !!(t && t.closest && t.closest(
+      '.ctrl-btn, button, a, .drag-tool, .drag-hint, .info-video, video, .eslo-hero-single, .info-product'));
+  }
   function tapAdvance(el) {
-    if (CFG.options.tapToAdvance) el.addEventListener('click', next);
+    if (!CFG.options.tapToAdvance) return;
+    var sx = 0, sy = 0, downInteractive = false, downId = null;
+    el.addEventListener('pointerdown', function (e) {
+      sx = e.clientX; sy = e.clientY; downId = e.pointerId;
+      downInteractive = isInteractiveTarget(e.target);
+    });
+    el.addEventListener('pointerup', function (e) {
+      if (busy) return;                                         // 전환 중
+      if (e.pointerId !== downId) return;                       // 다른 포인터
+      if (downInteractive || isInteractiveTarget(e.target)) return;   // 버튼/드래그/영상/제품 탭
+      if (Math.abs(e.clientX - sx) > TAP_MOVE_MAX ||
+          Math.abs(e.clientY - sy) > TAP_MOVE_MAX) return;      // 드래그/스와이프
+      goNext();                                                 // 탭 = 다음 (공통 이동)
+    });
   }
 
   function toolSrc(tool) {
@@ -1290,8 +1294,11 @@
   function makeCtrlButton(icon, label, onClick) {
     var b = document.createElement('button');
     b.className = 'ctrl-btn';
+    b.type = 'button';
+    b.setAttribute('aria-label', label);   // v0.8.x: 접근성
     var ico = div('ctrl-ico');
     ico.textContent = icon;
+    ico.setAttribute('aria-hidden', 'true');
     var lbl = div('ctrl-lbl');
     lbl.textContent = label;
     b.appendChild(ico);
@@ -1301,13 +1308,17 @@
   }
   function buildControlPanel() {
     controlPanel = div('control-panel');
+    // v0.8.x 순서: 처음으로 / 플레이 / 이전 / 정지 / 다음
     var homeB = makeCtrlButton('🏠', CFG.texts.homeButton, goHome);
     playBtn = makeCtrlButton('▶', '플레이', playGame);
+    prevBtn = makeCtrlButton('←', '이전', goPrev);   // v0.8.x — 이전 장면으로 이동
     pauseBtn = makeCtrlButton('⏸', '정지', pauseGame);
     nextBtn = makeCtrlButton('→', '다음', goNext);   // v0.2.7 — 다음 장면으로 즉시 이동
+    prevBtn.classList.add('is-prev');
     nextBtn.classList.add('is-next');                // v0.2.8 — 파란 화살표 강조
     controlPanel.appendChild(homeB);
     controlPanel.appendChild(playBtn);
+    controlPanel.appendChild(prevBtn);
     controlPanel.appendChild(pauseBtn);
     controlPanel.appendChild(nextBtn);
     controlPanel.style.display = 'none';

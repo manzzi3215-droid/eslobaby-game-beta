@@ -1920,3 +1920,21 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
   .compare-label { min-height: 0; }
   .compare-img { width: clamp(70px, 26vw, 96px); }
 }
+
+/* =============================================================================
+ * ★ v0.8.x — 컨트롤(처음으로/플레이/이전/정지/다음) + 정지 시 애니메이션 일시정지
+ * ========================================================================== */
+/* ⏸ 정지: 현재 화면의 모든 CSS 애니메이션 일시정지 (영상은 JS 로 pause) */
+.screen.is-anim-paused,
+.screen.is-anim-paused *,
+.screen.is-anim-paused *::before,
+.screen.is-anim-paused *::after {
+  animation-play-state: paused !important;
+}
+/* 컨트롤 5버튼: 좁은 모바일에서 겹침/잘림·가로 스크롤 방지 (크기·gap만 축소) */
+@media (orientation: portrait) and (max-width: 420px) {
+  .control-panel { gap: 6px; max-width: 100vw; }
+  .ctrl-btn { min-width: 50px; min-height: 50px; padding: 4px 5px; }
+  .ctrl-ico { font-size: clamp(16px, 4.6vw, 22px); }
+  .ctrl-lbl { font-size: clamp(8px, 2.4vw, 11px); }
+}

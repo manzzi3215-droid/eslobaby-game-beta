@@ -14,7 +14,13 @@
 
 ## 현재 버전
 
-**v0.8.0-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.9.0-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.9.0-beta(minor): **컨트롤/네비게이션 리팩터** — 콘텐츠/페이지 순서 불변.
+  - 컨트롤 순서: **처음으로 / 플레이 / 이전 / 정지 / 다음**(`buildControlPanel`). `이전`=`goPrev`(index 0 비활성), `다음`=`goNext`(마지막 비활성). 둘 다 `clearScene→index±→irritationForIndex→renderScene`.
+  - **자동 페이지 전환 전부 삭제**(`setTimer(next,…)`·`next()`·`queuedNext` 제거, 드래그 onComplete proceed 제거). 이동은 화면 탭 또는 다음/이전 버튼만.
+  - **탭 진행**(`tapAdvance`): screen의 pointerdown/up. `isInteractiveTarget`(.ctrl-btn/button/a/.drag-tool/.info-video/video/.eslo-hero-single/.info-product)면 이동 금지 + 이동거리 >12px면 탭 아님(드래그 오인 방지).
+  - **플레이/정지**(`applyPauseState`): 현재 화면 `<video>` pause/play + `.is-anim-paused`(CSS animation-play-state). 페이지 이동과 무관. 영상 탭=토글. `paused`는 renderScene에서 유지, 처음으로/startGame에서 초기화.
+  - `dragFallback`(9s)만 유지(드래그 자체 완료, 페이지 이동 아님).
 ※ v0.8.0-beta(minor): 신규 2페이지(PAGE 10-1 생분해 설명 placeholder, PAGE 10-2 비포/애프터 비교) + PAGE 5·7·8·9·10 개선. **총 13페이지.**
   - PAGE 10-1 `biodegradeInfo`(type `video`): `scene.video` 미지정 → `renderVideo`가 video 요소/요청 없이 placeholder(`.info-video.is-placeholder`, 4:3, "영상 준비 중") 렌더. 추후 `scene.video` asset key만 넣으면 영상 교체.
   - PAGE 10-2 `beforeAfterCompare`(type `compare`, `renderCompare`): 좌 baby-sad(일반 바디워시)/VS/우 baby-happy(이슬로) 비교 카드. `.compare-*` 페이지 한정 클래스, 375px 2열 유지·≤360px 세로 스택.
