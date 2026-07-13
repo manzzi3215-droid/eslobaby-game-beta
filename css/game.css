@@ -1657,11 +1657,84 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
  *   세로 비율(481:705)·크기만 이 이미지에 맞게 오버라이드. 다른 페이지 영향 없음.
  * ========================================================================== */
 .child-wonder {
-  aspect-ratio: 662 / 744;
+  aspect-ratio: 646 / 744;
   width: clamp(200px, 34vw, 296px);
   height: auto;
 }
 .child-wonder > img { object-fit: contain; }
 @media (orientation: portrait) {
   .child-wonder { width: clamp(210px, 58vw, 300px); }
+}
+
+/* =============================================================================
+ * ★ v0.6.x — PAGE 1-1 안내 이미지 + PAGE 2·3 실제 제품/샤워 이미지 비율 보정
+ *   normal_wash(279×491)·washhead(277×528) 세로 비율 유지(잘림/찌그러짐 없음).
+ *   드래그 로직/판정은 불변 — 표시 크기/비율만 조정.
+ * ========================================================================== */
+/* PAGE 1-1 안내 카드의 제품 이미지(중앙, 과도하지 않은 크기) */
+.info-product {
+  width: clamp(120px, 22vw, 184px);
+  height: auto;
+  aspect-ratio: 279 / 491;
+  filter: drop-shadow(0 10px 18px rgba(60, 110, 160, 0.22));
+  animation: productIn 360ms cubic-bezier(.2,.85,.25,1) both;
+}
+.info-product > img { object-fit: contain; }
+/* PAGE 2 드래그 도구: 일반 바디워시(normal_wash) 세로 병 비율 */
+.drag-tool.tool-bodywash {
+  width: clamp(80px, 12.5vw, 112px);
+  height: auto;
+  aspect-ratio: 279 / 491;
+}
+/* PAGE 3 드래그 도구: 핸드 샤워헤드(washhead) 세로 비율 */
+.drag-tool.tool-shower {
+  width: clamp(84px, 13vw, 122px);
+  height: auto;
+  aspect-ratio: 277 / 528;
+}
+@media (orientation: portrait) {
+  .info-product { width: clamp(120px, 40vw, 176px); }
+  .drag-tool.tool-bodywash { width: clamp(74px, 22vw, 104px); }
+  .drag-tool.tool-shower { width: clamp(78px, 24vw, 116px); }
+}
+
+/* =============================================================================
+ * ★ v0.6.x — PAGE 5-1 설명 영상(prof.mp4) + 강조 문구 흔들림
+ *   기존 카드/KEY COLOR 디자인 유지. 영상은 원본 비율(4:3) 유지·잘림 없음.
+ * ========================================================================== */
+.info-video {
+  width: clamp(220px, 44vw, 380px);
+  margin: clamp(4px, 1vh, 10px) auto 0;
+  border-radius: clamp(16px, 2.4vw, 22px);
+  overflow: hidden;
+  /* 로드 실패 시 빈 화면 방지용 은은한 브랜드 배경(새 이미지 생성 없이 그라데이션) */
+  background: linear-gradient(160deg, var(--sky-100), var(--mint-100));
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  box-shadow: 0 12px 30px rgba(77, 134, 236, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+.info-video video {
+  display: block;
+  width: 100%;
+  height: auto;               /* 원본 비율 유지, 잘림 없음 */
+  border-radius: inherit;
+}
+@media (orientation: portrait) {
+  .info-video { width: clamp(220px, 80vw, 400px); }
+}
+
+/* 강조 문구: 소프트 레드 + 진입 시 살짝 흔들림(2회, 무한 반복 아님) */
+.video-caption { margin-bottom: clamp(8px, 1.6vh, 16px); }
+.shake-emph {
+  display: inline-block;
+  color: #ef6d6d;             /* 경고 계열 소프트 레드 */
+  animation: emphShake 0.5s ease-in-out 2 both;
+}
+@keyframes emphShake {
+  0%, 100% { transform: translateX(0) rotate(0); }
+  25%      { transform: translateX(-2px) rotate(-1.2deg); }
+  60%      { transform: translateX(2px) rotate(1.2deg); }
+  85%      { transform: translateX(-1px) rotate(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shake-emph { animation: none; }
 }

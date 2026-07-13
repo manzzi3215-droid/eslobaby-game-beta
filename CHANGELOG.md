@@ -11,6 +11,35 @@
 
 ---
 
+## [v0.7.0-beta] - 2026-07-13
+### STEP1 흐름 확장 · 계면이 배치 개선 · 계면활성제 설명 영상 페이지
+STEP1(일반 바디워시) 구간을 확장하고, 계면이 배치를 안전 슬롯 기반으로 개선했으며,
+정적 피부 클로즈업(residue) 화면을 prof.mp4 영상 설명 페이지로 교체했습니다. 총 11페이지 유지.
+게임 로직·게이지·드래그 판정·성공/엔딩·효과음·배경·KEY COLOR 디자인 시스템은 불변.
+
+### Added
+- STEP1 안내 페이지(PAGE 1-1, 신규 `info` 타입): "먼저 일반 바디워시를 사용해서 씻어볼까요?" + normal_wash 이미지
+- prof.mp4 기반 계면활성제 설명 영상 페이지(PAGE 5-1, `renderVideo`) — autoplay/muted/loop/playsinline
+- PAGE 5(경고) baby-sad 주변 계면이 5개 연출
+
+### Changed
+- 일반 바디워시 이미지(`normal_wash.png`) · 샤워기 이미지(`washhead.png`) 교체
+- 문구 수정: STEP1 안내/거품/헹굼 · 드래그 안내("일반 바디워시…") · "…씻어내주세요"
+- residue 정적 화면 → prof.mp4 영상 설명 화면(문구 "일반 바디워시 속 계면활성제는…자극을 유발해요!")
+- PAGE 1 비교 이미지(`baby-wonder.png`) 교체
+- PAGE 2·3·5 계면이 이미지 풀을 gyemeon2/3/5 로 제한
+- 샤워기 시작 위치 좌측 이동(아기 얼굴 비가림, PAGE 3·9)
+- `sw.js` CACHE_NAME → `eslo-game-v0.7.0-beta`, 신규 소형 이미지 precache 추가(prof.mp4는 제외)
+- 버전 표기 동기화(config/README/CHANGELOG/CLAUDE) → v0.7.0-beta
+
+### Improved
+- 계면이 **안전 슬롯 배치**: 얼굴 보호 영역(x16~84, y28~56) · 좌우 균형 · 최소 간격 충돌 검사 · 슬롯 폴백
+- 계면이 얼굴 가림·한쪽 쏠림·과도한 겹침 방지, 머리위/어깨/몸통/다리 고른 분산
+- 영상 lifecycle: 페이지 이탈 시 정지·해제, 재진입 시 처음부터 재생
+- 경고 문구 강조 흔들림(`.shake-emph`, 진입 시 2회, 무한 반복 없음, `prefers-reduced-motion` 대응)
+
+---
+
 ## [v0.6.1-beta] - 2026-07-13
 ### Page 1(MISSION) 문구 · 대표 이미지 교체 (콘텐츠 패치)
 v0.6.0-beta 이후 소규모 콘텐츠 수정. **Page 1 외 모든 화면·게임 기능·디자인 시스템·배경은 불변.**

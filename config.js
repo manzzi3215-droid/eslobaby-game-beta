@@ -19,7 +19,7 @@
 window.ESLO_CONFIG = {
   /* --- 프로젝트 메타 --------------------------------------------------- */
   meta: {
-    version: 'v0.6.1-beta',
+    version: 'v0.7.0-beta',
     title: '이슬로(eslo) 베이비 미니게임',
   },
 
@@ -39,6 +39,7 @@ window.ESLO_CONFIG = {
     magnifier: 'assets/images/magnifier.png',   // 돋보기 (현재 흐름 미사용)
     bubble:    'assets/images/bubble.png',      // 거품 (비우면 도형 거품)
     warningLight: 'assets/images/warning-light.png', // 경고등/비상등 (게이지 100%)
+    profVideo: 'assets/images/prof.mp4', // PAGE 5-1 설명 영상 (계면활성제 잔류)
     // 계면이(gyemeon) — v0.4.2-beta: 실제 1x 에셋. 표정 변형 5종 + Scene 8 씻김용 sad.
     surfactant:   'assets/images/gyemeon1.png',       // 기본 단일 fallback
     gyemeon: [
@@ -50,8 +51,8 @@ window.ESLO_CONFIG = {
     ],
     gyemeonSad:   'assets/images/gyemeon6-sad.png',   // Scene 8: 씻겨 내려갈 때 표정
     products: {
-      bodywash: 'assets/images/bodywash.png',   // 일반 바디워시 (무지 흰색 펌프)
-      shower:   'assets/images/shower.png',     // 샤워기
+      bodywash: 'assets/images/normal_wash.png', // 일반 바디워시 (자사일반 바디워시 라벨)
+      shower:   'assets/images/washhead.png',   // 샤워기(핸드 샤워헤드)
       eslo:     'assets/images/eslo-bath.png',  // eslo 바스앤샴푸
     },
     // 엔딩 3종 카드
@@ -117,9 +118,13 @@ window.ESLO_CONFIG = {
       /* --- v0.2.5 시놉시스 문구 (★ 원문 그대로 — 임의 수정 금지) ------- */
       // v0.4.5: 의미 단위 줄바꿈으로 가독성 개선 (문구 단어는 그대로, \n만 추가)
       missionIntro: '민감한 우리 아이 샤워,\n어떤 바디워시를 써야 할까요?',
-      bodywashUse:  '바디워시로 거품을 내어\n씻겨주세요.',
-      bodywashRinse: '샤워기로\n깨끗하게 헹궈주세요',   // v0.3.1: STEP1 ② 샤워 단계
+      bodywashIntro: '먼저 일반 바디워시를\n사용해서 씻어볼까요?',   // v0.6.x: PAGE 1-1 신규 안내
+      bodywashUse:  '일반 바디워시로\n거품을 내어 씻겨주세요.',
+      bodywashRinse: '샤워기로\n깨끗하게 씻어내주세요',   // v0.3.1: STEP1 ② 샤워 단계
       residue:      '바디워시 속 나쁜 계면활성제가\n피부에 남아\n자극을 유발했어요!',
+      // v0.6.x: PAGE 5-1 영상 설명 문구 (앞 2줄=본문, 마지막=강조 span으로 분리)
+      residueVideoLead: '일반 바디워시 속 계면활성제는\n물에 씻기지 않고 피부에 남아\n',
+      residueVideoEmph: '자극을 유발해요!',
       // (구버전 보존 v0.2.5~v0.3.0) residue: '바디워시 속 나쁜 계면활성제는 피부에 남아 자극을 유발해요!'
       esloIntro:    '이제 이슬로 베이비로\n순한 세정을 시작해보세요.',
       esloUse:      '이슬로 바디 제품으로\n거품을 내어 씻겨주세요',
@@ -153,7 +158,7 @@ window.ESLO_CONFIG = {
     },
 
     hints: {
-      dragWash:     '바디워시를 아이 몸에 문질러 주세요',
+      dragWash:     '일반 바디워시를 아이 몸에 문질러 주세요',
       dragWashEslo: '이슬로 제품을 아이 몸에 문질러주세요.',   // v0.3.3 (구: '제품을 아이 몸에 문질러 주세요')
       dragShower:   '샤워기를 아이 몸에 문질러 주세요',   // v0.3.1: STEP1 샤워 단계
       dragRinse:    '샤워기를 아이 몸에 문질러주세요.',   // v0.3.3 (구: '샤워기로 헹굴수록 계면이와 자극이 사라져요')

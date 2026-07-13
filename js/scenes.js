@@ -32,6 +32,11 @@
     { id: 'missionIntro', type: 'missionIntro', phase: 0,
       title: T.scenes.missionIntro },
 
+    // 장면 ②-2 (PAGE 1-1) — STEP1 안내: "먼저 일반 바디워시를 사용해서 씻어볼까요?"
+    //   v0.6.x: 기존 STEP 카드/배지/전환 스타일 재사용(신규 디자인 없음). 이미지=normal_wash.
+    { id: 'bodywashIntro', type: 'info', phase: 1, step: 1,
+      title: T.scenes.bodywashIntro, image: 'bodywash' },
+
     // 장면 ③ — STEP1 ①: 바디워시로 거품 (문지를수록 거품+계면이 함께 생성)
     //   v0.3.3: surfactantGrow — 거품과 함께 계면활성제 캐릭터가 점점 늘어나는 연출.
     { id: 'bodywashUse', type: 'drag', phase: 1, step: 1,
@@ -45,15 +50,18 @@
     { id: 'bodywashRinse', type: 'drag', phase: 1, step: 1,
       title: T.scenes.bodywashRinse,
       tool: 'shower', action: 'rinse', hint: T.hints.dragShower,
+      toolLeft: '3%', toolTop: '18%',   // v0.6.x: 샤워기를 왼쪽으로 이동(아기 얼굴 가림 방지)
       gauge: 'rise', gaugeFrom: 0.5, gaugeTo: 1,
       surfactant: true, surfactantFrom: 1, surfactantTo: 1, surfactantMood: 'clinging' },
 
     // 장면 ④ — 설명: 민감도 100% 경고 (STEP 배지·제목 없음, 게이지만 유지)
     { id: 'warning', type: 'warning', phase: 1 },
 
-    // 장면 ⑤ — 설명: 나쁜 계면활성제 (피부 클로즈업)
-    { id: 'residue', type: 'closeup', phase: 1,
-      title: T.scenes.residue, skin: 'irritated', surfactant: true },
+    // 장면 ⑤ (PAGE 5-1) — 설명: 계면활성제 잔류 (v0.6.x: 피부 클로즈업 → prof.mp4 영상으로 교체)
+    //   기존 skin/붉은원/계면이 제거. 문구는 residueVideoLead + 강조 residueVideoEmph.
+    { id: 'residue', type: 'video', phase: 1,
+      video: 'profVideo',
+      lead: T.scenes.residueVideoLead, emph: T.scenes.residueVideoEmph },
 
     // 장면 ⑥ — 설명: 이슬로 소개 (제품 + 키워드)
     { id: 'esloIntro', type: 'brand', phase: 2,
@@ -70,6 +78,7 @@
     { id: 'esloRinse', type: 'drag', phase: 3, step: 3,
       title: T.scenes.esloRinse,
       tool: 'shower', action: 'rinse', hint: T.hints.dragRinse,
+      toolLeft: '3%', toolTop: '18%',   // v0.6.x: 동일 샤워헤드 공유 → 아기 얼굴 가림 방지(위치만)
       gauge: 'fall', gaugeFrom: 0.5, gaugeTo: 0,
       surfactant: true, surfactantFrom: 1, surfactantTo: 0, surfactantMood: 'panic',
       washFace: true,           // v0.4.2: Scene 8 — 씻길 때 gyemeon6-sad 로 표정 교체

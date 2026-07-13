@@ -11,7 +11,7 @@
  * ========================================================================== */
 'use strict';
 
-var CACHE_NAME = 'eslo-game-v0.6.1-beta';
+var CACHE_NAME = 'eslo-game-v0.7.0-beta';
 
 // 미리 캐싱할 핵심 파일 (상대경로)
 var PRECACHE = [
@@ -54,6 +54,11 @@ var PRECACHE = [
   // v0.6.0: 욕실 배경(세로/가로, 변기 제거 v2) — 오프라인 첫 로드에도 배경 표시
   './assets/images/background-v2.png',
   './assets/images/background-wide-v2.webp',
+  // v0.7.0: PAGE1 비교 이미지 · 일반 바디워시 · 샤워헤드 (소형, 오프라인 대비 precache)
+  './assets/images/baby-wonder.png',
+  './assets/images/normal_wash.png',
+  './assets/images/washhead.png',
+  // ※ prof.mp4(8MB+, 206 Range)는 precache 제외 — 초기 설치 용량 과다 방지, 네트워크 스트리밍
 ];
 
 self.addEventListener('install', function (e) {

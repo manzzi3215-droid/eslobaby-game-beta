@@ -90,6 +90,7 @@
   // Scene 구조/문구는 건드리지 않고, 장면 id 로 분위기 색만 매핑 (시각 전용).
   var SCENE_THEME = {
     missionIntro:   'mint',
+    bodywashIntro:  'blue',
     bodywashUse:    'blue',
     bodywashRinse:  'blue',
     warning:        'red',
@@ -306,9 +307,11 @@
   /* ---------- 타입별 렌더러 ------------------------------------------ */
   var RENDERERS = {
     missionIntro: renderMissionIntro,       // v0.2.5 — MISSION 인트로
+    info: renderInfo,                       // v0.6.x — STEP 안내(배지+문구+제품 이미지)
     drag: renderDrag,
     warning: renderWarning,
     closeup: renderCloseup,
+    video: renderVideo,                     // v0.6.x — PAGE 5-1 설명 영상(prof.mp4)
     brand: renderBrand,
     missionSuccess: renderMissionSuccess,   // v0.2.5 — MISSION 성공!
     brandFinal: renderBrandFinal,           // v0.2.5 — 최종 브랜드 페이지
@@ -341,6 +344,23 @@
         body.appendChild(badge);
         body.appendChild(goal);
         body.appendChild(stage);
+        body.appendChild(makeHint(CFG.texts.hints.tapNext));
+      });
+      tapAdvance(el);
+      setTimer(next, CFG.timings.missionAutoAdvance);
+    });
+  }
+
+  // STEP 안내(정보) 페이지 (v0.6.x, PAGE 1-1) — 배지 + 문구 + 제품 이미지 1개.
+  //   기존 카드/배지/텍스트/페이지 전환 스타일(shell)을 그대로 재사용. 이미지는 scene.image(도구 키).
+  function renderInfo(scene) {
+    showScreen(function (el) {
+      shell(el, scene, scene.title, function (body) {
+        var asset = C.createAsset({
+          src: toolSrc(scene.image), label: toolLabel(scene.image), shape: toolShape(scene.image),
+          className: 'info-product' + (scene.image ? ' info-' + scene.image : ''),
+        });
+        body.appendChild(asset);
         body.appendChild(makeHint(CFG.texts.hints.tapNext));
       });
       tapAdvance(el);
@@ -488,6 +508,10 @@
           shape: 'baby', variant: 'sad', className: 'child-body is-distress',
         });
         // v0.4.3: Page 4 아기 얼굴 위 빨간 원(irritation) 제거 — baby-sad 이미지에 이미 발진이 있어 불필요
+        // v0.6.x: baby-sad 주변에 계면이(자극 원인) — 안전 슬롯 분산(얼굴 보호·좌우 균형·겹침 방지),
+        //   gyemeon2/3/5, 은은한 floating. (baby-sad=481×705 동일 규격이라 기존 슬롯 그대로 적용)
+        var warnSurf = addSurfactants(childBody, 5, surfactantFaces('residue'), true);
+        warnSurf.forEach(function (s) { s.classList.add('mood-float'); });
         stage.appendChild(childBody);
 
         // 비상 경고등 (기존보다 크게, 반응형) — 무대 좌하단
@@ -587,8 +611,8 @@
           shape: toolShape(scene.tool),
           className: 'drag-tool' + (scene.tool ? ' tool-' + scene.tool : ''),  // v0.4.3: 도구별 크기 보정용
         });
-        tool.style.left = '18%';
-        tool.style.top = '22%';
+        tool.style.left = scene.toolLeft || '18%';   // v0.6.x: 장면별 시작 위치(샤워기 좌측 이동 등)
+        tool.style.top = scene.toolTop || '22%';
 
         // v0.4.4: "이걸 움직이세요" 드래그 유도 연출 — 펄스 링(tool::before) + 손가락 힌트 (판정 영향 없음)
         var handHint = div('drag-hint'); handHint.textContent = '👆';
@@ -678,6 +702,47 @@
       });
       tapAdvance(el);
       setTimer(next, CFG.timings.inspectAutoAdvance);
+    });
+  }
+
+  // PAGE 5-1 (v0.6.x) — 설명 영상 페이지 (residue 를 prof.mp4 영상으로 교체).
+  //   기존 shell(카드/배지/페이지 표시/전환) 재사용. 본문 = 문구(마지막 줄 강조·살짝 흔들림) + 영상.
+  //   video: autoplay·muted·loop·playsinline (모바일 autoplay 정책 대응). 씬 이탈 시 cleanups 로 정지·해제.
+  function renderVideo(scene) {
+    showScreen(function (el) {
+      shell(el, scene, '', function (body) {
+        // 문구: 앞 2줄(본문 스타일) + 마지막 줄 강조 span(소프트 레드·진입 시 살짝 흔들림)
+        var cap = div('card-title video-caption');
+        cap.appendChild(document.createTextNode(scene.lead || ''));
+        var emph = document.createElement('span');
+        emph.className = 'shake-emph';
+        emph.textContent = scene.emph || '';
+        cap.appendChild(emph);
+        body.appendChild(cap);
+
+        // 영상 (원본 비율 유지·잘림 없음·둥근 모서리·은은한 border/shadow, fallback 배경)
+        var vwrap = div('info-video');
+        var v = document.createElement('video');
+        v.muted = true; v.defaultMuted = true;           // muted 는 src 전에 (autoplay 허용)
+        v.loop = true; v.autoplay = true;
+        v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
+        v.setAttribute('preload', 'auto'); v.setAttribute('aria-hidden', 'true');
+        v.src = CFG.assets[scene.video] || scene.video;
+        vwrap.appendChild(v);
+        body.appendChild(vwrap);
+        body.appendChild(makeHint(CFG.texts.hints.tapNext));
+
+        // 자동재생 (일부 브라우저는 명시 play 필요) — muted 라 대부분 허용, 실패해도 무시
+        var tryPlay = function () { var p = v.play(); if (p && p.catch) p.catch(function () {}); };
+        v.addEventListener('loadeddata', tryPlay);
+        tryPlay();
+
+        // 씬 이탈 시 영상 정지·해제 (재진입 시 새 요소로 처음부터 재생)
+        cleanups.push(function () { try { v.pause(); v.removeAttribute('src'); v.load(); } catch (_) {} });
+      });
+      tapAdvance(el);
+      // 영상(약 6.4초)을 보기 전에 넘어가지 않도록 살짝 길게 자동 전환 (탭/다음으로 즉시 이동 가능)
+      setTimer(next, 7200);
     });
   }
 
@@ -893,20 +958,120 @@
     bubbles.forEach(function (b, i) { b.style.opacity = i < n ? '1' : '0'; });
   }
 
+  // ---- 계면이 배치: 안전 슬롯 + 약간의 랜덤 오프셋 (v0.6.x) ----------------
+  //   목적: 얼굴 중앙(눈·코·입·볼) 가림 방지 + 몸 전체 고른 분산 + 계면이끼리 겹침 방지.
+  //   좌표는 모두 parent(childBody/panel) 기준 비율(%)이라 모바일/데스크톱 자동 대응.
+  //   각 슬롯 = { x, y(중심 %), ox, oy(허용 오프셋 %), g(그룹) }.
+  //
+  //   ● 캐릭터(childBody) 슬롯 — 얼굴 코어(x16~84, y28~56)를 피해 머리위·양옆·어깨·가슴·배·다리에 분산.
+  //   각 슬롯의 s: 좌/우(L/R) 또는 중앙(C) — 좌우 쏠림 방지에 사용.
+  var BODY_SLOTS = [
+    { x: 36, y: 12, ox: 5, oy: 3, g: 'head', s: 'L' },     // 머리 위 왼쪽(hair)
+    { x: 58, y: 11, ox: 5, oy: 3, g: 'head', s: 'R' },     // 머리 위 오른쪽(hair)
+    { x: 11, y: 33, ox: 3, oy: 5, g: 'head', s: 'L' },     // 왼쪽 머리 가장자리(관자/귀, 얼굴 코어 밖)
+    { x: 89, y: 32, ox: 3, oy: 5, g: 'head', s: 'R' },     // 오른쪽 머리 가장자리
+    { x: 24, y: 61, ox: 5, oy: 2, g: 'shoulder', s: 'L' }, // 왼쪽 어깨(얼굴 코어 아래 유지)
+    { x: 74, y: 60, ox: 5, oy: 2, g: 'shoulder', s: 'R' }, // 오른쪽 어깨
+    { x: 36, y: 67, ox: 5, oy: 3, g: 'chest', s: 'L' },    // 가슴 왼쪽
+    { x: 60, y: 65, ox: 5, oy: 3, g: 'chest', s: 'R' },    // 가슴 오른쪽
+    { x: 30, y: 76, ox: 5, oy: 3, g: 'belly', s: 'L' },    // 배 왼쪽
+    { x: 60, y: 75, ox: 5, oy: 3, g: 'belly', s: 'R' },    // 배 오른쪽
+    { x: 26, y: 88, ox: 5, oy: 3, g: 'leg', s: 'L' },      // 다리/무릎 왼쪽
+    { x: 62, y: 88, ox: 5, oy: 3, g: 'leg', s: 'R' },      // 다리/무릎 오른쪽
+  ];
+  //   ● 클로즈업(피부 패널) 슬롯 — 얼굴 없음. 테두리+중앙에 고르게 산포.
+  var PANEL_SLOTS = [
+    { x: 26, y: 26, ox: 6, oy: 6, g: 'a', s: 'L' },
+    { x: 70, y: 23, ox: 6, oy: 6, g: 'b', s: 'R' },
+    { x: 48, y: 48, ox: 7, oy: 7, g: 'c', s: 'C' },
+    { x: 24, y: 70, ox: 6, oy: 6, g: 'd', s: 'L' },
+    { x: 73, y: 68, ox: 6, oy: 6, g: 'e', s: 'R' },
+    { x: 50, y: 84, ox: 6, oy: 5, g: 'f', s: 'C' },
+  ];
+
+  function shuffle(a) {
+    a = a.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = a[i]; a[i] = a[j]; a[j] = t;
+    }
+    return a;
+  }
+
+  // n개의 서로 다른 슬롯을 (1)그룹 라운드로빈으로 세로 분산 + (2)좌/우 균형으로 골라
+  //   한쪽 몰림 없이 몸 전체에 고르게 배치. (같은 그룹·같은 쪽에 쏠리지 않게)
+  function pickSlots(slots, n) {
+    var byGroup = {};
+    slots.forEach(function (s) { (byGroup[s.g] = byGroup[s.g] || []).push(s); });
+    var groups = shuffle(Object.keys(byGroup));
+    groups.forEach(function (g) { byGroup[g] = shuffle(byGroup[g]); });
+    var picked = [];
+    var side = { L: 0, R: 0 };
+    var guard = 0;
+    while (picked.length < n && guard < 500) {
+      guard++;
+      var progressed = false;
+      for (var gi = 0; gi < groups.length && picked.length < n; gi++) {
+        var pool = byGroup[groups[gi]];
+        if (!pool.length) continue;
+        // 이 그룹에서 현재 부족한 쪽(L/R)을 우선 선택 (쏠림 방지)
+        var idx = 0;
+        if (pool.length > 1) {
+          var want = side.L <= side.R ? 'L' : 'R';
+          for (var pi = 0; pi < pool.length; pi++) { if (pool[pi].s === want) { idx = pi; break; } }
+        }
+        var chosen = pool.splice(idx, 1)[0];
+        if (chosen.s === 'L') side.L++; else if (chosen.s === 'R') side.R++;
+        picked.push(chosen);
+        progressed = true;
+      }
+      if (!progressed) break;   // 슬롯이 모자라면(요청 n > 슬롯 수) 중단
+    }
+    return picked;
+  }
+
+  // 슬롯 기준점 + 랜덤 오프셋으로 겹치지 않는 최종 좌표(%) 목록 생성.
+  //   yWeight: 박스 종횡비 보정(세로가 길수록 같은 %도 px가 크다) — childBody≈1.47, panel≈0.9.
+  //   minDist: 폭-% 단위 최소 중심 거리(계면이 폭 ≈ 14~16% 기준 겹침 50% 미만 확보).
+  function slotPositions(slots, n, yWeight, minDist) {
+    var chosen = pickSlots(slots, n);
+    var placed = [];
+    var K = 8;   // 오프셋 재시도 최대 횟수
+    for (var i = 0; i < chosen.length; i++) {
+      var s = chosen[i];
+      var best = null;
+      for (var k = 0; k <= K; k++) {
+        var offScale = k === K ? 0 : 1;   // 마지막 시도는 오프셋 0(슬롯 기준점 폴백)
+        var x = s.x + (Math.random() * 2 - 1) * s.ox * offScale;
+        var y = s.y + (Math.random() * 2 - 1) * s.oy * offScale;
+        var ok = true;
+        for (var p = 0; p < placed.length; p++) {
+          var dx = x - placed[p].x;
+          var dy = (y - placed[p].y) * yWeight;   // y를 폭-% 단위로 환산
+          if (Math.sqrt(dx * dx + dy * dy) < minDist) { ok = false; break; }
+        }
+        if (ok) { best = { x: x, y: y }; break; }
+        if (k === K) best = { x: x, y: y };   // 재시도 실패 시 기준점 사용
+      }
+      placed.push(best);
+    }
+    return placed;
+  }
+
   // 계면이: outer(위치·씻김) + inner(감정 모션·이미지) 래퍼 구조 (v0.4.1)
   //   faceList: 표정 변형 이미지 경로 배열(없으면 기본 단일). 인스턴스마다 무작위 선택 (v0.4.2)
-  //   avoidFace: true 면 아기 얼굴(상단) 영역을 피해 몸(팔·배·다리) 주변에만 배치 (v0.4.3)
+  //   avoidFace: true 면 아기 얼굴을 피해 몸 전체에 분산(childBody). false 면 피부 패널(closeup).
+  //   v0.6.x: 순수 랜덤 → 안전 슬롯 기반 배치로 교체(얼굴 가림·뭉침 방지). 개수·종류·로직 불변.
   function addSurfactants(parent, n, faceList, avoidFace) {
     var arr = [];
+    var slots = avoidFace ? BODY_SLOTS : PANEL_SLOTS;
+    var yWeight = avoidFace ? 1.47 : 0.9;   // childBody(481/705) / panel(≈정사각) 종횡비 보정
+    var positions = slotPositions(slots, n, yWeight, 13);
     for (var i = 0; i < n; i++) {
       var wrap = div('surfactant');
-      if (avoidFace) {
-        wrap.style.left = (16 + Math.random() * 66) + '%';   // 16~82%
-        wrap.style.top  = (48 + Math.random() * 40) + '%';   // 48~88% (얼굴 아래 몸통·다리)
-      } else {
-        wrap.style.left = (14 + Math.random() * 68) + '%';
-        wrap.style.top  = (14 + Math.random() * 66) + '%';
-      }
+      var pos = positions[i] || { x: 50, y: 70 };   // 슬롯 부족 시 안전 기본값
+      wrap.style.left = pos.x.toFixed(2) + '%';
+      wrap.style.top  = pos.y.toFixed(2) + '%';
       var src = (faceList && faceList.length)
         ? faceList[Math.floor(Math.random() * faceList.length)]
         : CFG.assets.surfactant;
@@ -920,10 +1085,12 @@
   }
   // 장면 감정(mood) → 어울리는 계면이 표정(gyemeon) 인덱스 풀 (v0.4.2)
   var MOOD_FACES = {
-    playful:  [0, 3],   // 웃음/능글 (신나게)
-    clinging: [3, 0],   // 능글/웃음 (아직 안 없어졌어)
-    anxious:  [1, 2],   // 뾰루퉁/화남 (불안)
-    panic:    [4, 2],   // 놀람/화남
+    // v0.6.x: PAGE 2·3·5(바디워시 사용/헹굼/계면활성제 설명)은 gyemeon2·3·5 만 사용(인덱스 1,2,4)
+    playful:  [1, 2, 4],   // 바디워시 거품 (PAGE 2)
+    clinging: [1, 2, 4],   // 바디워시 헹굼 잔류 (PAGE 3)
+    residue:  [1, 2, 4],   // 계면활성제 설명 (PAGE 5, 표정 선택 전용)
+    anxious:  [1, 2],   // 뾰루퉁/화남 (불안) — 이슬로 사용(PAGE 7), 변경 없음
+    panic:    [4, 2],   // 놀람/화남 — 이슬로 헹굼(PAGE 8), 변경 없음
   };
   function surfactantFaces(mood) {
     var g = CFG.assets.gyemeon;

@@ -14,8 +14,13 @@
 
 ## 현재 버전
 
-**v0.6.1-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
-※ v0.6.1-beta(패치): Page1(MISSION) 문구 "…어떤 바디워시를 써야 할까요?" + 대표 이미지 `baby-wonder.png`(양손에 바디워시·이슬로, `.child-wonder`). 그 외 v0.6.0-beta와 동일.
+**v0.7.0-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.7.0-beta(minor): STEP1 흐름 확장 + 계면이 배치 개선 + 영상 설명 페이지. 총 11페이지.
+  - PAGE 1-1(신규 `info` 타입): "먼저 일반 바디워시를…" + `normal_wash.png`.
+  - PAGE 2 `bodywashUse`=일반 바디워시 거품, PAGE 3 `bodywashRinse`=샤워 씻어냄. 제품 `products.bodywash`=normal_wash, `products.shower`=washhead(핸드 샤워헤드). 샤워기 `toolLeft/toolTop`으로 좌측 이동(얼굴 비가림).
+  - 계면이: `addSurfactants`가 **안전 슬롯**(BODY_SLOTS/PANEL_SLOTS)+얼굴보호(x16~84,y28~56)+좌우균형+충돌검사. PAGE 2·3·5는 `MOOD_FACES` playful/clinging/residue=[1,2,4](gyemeon2/3/5). PAGE 5(warning)에 baby-sad 주변 계면이 5개(mood-float).
+  - PAGE 5-1: 기존 `residue`를 `type:'video'`로 교체 → `prof.mp4`(autoplay/muted/loop/playsinline, `renderVideo`, `cleanups`로 lifecycle). 문구 마지막 `자극을 유발해요!`는 `.shake-emph`(emphShake 2회, reduced-motion 대응). prof.mp4는 sw precache 제외(8MB).
+※ v0.6.1-beta(패치): Page1(MISSION) 문구 + 대표 이미지 `baby-wonder.png`(`.child-wonder`).
 ※ `feature/motion-test` 브랜치에서 진행한 **안정 릴리스**입니다(실험 표기 -motion-test → -beta 로 전환).
   욕실 배경 시스템·반응형 배경·**KEY COLOR #6DA1FF 디자인 시스템**을 도입했으며, 게임 로직/문구/관리자 기능은 불변.
   모션인식·Idle 애니메이션·효과음 등 추가 기능은 다음 버전 예정.
