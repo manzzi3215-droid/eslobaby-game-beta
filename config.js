@@ -19,7 +19,7 @@
 window.ESLO_CONFIG = {
   /* --- 프로젝트 메타 --------------------------------------------------- */
   meta: {
-    version: 'v0.9.3-beta',
+    version: 'v0.9.4-beta',
     title: '이슬로(eslo) 베이비 미니게임',
   },
 
@@ -124,9 +124,11 @@ window.ESLO_CONFIG = {
       bodywashUse:  '일반 바디워시로\n거품을 내어 씻겨주세요.',
       bodywashRinse: '샤워기로\n깨끗하게 씻어내주세요',   // v0.3.1: STEP1 ② 샤워 단계
       residue:      '바디워시 속 나쁜 계면활성제가\n피부에 남아\n자극을 유발했어요!',
-      // v0.6.x: PAGE 5-1 영상 설명 문구 (앞 2줄=본문, 마지막=강조 span으로 분리)
-      residueVideoLead: '일반 바디워시 속 계면활성제는\n물에 씻기지 않고 피부에 남아\n',
-      residueVideoEmph: '자극을 유발해요!',
+      // v0.9.4: PAGE6 영상 설명 문구 — '나쁜 계면활성제'만 붉은 강조 span, 나머지는 일반 텍스트.
+      //   (lead=강조 앞 / emph=나쁜 계면활성제 / tail=강조 뒤 나머지 2줄 포함)
+      residueVideoLead: '일반 바디워시 속 ',
+      residueVideoEmph: '나쁜 계면활성제',
+      residueVideoTail: '는\n물에 씻기지 않고 피부에 남아\n자극을 유발해요!',
       // (구버전 보존 v0.2.5~v0.3.0) residue: '바디워시 속 나쁜 계면활성제는 피부에 남아 자극을 유발해요!'
       esloIntro:    '이제 이슬로 베이비\n생분해 워시로 씻어볼까요?',
       esloProductName: '이슬로 생분해 바스앤샴푸',   // PAGE 7 제품명 캡션
@@ -142,8 +144,8 @@ window.ESLO_CONFIG = {
       compareLead: '민감한 아이 피부일수록\n',
       compareEmph: '생분해 계면활성제',
       compareTail: '는 필수입니다!',
-      compareBadLabel: '일반 바디워시',
-      compareGoodLabel: '이슬로 베이비\n생분해 바스앤샴푸',
+      compareBadLabel: '일반 계면활성제\n바디워시',           // v0.9.4: 2줄
+      compareGoodLabel: '생분해 계면활성제\n이슬로 베이비 워시',   // v0.9.4: 2줄
       compareVs: 'VS',
       brandFinalTitle: '착한 계면활성제로\n우리 아이 피부를 지키는\n안심 생분해 케어, 이슬로',
       brandFinalDesc:  '',   // v0.9.1: 마지막 페이지 하단 문구 삭제(로고·제품 정렬만 유지)

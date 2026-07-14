@@ -43,7 +43,8 @@
       title: T.scenes.bodywashUse,
       tool: 'bodywash', action: 'foam', hint: T.hints.dragWash,
       gauge: 'rise', gaugeFrom: 0, gaugeTo: 0.5,
-      surfactant: true, surfactantGrow: true, surfactantMood: 'playful' },
+      surfactant: true, surfactantGrow: true, surfactantMood: 'playful',
+      autoNext: true },   // v0.9.4: 계면이 모두 생성(완료) 직후 Page4 자동 전환
 
     // 장면 ③-2 — STEP1 ②: 샤워기로 헹구기 (거품만 사라지고 계면이는 그대로 남음)
     //   "깨끗이 씻은 것처럼 보이지만 실제로는 계면활성제가 남아 있다."
@@ -52,7 +53,8 @@
       tool: 'shower', action: 'rinse', hint: T.hints.dragShower,
       toolLeft: '3%', toolTop: '18%',   // v0.6.x: 샤워기를 왼쪽으로 이동(아기 얼굴 가림 방지)
       gauge: 'rise', gaugeFrom: 0.5, gaugeTo: 1,
-      surfactant: true, surfactantFrom: 1, surfactantTo: 1, surfactantMood: 'clinging' },
+      surfactant: true, surfactantFrom: 1, surfactantTo: 1, surfactantMood: 'clinging',
+      autoNext: true },   // v0.9.4: 거품 모두 제거(완료) 직후 Page5 자동 전환
 
     // 장면 ④ — 설명: 민감도 100% 경고 (STEP 배지·제목 없음, 게이지만 유지)
     { id: 'warning', type: 'warning', phase: 1 },
@@ -60,8 +62,9 @@
     // 장면 ⑤ (PAGE 5-1) — 설명: 계면활성제 잔류 (v0.6.x: 피부 클로즈업 → prof.mp4 영상으로 교체)
     //   기존 skin/붉은원/계면이 제거. 문구는 residueVideoLead + 강조 residueVideoEmph.
     { id: 'residue', type: 'video', phase: 1,
-      video: 'profVideo', requireEnd: true,   // v0.9.3: 영상이 끝나야 다음(Page7)으로 이동 가능
-      lead: T.scenes.residueVideoLead, emph: T.scenes.residueVideoEmph },
+      video: 'profVideo', requireEnd: true, autoNext: true,   // v0.9.3 잠금 + v0.9.4 종료 후 Page7 자동 전환
+      lead: T.scenes.residueVideoLead, emph: T.scenes.residueVideoEmph,
+      tail: T.scenes.residueVideoTail, emphClass: 'bad-emph' },   // v0.9.4: '나쁜 계면활성제' 붉은 강조
 
     // 장면 ⑥ — 설명: 이슬로 소개 (제품 + 키워드)
     { id: 'esloIntro', type: 'brand', phase: 2,
@@ -73,7 +76,8 @@
       title: T.scenes.esloUse,
       tool: 'eslo', action: 'foam', hint: T.hints.dragWashEslo,
       gauge: 'fall', gaugeFrom: 1, gaugeTo: 0.5,
-      surfactant: true, surfactantGrow: true, surfactantMood: 'anxious' },
+      surfactant: true, surfactantGrow: true, surfactantMood: 'anxious',
+      autoNext: true },   // v0.9.4: 계면이 모두 생성(완료) 직후 Page9 자동 전환
 
     // 장면 ⑧ — STEP3: 샤워 (거품과 계면이가 함께 씻겨 내려가 모두 사라짐)
     { id: 'esloRinse', type: 'drag', phase: 3, step: 5,
@@ -83,7 +87,8 @@
       gauge: 'fall', gaugeFrom: 0.5, gaugeTo: 0,
       surfactant: true, surfactantFrom: 1, surfactantTo: 0, surfactantMood: 'panic',
       washFace: true,           // v0.4.2: Scene 8 — 씻길 때 gyemeon6-sad 로 표정 교체
-      requireGaugeZero: true },
+      requireGaugeZero: true,
+      autoNext: true },   // v0.9.4: 거품·계면이 모두 제거(완료) 직후 Page10 자동 전환
 
     // 장면 ⑨ — MISSION 성공! (웃는 아이 + 반짝임, 제품 이미지 없음)
     { id: 'missionSuccess', type: 'missionSuccess', phase: 4,
@@ -92,7 +97,7 @@
     // 장면 ⑨-2 (PAGE 10-1) — 생분해 설명 영상 (v0.9.3: prof_nongye.mp4, 필수 시청)
     //   Page6과 동일하게 requireEnd → 영상이 끝나야 다음으로 이동 가능.
     { id: 'biodegradeInfo', type: 'video', phase: 4,
-      video: 'bioVideo', requireEnd: true,
+      video: 'bioVideo', requireEnd: true, autoNext: true,   // v0.9.3 잠금 + v0.9.4 종료 후 Page12 자동 전환
       lead: T.scenes.bioLead, emph: T.scenes.bioEmph, emphClass: 'key-emph' },
 
     // 장면 ⑨-3 (PAGE 10-2) — 비포/애프터 비교 (일반 바디워시 vs 이슬로)

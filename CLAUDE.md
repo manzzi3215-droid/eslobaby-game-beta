@@ -14,7 +14,14 @@
 
 ## 현재 버전
 
-**v0.9.3-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.9.4-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.9.4-beta(patch): **완료 이벤트 기반 자동 전환(6개 장면)** + Page6/12 문구. 페이지 순서/이미지/영상/효과음/드래그·네비 구조 불변. **전역·단순 타이머 자동 전환 아님.**
+  - `scene.autoNext:true` — Page3/4/8/9(드래그 onComplete), Page6/11(영상 ended). game.js `scheduleAutoNext(fromIndex)`가 완료 콜백에서만 호출.
+  - 안전장치: `setTimer`(AUTO_NEXT_DELAY 450ms) → `clearScene`(모든 네비 진입점)에서 취소. `autoNextScheduled`로 장면당 1회. 발화 시 `index===fromIndex && !busy && !videoGateLocked` 재확인. 영상은 `ended`에만 자동 이동(오류 `error`는 잠금 해제만, 자동 이동 X). 재생 중 탭/다음/페이지점 차단 유지.
+  - Page6 문구: '나쁜 계면활성제'만 `.bad-emph`(붉은 glow, reduced-motion 정적). config `residueVideoLead/Emph/Tail`, `.video-caption` 폰트/줄간격/폭 조정.
+  - Page12 라벨: `compareBadLabel`='일반 계면활성제\n바디워시', `compareGoodLabel`='생분해 계면활성제\n이슬로 베이비 워시'(좌우 2줄 균형).
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.9.4-beta`.
+※ v0.9.3-beta(patch): Page1 "?" 연출 · STEP 번호 정정 · 필수 시청 영상 · Page7 확대 · Page10 배지 삭제 · 모바일 로고 하단 이동.
 ※ v0.9.3-beta(patch): Page1 "?" 연출 · STEP 번호 정정 · 필수 시청 영상 · Page7 확대 · Page10 배지 삭제 · 모바일 로고 하단 이동. 흐름/순서/문구/드래그·네비 구조 불변.
   - **필수 시청 영상**: scene `requireEnd:true`(residue=Page6, biodegradeInfo=Page11). `renderVideo`가 loop 끄고 `videoGateLocked=true` → `goNext`/다음버튼 잠금, `ended`(또는 `error`) 시 해제·안내문 전환. `renderScene` 진입 시 잠금 초기화.
   - **STEP 배지**: scenes.js `step` = bodywashUse 2·bodywashRinse 3·esloUse 4·esloRinse 5 (bodywashIntro 1 유지) → 1→2→3→4→5.

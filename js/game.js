@@ -23,6 +23,7 @@
   var busy = false;
   var paused = false;                    // 정지(⏸): v0.8.x — 현재 화면의 영상·CSS 애니메이션 일시정지 (페이지 이동과 무관)
   var videoGateLocked = false;           // v0.9.3: 필수 시청 영상(Page6·Page11)이 끝나기 전엔 다음 이동 잠금
+  var autoNextScheduled = false;         // v0.9.4: 완료 이벤트 기반 자동 전환 — 장면당 1회 가드
 
   // 장면 간 유지되는 게임 상태 (자극 게이지 값 등)
   var state = { irritation: 0 };
@@ -250,6 +251,23 @@
     renderScene();
   }
 
+  // v0.9.4: 완료 이벤트 기반 자동 전환 (지정 6개 장면만: scene.autoNext). 전역/단순 타이머 전환 아님.
+  //   - 실제 완료 콜백(드래그 onComplete / 영상 ended)에서만 예약.
+  //   - setTimer 로 예약 → clearScene(모든 네비게이션 진입점: 다음/이전/처음으로/goToStep/renderScene) 시 자동 취소.
+  //   - autoNextScheduled 로 장면당 1회 보장(중복 이벤트로 2페이지 이상 건너뜀 방지).
+  //   - 발화 시 여전히 같은 장면인지 + busy/영상잠금 아님을 재확인(수동 이동과 경쟁 방지).
+  var AUTO_NEXT_DELAY = 450;             // 완료 후 짧은 여운(ms)
+  function scheduleAutoNext(fromIndex) {
+    if (autoNextScheduled) return;
+    if (index !== fromIndex) return;
+    autoNextScheduled = true;
+    setTimer(function () {
+      if (index !== fromIndex) return;            // 이미 이탈(수동 이동/이전/처음으로/goToStep)
+      if (busy || videoGateLocked) return;        // 전환 중이거나 영상 잠김이면 스킵
+      goNext();
+    }, AUTO_NEXT_DELAY);
+  }
+
   // ⏸ 정지 / ▶ 플레이 (v0.8.x): 현재 화면의 영상·CSS 애니메이션만 일시정지/재개. 페이지 이동과 무관.
   function applyPauseState() {
     var scr = currentScreen;
@@ -311,6 +329,7 @@
     clearScene();
     toggleChrome(true);
     videoGateLocked = false;             // v0.9.3: 장면 진입 시 영상 잠금 초기화(영상 렌더러가 필요 시 다시 잠금)
+    autoNextScheduled = false;           // v0.9.4: 자동 전환 예약 초기화(이전 장면 타이머는 clearScene 이 이미 정리)
     var scene = SCENES[index];
     updateCtrlButtons();                 // 다음 버튼 활성/비활성 갱신
     if (window.Analytics) window.Analytics.enterScene(scene.id, scene.phase);  // v0.4.0: 통계
@@ -560,6 +579,7 @@
   // v0.2.5 게이지 규칙 — 장면별 gaugeFrom → gaugeTo 로 진행:
   //   STEP1: 0 → 1 (빨강) / STEP2: 1 → 0.5 (주황) / STEP3: 0.5 → 0 (파랑)
   function renderDrag(scene) {
+    var myIndex = index;                    // v0.9.4: 완료 시 자동 전환 대상 장면 고정
     showScreen(function (el) {
       shell(el, scene, scene.title, function (body) {
         var mode = scene.gauge;               // 'rise' | 'hold' | 'fall'
@@ -692,12 +712,13 @@
             if (scene.weaken) weakenSurfactants(surfEls, 1);
             if (surfWashFraction > 0) washSurfactants(surfEls, surfWashFraction, washFaceSrc);
 
-            // v0.8.x: 자동 페이지 전환 제거 — 드래그를 완료해도 자동으로 넘어가지 않는다.
-            //   requireGaugeZero 게이지 확정만 유지. 다음 이동은 사용자가 탭 또는 다음 버튼으로.
             if (scene.requireGaugeZero && state.irritation > CFG.gauge.calmThreshold) {
               state.irritation = 0;
               if (gauge) gauge.set(0);
             }
+            // v0.9.4: 지정 장면(Page3·4·8·9)만 — 드래그 완료(계면이 모두 생성 / 거품 모두 제거) 직후 자동 전환.
+            //   완료 이벤트(onComplete) 1회 기준. clearScene 이 이탈/수동이동 시 예약 취소.
+            if (scene.autoNext) scheduleAutoNext(myIndex);
           },
         });
         cleanups.push(cleanup);
@@ -730,6 +751,7 @@
   //   scene.video 미지정 → video 요소/네트워크 요청 없이 placeholder 만 렌더(404 없음).
   //   scene.emphClass: 강조 span 클래스(기본 shake-emph=소프트 레드/흔들림, 'key-emph'=키컬러/차분).
   function renderVideo(scene) {
+    var myIndex = index;                    // v0.9.4: 영상 정상 종료 시 자동 전환 대상 장면 고정
     showScreen(function (el) {
       shell(el, scene, '', function (body) {
         // 문구: lead(본문) + 강조 span(+선택 tail)
@@ -769,16 +791,22 @@
             videoGateLocked = true;                        // 종료 전 이동 잠금
             vwrap.classList.add('is-gated');
             hint.textContent = CFG.texts.hints.videoWatch; // "영상을 끝까지 보면 다음으로 넘어가요"
-            var openGate = function () {
-              if (!videoGateLocked) return;
+            // 잠금 해제(종료·오류 공통). 이미 해제됐으면 false(중복 방지).
+            var unlock = function () {
+              if (!videoGateLocked) return false;
               videoGateLocked = false;
               vwrap.classList.remove('is-gated');
               vwrap.classList.add('is-ended');             // 종료 후 UX(안내 강조)용
               hint.textContent = CFG.texts.hints.tapNext;
               updateCtrlButtons();                         // 다음 버튼 활성화
+              return true;
             };
-            v.addEventListener('ended', openGate);
-            v.addEventListener('error', openGate);         // 로드 실패 시 영구 멈춤 방지(잠금 해제)
+            // v0.9.4: 정상 종료(ended)에만 자동 전환 예약. 오류(error)는 잠금 해제만(자동 이동 안 함).
+            v.addEventListener('ended', function () {
+              if (!unlock()) return;                       // 중복 ended 가드
+              if (scene.autoNext) scheduleAutoNext(myIndex);
+            });
+            v.addEventListener('error', function () { unlock(); });
             updateCtrlButtons();                           // 다음 버튼 비활성 즉시 반영
           }
           // 씬 이탈 시 영상 정지·해제 (재진입 시 새 요소로 처음부터 재생)

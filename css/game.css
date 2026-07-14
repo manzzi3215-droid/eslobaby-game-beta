@@ -1725,7 +1725,14 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
 }
 
 /* 강조 문구: 소프트 레드 + 진입 시 살짝 흔들림(2회, 무한 반복 아님) */
-.video-caption { margin-bottom: clamp(8px, 1.6vh, 16px); }
+/* v0.9.4: PAGE6 문장이 길어져 폰트/줄간격/폭 조정(카드 넘침·영상 겹침 방지, 데스크톱 과소 아님) */
+.video-caption {
+  margin-bottom: clamp(8px, 1.6vh, 16px);
+  font-size: clamp(17px, 2.7vw, 32px);
+  line-height: 1.36;
+  max-width: 96%;
+  word-break: keep-all;
+}
 .shake-emph {
   display: inline-block;
   color: #ef6d6d;             /* 경고 계열 소프트 레드 */
@@ -1737,8 +1744,21 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
   60%      { transform: translateX(2px) rotate(1.2deg); }
   85%      { transform: translateX(-1px) rotate(0); }
 }
+/* v0.9.4: '나쁜 계면활성제' — 붉은색 + 은은하게 붉게 빛나는 반복(과하지 않게). reduced-motion 정적 */
+.bad-emph {
+  display: inline-block;
+  color: #e23b30;
+  font-weight: 900;
+  text-shadow: 0 0 8px rgba(226, 59, 48, 0.42);
+  animation: badGlow 1.9s ease-in-out infinite;
+}
+@keyframes badGlow {
+  0%, 100% { text-shadow: 0 0 5px rgba(226, 59, 48, 0.30); }
+  50%      { text-shadow: 0 0 14px rgba(226, 59, 48, 0.72); }
+}
 @media (prefers-reduced-motion: reduce) {
   .shake-emph { animation: none; }
+  .bad-emph { animation: none; text-shadow: 0 0 8px rgba(226, 59, 48, 0.42); }
 }
 
 /* =============================================================================
