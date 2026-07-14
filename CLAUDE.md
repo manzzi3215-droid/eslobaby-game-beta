@@ -14,12 +14,18 @@
 
 ## 현재 버전
 
-**v0.9.0-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.9.1-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.9.1-beta(patch): **PAGE 6→7 전환 오류 수정 + PAGE 7·12·마지막 페이지 디자인 정리**. 흐름/페이지 순서/문구/게임 로직 불변.
+  - **PAGE 6→7 수정**: `isInteractiveTarget`에서 `.info-video, video` 제거 + `renderVideo`의 "영상 탭=재생/정지 토글" 핸들러 제거 → 영상 영역 탭도 다음으로 이동(다른 페이지와 동일). 영상 재생/정지는 좌측 ▶/⏸ 버튼(`applyPauseState`)으로만 유지.
+  - PAGE 7: `.eslo-hero-single`/`.eslo-product-name` 확대. `esloKeywords` 순서 변경(생분해→안심 베이비케어→피부에 남지 않는 계면활성제). `.kw-bubble`=흰색 비정형 물방울(흰 배경+얇은 파란 border, 3개 모두 줄바꿈, blob 라디우스), 제품과 겹침 방지 폭 조정.
+  - PAGE 12: `renderCompare`에서 'VS'(`.compare-vs`) 삭제. `makeCard`에 제품 오버레이 추가 → `.compare-figure`(relative) 안에 `.compare-prod`(absolute, 오른쪽 엉덩이) — 일반=normal_wash / 이슬로=eslo-bath, 아이보다 작게.
+  - 마지막 페이지: `.ending-logo` 축소+상하 여백. `brandFinalDesc` 빈 값(하단 문구 삭제) + `renderBrandFinal`은 desc 있을 때만 렌더.
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.9.1-beta`.
 ※ v0.9.0-beta(minor): **컨트롤/네비게이션 리팩터** — 콘텐츠/페이지 순서 불변.
   - 컨트롤 순서: **처음으로 / 플레이 / 이전 / 정지 / 다음**(`buildControlPanel`). `이전`=`goPrev`(index 0 비활성), `다음`=`goNext`(마지막 비활성). 둘 다 `clearScene→index±→irritationForIndex→renderScene`.
   - **자동 페이지 전환 전부 삭제**(`setTimer(next,…)`·`next()`·`queuedNext` 제거, 드래그 onComplete proceed 제거). 이동은 화면 탭 또는 다음/이전 버튼만.
-  - **탭 진행**(`tapAdvance`): screen의 pointerdown/up. `isInteractiveTarget`(.ctrl-btn/button/a/.drag-tool/.info-video/video/.eslo-hero-single/.info-product)면 이동 금지 + 이동거리 >12px면 탭 아님(드래그 오인 방지).
-  - **플레이/정지**(`applyPauseState`): 현재 화면 `<video>` pause/play + `.is-anim-paused`(CSS animation-play-state). 페이지 이동과 무관. 영상 탭=토글. `paused`는 renderScene에서 유지, 처음으로/startGame에서 초기화.
+  - **탭 진행**(`tapAdvance`): screen의 pointerdown/up. `isInteractiveTarget`(.ctrl-btn/button/a/.drag-tool/.drag-hint/.eslo-hero-single/.info-product)면 이동 금지 + 이동거리 >12px면 탭 아님(드래그 오인 방지). ※ v0.9.1: `.info-video/video` 제외 → 영상 탭도 이동.
+  - **플레이/정지**(`applyPauseState`): 현재 화면 `<video>` pause/play + `.is-anim-paused`(CSS animation-play-state). 페이지 이동과 무관. `paused`는 renderScene에서 유지, 처음으로/startGame에서 초기화. ※ v0.9.1: 영상 탭=토글 제거(영상 탭은 이동), 재생/정지는 ▶/⏸ 버튼만.
   - `dragFallback`(9s)만 유지(드래그 자체 완료, 페이지 이동 아님).
 ※ v0.8.0-beta(minor): 신규 2페이지(PAGE 10-1 생분해 설명 placeholder, PAGE 10-2 비포/애프터 비교) + PAGE 5·7·8·9·10 개선. **총 13페이지.**
   - PAGE 10-1 `biodegradeInfo`(type `video`): `scene.video` 미지정 → `renderVideo`가 video 요소/요청 없이 placeholder(`.info-video.is-placeholder`, 4:3, "영상 준비 중") 렌더. 추후 `scene.video` asset key만 넣으면 영상 교체.

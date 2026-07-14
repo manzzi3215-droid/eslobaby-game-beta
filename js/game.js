@@ -428,12 +428,14 @@
         // v0.4.4: Page 6과 동일한 3종 히어로 배치
         var hero = buildProductHero();
 
-        var desc = div('ending-sub');
-        desc.textContent = scene.desc || '';
-
         body.appendChild(logo);
         body.appendChild(hero);
-        body.appendChild(desc);
+        // v0.9.1: 하단 문구(brandFinalDesc) 삭제 — 값이 있을 때만 표시(현재는 빈 값이라 미표시).
+        if (scene.desc) {
+          var desc = div('ending-sub');
+          desc.textContent = scene.desc;
+          body.appendChild(desc);
+        }
         body.appendChild(C.createButton(CFG.texts.replayButton, renderGate));
       });
       sfx('complete');                     // v0.4.3: 최종 완료 효과음
@@ -744,8 +746,8 @@
           var tryPlay = function () { var p = v.play(); if (p && p.catch) p.catch(function () {}); };
           v.addEventListener('loadeddata', tryPlay);
           tryPlay();
-          // v0.8.x: 영상 영역 탭 → 재생/정지 토글만(페이지 이동 없음, 전역 정지 상태와 동기화)
-          v.addEventListener('click', function (e) { e.stopPropagation(); (paused ? playGame : pauseGame)(); });
+          // v0.9.1: 영상 영역 탭 → 다음 페이지로 이동(다른 페이지와 동일). 재생/정지는 좌측 ▶/⏸ 버튼 사용.
+          //   (이전 v0.8.x의 "영상 탭=재생/정지 토글"은 PAGE 6→7 전환이 안 되는 원인이라 제거)
           // 씬 이탈 시 영상 정지·해제 (재진입 시 새 요소로 처음부터 재생)
           cleanups.push(function () { try { v.pause(); v.removeAttribute('src'); v.load(); } catch (_) {} });
         } else {
@@ -781,21 +783,34 @@
         row.setAttribute('role', 'group');
         row.setAttribute('aria-label', '일반 바디워시와 이슬로 베이비 비교');
 
-        function makeCard(cls, labelText, imgSrc, imgLabel) {
+        // v0.9.1: 각 아이 오른쪽 엉덩이 부분에 제품 이미지를 얹는다(아이보다 조금 작게, 자연스럽게).
+        //   일반 바디워시(baby-sad) = normal_wash / 이슬로(baby-happy) = eslo-bath.
+        function makeCard(cls, labelText, imgSrc, imgLabel, prodSrc, prodLabel, prodCls) {
           var card = div('compare-card ' + cls);
           var lab = div('compare-label');
           lab.textContent = labelText;
+          var figure = div('compare-figure');
           var img = C.createAsset({ src: imgSrc, label: imgLabel, shape: 'baby', className: 'compare-img' });
+          figure.appendChild(img);
+          if (prodSrc) {
+            var prod = C.createAsset({
+              src: prodSrc, label: prodLabel, shape: 'product',
+              className: 'compare-prod ' + (prodCls || ''),
+            });
+            prod.setAttribute('aria-hidden', 'true');
+            figure.appendChild(prod);
+          }
           card.appendChild(lab);
-          card.appendChild(img);
+          card.appendChild(figure);
           return card;
         }
-        var left  = makeCard('compare-bad',  T.compareBadLabel,  CFG.assets.childSad,   CFG.placeholders.childSad);
-        var vs    = div('compare-vs'); vs.textContent = T.compareVs || 'VS'; vs.setAttribute('aria-hidden', 'true');
-        var right = makeCard('compare-good', T.compareGoodLabel, CFG.assets.childHappy, CFG.placeholders.childHappy);
+        var left  = makeCard('compare-bad',  T.compareBadLabel,  CFG.assets.childSad,   CFG.placeholders.childSad,
+                              CFG.assets.products.bodywash, CFG.placeholders.bodywash, 'compare-prod-wash');
+        var right = makeCard('compare-good', T.compareGoodLabel, CFG.assets.childHappy, CFG.placeholders.childHappy,
+                              CFG.assets.ending.bath, CFG.placeholders.endBath, 'compare-prod-eslo');
 
+        // v0.9.1: 가운데 'VS' 텍스트 삭제(요청). 두 카드만 나란히.
         row.appendChild(left);
-        row.appendChild(vs);
         row.appendChild(right);
         body.appendChild(row);
         body.appendChild(makeHint(CFG.texts.hints.tapNext));
@@ -993,8 +1008,11 @@
   //   - pointerdown→up 이동거리가 임계 초과면 탭 아님(드래그/스와이프 오인 방지)
   var TAP_MOVE_MAX = 12;   // px
   function isInteractiveTarget(t) {
+    // v0.9.1: 설명 영상(.info-video/video)은 제외 목록에서 빼서, 다른 페이지들과 동일하게
+    //   영상 영역을 탭해도 다음으로 넘어가도록 한다(PAGE 6→7 전환 실패 수정).
+    //   영상 재생/정지는 좌측 컨트롤의 ▶/⏸ 버튼으로 유지된다.
     return !!(t && t.closest && t.closest(
-      '.ctrl-btn, button, a, .drag-tool, .drag-hint, .info-video, video, .eslo-hero-single, .info-product'));
+      '.ctrl-btn, button, a, .drag-tool, .drag-hint, .eslo-hero-single, .info-product'));
   }
   function tapAdvance(el) {
     if (!CFG.options.tapToAdvance) return;

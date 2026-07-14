@@ -794,7 +794,8 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
 .cards.is-compact { gap: clamp(6px, 1.4vw, 14px); }
 .cards.is-compact .product-card { width: clamp(70px, 10vw, 96px); padding: 8px; box-shadow: none; background: transparent; }
 .cards.is-compact .card-visual { height: clamp(90px, 13vh, 130px); }
-.ending-logo { width: clamp(120px, 22vw, 190px); height: clamp(56px, 9vw, 88px); }
+/* v0.9.1: 마지막 페이지 로고 조금 작게 + 위/아래 여백 확보(제목·제품과 겹침 방지) */
+.ending-logo { width: clamp(92px, 16vw, 148px); height: clamp(48px, 7vw, 72px); margin: clamp(8px, 2vh, 20px) auto clamp(6px, 1.8vh, 18px); }
 .cards { display: flex; gap: clamp(10px, 2.2vw, 24px); flex-wrap: wrap; justify-content: center; }
 .product-card {
   width: clamp(110px, 19vw, 168px);
@@ -1754,7 +1755,7 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
   display: flex; align-items: center; justify-content: center;
 }
 .eslo-hero-single {
-  width: clamp(84px, 15vw, 118px);
+  width: clamp(104px, 18vw, 144px);   /* v0.9.1: 제품 이미지 조금 더 크게 */
   height: auto;
   aspect-ratio: 499 / 1000;
   filter: drop-shadow(0 12px 22px rgba(70, 120, 160, 0.24));
@@ -1766,30 +1767,33 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
   from { transform: translateY(0) rotate(-0.6deg); }
   to   { transform: translateY(-6px) rotate(0.9deg); }
 }
-/* 키워드 말풍선 (KEY COLOR pill, 연한 스카이 배경, 얇은 키컬러 border) */
+/* 키워드 말풍선 (v0.9.1) — 흰색 비정형 물방울: 내부 흰색 + 외곽 얇은 파란 스트로크.
+   세 개 모두 줄바꿈 허용(긴 문구 대응), blob 라디우스로 깔끔한 물방울 느낌. */
 .kw-bubble {
   position: absolute;
   font-size: clamp(11px, 1.5vw, 15px);
   font-weight: 800;
-  line-height: 1.3;
+  line-height: 1.32;
   color: var(--key-deep);
-  background: rgba(240, 246, 255, 0.96);
-  border: 1.5px solid var(--key-soft);
-  border-radius: 999px;
-  padding: 6px 12px;
-  box-shadow: 0 4px 10px rgba(78, 134, 236, 0.16);
-  white-space: nowrap;
-  max-width: 34%;
+  background: #ffffff;                    /* 내부 흰색 */
+  border: 1.5px solid var(--key-soft);    /* 외곽 얇은 파란 스트로크 */
+  border-radius: 58% 42% 56% 44% / 54% 48% 52% 46%;   /* 비정형 물방울 */
+  padding: 8px 14px;
+  box-shadow: 0 5px 13px rgba(78, 134, 236, 0.14);
+  white-space: normal;
+  word-break: keep-all;
+  text-align: center;
+  max-width: 32%;   /* v0.9.1: 가로(데스크톱)에서 제품과 겹치지 않도록 폭 제한. 세로는 아래 미디어쿼리(31%)가 우선. */
   z-index: 2;
   animation: fadeUp 360ms ease both;
 }
-.kw-1 { left: 1%;  top: 11%; }                                   /* 왼쪽 위: 생분해 */
-.kw-2 { left: 0%;  top: 58%; white-space: normal; max-width: 34%; border-radius: 16px; }  /* 왼쪽 아래: 긴 문구(2줄 허용) */
-.kw-3 { right: 0%; top: 37%; }                                   /* 오른쪽 중간: 안심 베이비케어 */
-/* 제품명 캡션 (제목보다 작고 본문보다 명확, 짙은 네이비) */
+.kw-1 { left: 0%;  top: 6%;  border-radius: 60% 40% 58% 42% / 56% 46% 54% 44%; }   /* 왼쪽 위: 생분해 */
+.kw-2 { left: 0%;  top: 62%; border-radius: 44% 56% 42% 58% / 52% 44% 56% 48%; }   /* 왼쪽 아래: 안심 베이비케어 */
+.kw-3 { right: 0%; top: 33%; border-radius: 56% 44% 54% 46% / 46% 56% 44% 54%; max-width: 32%; }  /* 오른쪽 중간: 긴 문구 */
+/* 제품명 캡션 (v0.9.1: 폰트 조금 더 크게) */
 .eslo-product-name {
   margin-top: clamp(6px, 1.4vh, 12px);
-  font-size: clamp(15px, 2vw, 22px);
+  font-size: clamp(18px, 2.6vw, 27px);
   font-weight: 800;
   color: var(--color-text);
   text-align: center;
@@ -1798,9 +1802,9 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
 }
 @media (orientation: portrait) {
   .eslo-single-stage { width: 100%; min-height: clamp(230px, 42vh, 330px); }
-  .eslo-hero-single { width: clamp(78px, 24vw, 112px); }
-  .kw-bubble { font-size: clamp(11px, 3vw, 14px); padding: 5px 10px; max-width: 33%; }
-  .kw-2 { max-width: 33%; }
+  .eslo-hero-single { width: clamp(92px, 28vw, 128px); }   /* v0.9.1: 세로에서도 조금 더 크게(과하지 않게) */
+  .kw-bubble { font-size: clamp(11px, 3vw, 14px); padding: 7px 11px; max-width: 31%; }
+  .kw-3 { max-width: 31%; }
 }
 @media (prefers-reduced-motion: reduce) {
   .eslo-hero-single { animation: none; }
@@ -1894,20 +1898,26 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
 }
 .compare-bad .compare-label  { color: #d9705f; }   /* 소프트 레드 */
 .compare-good .compare-label { color: var(--key-deep); }
+/* v0.9.1: 아이 + 오른쪽 엉덩이 제품을 함께 담는 relative 컨테이너 */
+.compare-figure { position: relative; display: inline-flex; }
 .compare-img {
   width: clamp(78px, 15vw, 128px);
   height: auto;
   aspect-ratio: 481 / 705;           /* baby-sad/happy 원본 비율(둘 다 481×705) */
 }
 .compare-img > img { object-fit: contain; }
-.compare-vs {
-  align-self: center;
-  flex: 0 0 auto;
-  font-weight: 900;
-  font-size: clamp(14px, 2.4vw, 24px);
-  color: var(--key);
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+/* v0.9.1: 오른쪽 엉덩이 부분 제품(아이보다 조금 작게, 자연스럽게 겹치기) */
+.compare-prod {
+  position: absolute;
+  right: -12%;
+  bottom: 4%;
+  height: auto;
+  filter: drop-shadow(0 5px 10px rgba(60, 110, 160, 0.30));
+  z-index: 2;
 }
+.compare-prod > img { object-fit: contain; }
+.compare-prod-wash { width: 42%; aspect-ratio: 279 / 491; }   /* normal_wash 원본 비율 */
+.compare-prod-eslo { width: 40%; aspect-ratio: 499 / 1000; }  /* eslo-bath 원본 비율 */
 @media (orientation: portrait) {
   .compare-img { width: clamp(72px, 22vw, 118px); }
   .compare-label { font-size: clamp(11px, 3vw, 15px); }

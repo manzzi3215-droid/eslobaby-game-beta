@@ -19,7 +19,7 @@
 window.ESLO_CONFIG = {
   /* --- 프로젝트 메타 --------------------------------------------------- */
   meta: {
-    version: 'v0.9.0-beta',
+    version: 'v0.9.1-beta',
     title: '이슬로(eslo) 베이비 미니게임',
   },
 
@@ -107,7 +107,8 @@ window.ESLO_CONFIG = {
     },
 
     // eslo 핵심 키워드 (PAGE 7 제품 주변 말풍선 — 순서: 왼쪽위 / 왼쪽아래 / 오른쪽중간)
-    esloKeywords: ['생분해', '피부에 남지 않는 계면활성제', '안심 베이비케어'],
+    //   v0.9.1: 순서 변경(생분해 → 안심 베이비케어 → 피부에 남지 않는 계면활성제). 말풍선은 모두 줄바꿈 허용.
+    esloKeywords: ['생분해', '안심 베이비케어', '피부에 남지 않는 계면활성제'],
 
     success: {
       title: '🎉 미션 성공!',
@@ -144,7 +145,7 @@ window.ESLO_CONFIG = {
       compareGoodLabel: '이슬로 베이비\n생분해 바스앤샴푸',
       compareVs: 'VS',
       brandFinalTitle: '착한 계면활성제로\n우리 아이 피부를 지키는\n안심 생분해 케어, 이슬로',
-      brandFinalDesc:  '이슬로와 함께\n안심하고 사용할 수 있는\n클린한 생분해 케어,\n시작해볼까요?',
+      brandFinalDesc:  '',   // v0.9.1: 마지막 페이지 하단 문구 삭제(로고·제품 정렬만 유지)
 
       // 이슬로 사용 장면 POINT 안내 박스 (v0.2.5: 흐름에서 제외 — 보존)
       pointTitle:   'POINT!',
