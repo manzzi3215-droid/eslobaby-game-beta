@@ -422,6 +422,7 @@
   // (장면 전환은 공통 Fade — showScreen 의 더블 버퍼 페이드 사용)
   function renderBrandFinal(scene) {
     showScreen(function (el) {
+      el.classList.add('is-brand-final');   // v0.9.2: 마지막 페이지 전용 스코프(낮은 가로 화면 겹침 방지 CSS용)
       shell(el, scene, scene.title, function (body) {
         var logo = C.createAsset({ src: CFG.assets.logo, label: CFG.placeholders.logo, shape: 'logo', className: 'ending-logo' });
 

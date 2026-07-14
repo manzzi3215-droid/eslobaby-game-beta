@@ -14,7 +14,13 @@
 
 ## 현재 버전
 
-**v0.9.1-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.9.2-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.9.2-beta(patch): **후속 UI 3건** — 게임 흐름/페이지 순서/문구/로직 불변.
+  - 마지막 페이지 낮은 가로 화면 겹침/잘림: `renderBrandFinal`이 screen에 `is-brand-final` 클래스 부여 →
+    `@media (orientation: landscape) and (max-height: 880px)`에서 제목·`.ending-logo`·`.product-hero`(높이 기준)·`.btn-primary`·여백을 vh로 균형 축소. 세로(portrait) 불변.
+  - 모바일 상단 `.brand-logo`(전역 플로팅, Page 13 `.ending-logo`와 별개): `@media (orientation: portrait)`에서 폭 축소 + 카드 위 띠 중앙 배치(본문 가림 방지).
+  - 하단 컨트롤 5버튼은 이미 정중앙(±0.5px). `.admin-gear`를 세로에서 `bottom:74px`로 올려 컨트롤과 겹침 제거(admin.css). 메인 5버튼은 별도 fixed 중앙 정렬 유지.
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.9.2-beta`.
 ※ v0.9.1-beta(patch): **PAGE 6→7 전환 오류 수정 + PAGE 7·12·마지막 페이지 디자인 정리**. 흐름/페이지 순서/문구/게임 로직 불변.
   - **PAGE 6→7 수정**: `isInteractiveTarget`에서 `.info-video, video` 제거 + `renderVideo`의 "영상 탭=재생/정지 토글" 핸들러 제거 → 영상 영역 탭도 다음으로 이동(다른 페이지와 동일). 영상 재생/정지는 좌측 ▶/⏸ 버튼(`applyPauseState`)으로만 유지.
   - PAGE 7: `.eslo-hero-single`/`.eslo-product-name` 확대. `esloKeywords` 순서 변경(생분해→안심 베이비케어→피부에 남지 않는 계면활성제). `.kw-bubble`=흰색 비정형 물방울(흰 배경+얇은 파란 border, 3개 모두 줄바꿈, blob 라디우스), 제품과 겹침 방지 폭 조정.

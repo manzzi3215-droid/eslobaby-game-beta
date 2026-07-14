@@ -1948,3 +1948,61 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
   .ctrl-ico { font-size: clamp(16px, 4.6vw, 22px); }
   .ctrl-lbl { font-size: clamp(8px, 2.4vw, 11px); }
 }
+
+/* =============================================================================
+ * ★ v0.9.2-beta — UI 다듬기
+ *   (1) 모바일 상단 브랜드 로고 축소·카드 위 중앙 배치(본문 가림 방지)
+ *   (2) 마지막 페이지: 낮은 가로 화면(데스크톱/태블릿/가로 모바일) 겹침·잘림 방지
+ *   ※ 세로(portrait) 게임 흐름/디자인은 불변. Page 13 내부 엔딩 로고(.ending-logo)와는 별개.
+ * ========================================================================== */
+
+/* (1) 상단 플로팅 브랜드 로고 — 모바일(세로)에서는 확실히 작게 + 카드 위 여백대 중앙으로.
+ *     카드는 세로에서 상단 ~42px 아래에서 시작하므로, 그 위 빈 띠에 작게 올려 본문과 겹치지 않게 함. */
+@media (orientation: portrait) {
+  .brand-logo {
+    top: clamp(4px, 0.9vh, 9px);
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: clamp(46px, 13vw, 58px);
+    height: auto;                 /* aspect-ratio(243/142) 로 높이 자동 → 대략 폭*0.58 */
+  }
+}
+
+/* (2) 마지막 페이지(브랜드) — 화면 높이가 낮은 가로 화면에서 제목·로고·제품·버튼이
+ *     서로 겹치거나 카드 밖으로 잘리지 않도록, 요소 크기를 화면 높이(vh)에 맞춰 균형 있게 축소.
+ *     세로(portrait)는 이 쿼리에 해당하지 않아 기존 모바일 디자인 그대로 유지됨. */
+@media (orientation: landscape) and (max-height: 880px) {
+  .is-brand-final { padding-top: clamp(4px, 1.4vh, 18px); padding-bottom: clamp(4px, 1.4vh, 18px); }
+  .is-brand-final .scene-card {
+    margin-bottom: clamp(6px, 1.5vh, 20px);
+    padding: clamp(8px, 1.8vh, 22px) clamp(12px, 2.4vw, 26px);
+  }
+  .is-brand-final .card-title {
+    font-size: clamp(15px, 4.2vh, 34px);
+    line-height: 1.22;
+    margin-bottom: clamp(3px, 1vh, 14px);
+  }
+  .is-brand-final .screen-body { gap: clamp(3px, 1.2vh, 16px); justify-content: center; }
+  .is-brand-final .ending-logo {
+    width: clamp(66px, 11vh, 120px);
+    height: auto;
+    margin: clamp(2px, 0.7vh, 10px) auto;
+  }
+  /* 제품 3종: 세로가 짧으면 높이 기준으로 축소(폭이 아니라 높이에 맞춰 병이 작아지게) */
+  .is-brand-final .product-hero {
+    height: clamp(84px, 25vh, 210px);
+    width: auto;
+    margin: clamp(2px, 0.6vh, 8px) auto;
+  }
+  .is-brand-final .product-hero .ph-item {
+    width: auto;
+    height: 100%;
+    max-width: none;
+    flex: 0 1 auto;
+  }
+  .is-brand-final .btn-primary {
+    padding: clamp(8px, 1.4vh, 16px) clamp(18px, 4vw, 34px);
+    font-size: clamp(14px, 2.4vh, 20px);
+  }
+}

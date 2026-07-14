@@ -30,6 +30,16 @@
 .admin-gear:active { transform: scale(0.9); }
 .admin-gear svg { display: block; }
 
+/* v0.9.2: 모바일(세로)에서 하단 중앙 컨트롤 5버튼과 겹치지 않도록 톱니바퀴를 컨트롤 바 위로 올림.
+   (메인 컨트롤은 좌우 정중앙 정렬 유지 — 톱니바퀴는 별도 fixed 라 중앙 정렬 계산과 무관) */
+@media (orientation: portrait) {
+  .admin-gear {
+    bottom: calc(74px + env(safe-area-inset-bottom, 0px));
+    width: 34px;
+    height: 34px;
+  }
+}
+
 /* ---- 오버레이 (로그인 / 대시보드 공용) ---- */
 .admin-overlay {
   position: fixed;
