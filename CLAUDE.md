@@ -14,7 +14,12 @@
 
 ## 현재 버전
 
-**v0.9.4-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.9.5-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.9.5-beta(patch): Page6·11 영상 **종료 후 탭 안내 문구 제거**. 자동 전환·게이트·error 안전장치·디자인 불변.
+  - `renderVideo`의 `unlock()`에서 `hint.textContent = tapNext` 제거 → 종료·오류 시 안내문 텍스트 미변경(재생 중 "영상을 끝까지 보면…" 유지). 깜빡임·레이아웃 흔들림 없음.
+  - `hints.tapNext`는 config에 유지(다른 수동 이동 페이지 사용). 영상 흐름에서만 미표시.
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.9.5-beta`.
+※ v0.9.4-beta(patch): 완료 이벤트 기반 자동 전환(6개 장면) + Page6/12 문구.
 ※ v0.9.4-beta(patch): **완료 이벤트 기반 자동 전환(6개 장면)** + Page6/12 문구. 페이지 순서/이미지/영상/효과음/드래그·네비 구조 불변. **전역·단순 타이머 자동 전환 아님.**
   - `scene.autoNext:true` — Page3/4/8/9(드래그 onComplete), Page6/11(영상 ended). game.js `scheduleAutoNext(fromIndex)`가 완료 콜백에서만 호출.
   - 안전장치: `setTimer`(AUTO_NEXT_DELAY 450ms) → `clearScene`(모든 네비 진입점)에서 취소. `autoNextScheduled`로 장면당 1회. 발화 시 `index===fromIndex && !busy && !videoGateLocked` 재확인. 영상은 `ended`에만 자동 이동(오류 `error`는 잠금 해제만, 자동 이동 X). 재생 중 탭/다음/페이지점 차단 유지.

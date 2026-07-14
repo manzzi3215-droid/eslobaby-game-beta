@@ -770,7 +770,7 @@
 
         // 영상 or placeholder (영역 크기·스타일 동일)
         var vwrap = div('info-video');
-        var hint = makeHint(CFG.texts.hints.tapNext);   // v0.9.3: 종료 시 문구를 바꾸기 위해 참조 보관
+        var hint = makeHint(CFG.texts.hints.tapNext);   // 기본(비필수시청 영상=탭 이동). 필수시청이면 아래서 "영상을 끝까지…"로 설정, 종료 후에도 유지
         var src = scene.video ? (CFG.assets[scene.video] || scene.video) : null;
         if (src) {
           // v0.9.3: requireEnd 영상은 반드시 끝까지 재생(loop 없이 1회) → 종료 전엔 이동 잠금
@@ -792,13 +792,14 @@
             vwrap.classList.add('is-gated');
             hint.textContent = CFG.texts.hints.videoWatch; // "영상을 끝까지 보면 다음으로 넘어가요"
             // 잠금 해제(종료·오류 공통). 이미 해제됐으면 false(중복 방지).
+            // v0.9.5: 종료 후 자동 전환되므로 "화면을 탭하면…" 문구로 바꾸지 않는다(잘못된 탭 유도 방지).
+            //   안내문 텍스트를 유지(변경 없음) → 깜빡임·레이아웃 흔들림 없음. 오류 시에도 탭 문구 미표시.
             var unlock = function () {
               if (!videoGateLocked) return false;
               videoGateLocked = false;
               vwrap.classList.remove('is-gated');
-              vwrap.classList.add('is-ended');             // 종료 후 UX(안내 강조)용
-              hint.textContent = CFG.texts.hints.tapNext;
-              updateCtrlButtons();                         // 다음 버튼 활성화
+              vwrap.classList.add('is-ended');             // 종료 표시(테두리 강조)용 — 문구는 그대로 유지
+              updateCtrlButtons();                         // 다음 버튼 활성화(오류 시 수동 이동 대비)
               return true;
             };
             // v0.9.4: 정상 종료(ended)에만 자동 전환 예약. 오류(error)는 잠금 해제만(자동 이동 안 함).
