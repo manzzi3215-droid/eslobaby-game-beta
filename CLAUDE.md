@@ -14,7 +14,16 @@
 
 ## 현재 버전
 
-**v0.9.2-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.9.3-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.9.3-beta(patch): Page1 "?" 연출 · STEP 번호 정정 · 필수 시청 영상 · Page7 확대 · Page10 배지 삭제 · 모바일 로고 하단 이동. 흐름/순서/문구/드래그·네비 구조 불변.
+  - **필수 시청 영상**: scene `requireEnd:true`(residue=Page6, biodegradeInfo=Page11). `renderVideo`가 loop 끄고 `videoGateLocked=true` → `goNext`/다음버튼 잠금, `ended`(또는 `error`) 시 해제·안내문 전환. `renderScene` 진입 시 잠금 초기화.
+  - **STEP 배지**: scenes.js `step` = bodywashUse 2·bodywashRinse 3·esloUse 4·esloRinse 5 (bodywashIntro 1 유지) → 1→2→3→4→5.
+  - **Page10 배지 삭제**: `badgeLabel`에서 missionSuccess 분기 제거(파란 배지 미표시, success-title/desc 유지).
+  - **Page1 "?"**: `renderMissionIntro`가 stage에 `.q-mark.q-left/.q-right` 추가(CSS `qFloat`).
+  - **모바일 로고**: `.brand-logo` portrait → 하단 컨트롤 위 중앙(bottom 72px). 데스크톱 우상단 불변. Page13 내부 `.ending-logo`와 별개.
+  - **Page7 확대**: `.eslo-hero-single`·`.eslo-product-name`·`.kw-bubble` 폰트 확대(겹침 없음 유지). `.bottom-hint` 폰트 축소.
+  - config: `assets.bioVideo`(prof_nongye.mp4), `texts.hints.videoWatch`. `sw.js` `CACHE_NAME`=`eslo-game-v0.9.3-beta`.
+※ v0.9.2-beta(patch): 마지막 페이지 낮은 가로 화면 겹침 · 모바일 상단 로고 · 하단 컨트롤 정렬.
 ※ v0.9.2-beta(patch): **후속 UI 3건** — 게임 흐름/페이지 순서/문구/로직 불변.
   - 마지막 페이지 낮은 가로 화면 겹침/잘림: `renderBrandFinal`이 screen에 `is-brand-final` 클래스 부여 →
     `@media (orientation: landscape) and (max-height: 880px)`에서 제목·`.ending-logo`·`.product-hero`(높이 기준)·`.btn-primary`·여백을 vh로 균형 축소. 세로(portrait) 불변.

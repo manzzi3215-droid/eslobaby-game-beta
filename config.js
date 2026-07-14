@@ -19,7 +19,7 @@
 window.ESLO_CONFIG = {
   /* --- 프로젝트 메타 --------------------------------------------------- */
   meta: {
-    version: 'v0.9.2-beta',
+    version: 'v0.9.3-beta',
     title: '이슬로(eslo) 베이비 미니게임',
   },
 
@@ -40,6 +40,7 @@ window.ESLO_CONFIG = {
     bubble:    'assets/images/bubble.png',      // 거품 (비우면 도형 거품)
     warningLight: 'assets/images/warning-light.png', // 경고등/비상등 (게이지 100%)
     profVideo: 'assets/images/prof.mp4', // PAGE 5-1 설명 영상 (계면활성제 잔류)
+    bioVideo:  'assets/images/prof_nongye.mp4', // PAGE 10-1 생분해 설명 영상 (v0.9.3: 필수 시청)
     // 계면이(gyemeon) — v0.4.2-beta: 실제 1x 에셋. 표정 변형 5종 + Scene 8 씻김용 sad.
     surfactant:   'assets/images/gyemeon1.png',       // 기본 단일 fallback
     gyemeon: [
@@ -177,6 +178,7 @@ window.ESLO_CONFIG = {
       dragShower:   '샤워기를 아이 몸에 문질러 주세요',   // v0.3.1: STEP1 샤워 단계
       dragRinse:    '샤워기를 아이 몸에 문질러주세요.',   // v0.3.3 (구: '샤워기로 헹굴수록 계면이와 자극이 사라져요')
       tapNext:      '화면을 탭하면 다음으로 넘어가요',
+      videoWatch:   '영상을 끝까지 보면 다음으로 넘어가요',   // v0.9.3: 필수 시청 영상 재생 중 안내
       homeHint:     "※ 모든 장면 상단의 '처음으로' 버튼을 누르면 게임 시작 화면으로 돌아갑니다.",
     },
 

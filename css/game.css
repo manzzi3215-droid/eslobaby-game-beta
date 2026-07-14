@@ -499,10 +499,11 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
   left: 50%;
   transform: translateX(-50%);
   z-index: 15;
-  font-size: var(--fs-hint);
+  font-size: clamp(11px, 1.3vw, 15px);   /* v0.9.3: 안내 문구 축소(카드 밖 넘침·과대 방지) */
+  line-height: 1.35;
   color: var(--color-text-soft);
   background: rgba(255, 255, 255, 0.82);
-  padding: 5px 16px;
+  padding: 4px 14px;
   border-radius: 999px;
   max-width: 92vw;
   text-align: center;
@@ -1755,7 +1756,7 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
   display: flex; align-items: center; justify-content: center;
 }
 .eslo-hero-single {
-  width: clamp(104px, 18vw, 144px);   /* v0.9.1: 제품 이미지 조금 더 크게 */
+  width: clamp(118px, 21vw, 162px);   /* v0.9.3: 제품 이미지 더 크게(주변 키워드가 제품에 더 가깝게 모임) */
   height: auto;
   aspect-ratio: 499 / 1000;
   filter: drop-shadow(0 12px 22px rgba(70, 120, 160, 0.24));
@@ -1771,9 +1772,9 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
    세 개 모두 줄바꿈 허용(긴 문구 대응), blob 라디우스로 깔끔한 물방울 느낌. */
 .kw-bubble {
   position: absolute;
-  font-size: clamp(11px, 1.5vw, 15px);
+  font-size: clamp(12px, 1.7vw, 17px);   /* v0.9.3: 키워드 조금 더 크게 */
   font-weight: 800;
-  line-height: 1.32;
+  line-height: 1.3;
   color: var(--key-deep);
   background: #ffffff;                    /* 내부 흰색 */
   border: 1.5px solid var(--key-soft);    /* 외곽 얇은 파란 스트로크 */
@@ -1783,17 +1784,18 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
   white-space: normal;
   word-break: keep-all;
   text-align: center;
-  max-width: 32%;   /* v0.9.1: 가로(데스크톱)에서 제품과 겹치지 않도록 폭 제한. 세로는 아래 미디어쿼리(31%)가 우선. */
+  max-width: 31%;   /* 가로(데스크톱)에서 제품과 겹치지 않도록 폭 제한. 세로는 아래 미디어쿼리가 우선. */
   z-index: 2;
   animation: fadeUp 360ms ease both;
 }
-.kw-1 { left: 0%;  top: 6%;  border-radius: 60% 40% 58% 42% / 56% 46% 54% 44%; }   /* 왼쪽 위: 생분해 */
-.kw-2 { left: 0%;  top: 62%; border-radius: 44% 56% 42% 58% / 52% 44% 56% 48%; }   /* 왼쪽 아래: 안심 베이비케어 */
-.kw-3 { right: 0%; top: 33%; border-radius: 56% 44% 54% 46% / 46% 56% 44% 54%; max-width: 32%; }  /* 오른쪽 중간: 긴 문구 */
-/* 제품명 캡션 (v0.9.1: 폰트 조금 더 크게) */
+/* v0.9.3: 세로 위치를 제품 중심 쪽으로 모아 "제품 주변에 모여있는" 느낌 강화(가로 위치는 겹침 방지 위해 가장자리 유지) */
+.kw-1 { left: 0%;  top: 13%; border-radius: 60% 40% 58% 42% / 56% 46% 54% 44%; }   /* 왼쪽 위: 생분해 */
+.kw-2 { left: 0%;  top: 58%; border-radius: 44% 56% 42% 58% / 52% 44% 56% 48%; }   /* 왼쪽 아래: 안심 베이비케어 */
+.kw-3 { right: 0%; top: 35%; border-radius: 56% 44% 54% 46% / 46% 56% 44% 54%; max-width: 31%; }  /* 오른쪽 중간: 긴 문구 */
+/* 제품명 캡션 (v0.9.3: 폰트 더 크게) */
 .eslo-product-name {
   margin-top: clamp(6px, 1.4vh, 12px);
-  font-size: clamp(18px, 2.6vw, 27px);
+  font-size: clamp(20px, 3vw, 30px);
   font-weight: 800;
   color: var(--color-text);
   text-align: center;
@@ -1802,9 +1804,9 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
 }
 @media (orientation: portrait) {
   .eslo-single-stage { width: 100%; min-height: clamp(230px, 42vh, 330px); }
-  .eslo-hero-single { width: clamp(92px, 28vw, 128px); }   /* v0.9.1: 세로에서도 조금 더 크게(과하지 않게) */
-  .kw-bubble { font-size: clamp(11px, 3vw, 14px); padding: 7px 11px; max-width: 31%; }
-  .kw-3 { max-width: 31%; }
+  .eslo-hero-single { width: clamp(104px, 32vw, 144px); }   /* v0.9.3: 세로에서도 더 크게 */
+  .kw-bubble { font-size: clamp(12px, 3.3vw, 15px); padding: 7px 11px; max-width: 30%; }
+  .kw-3 { max-width: 30%; }
 }
 @media (prefers-reduced-motion: reduce) {
   .eslo-hero-single { animation: none; }
@@ -1956,15 +1958,17 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
  *   ※ 세로(portrait) 게임 흐름/디자인은 불변. Page 13 내부 엔딩 로고(.ending-logo)와는 별개.
  * ========================================================================== */
 
-/* (1) 상단 플로팅 브랜드 로고 — 모바일(세로)에서는 확실히 작게 + 카드 위 여백대 중앙으로.
- *     카드는 세로에서 상단 ~42px 아래에서 시작하므로, 그 위 빈 띠에 작게 올려 본문과 겹치지 않게 함. */
+/* (1) 상단 플로팅 브랜드 로고 — 모바일(세로)에서는 상단 텍스트를 가리므로
+ *     하단 컨트롤(처음으로/플레이/이전/정지/다음) 바로 위 중앙으로 이동.
+ *     v0.9.3: top → bottom 배치. 카드(하단 ~108px)와 컨트롤(하단 ~64px) 사이 빈 띠에 위치. */
 @media (orientation: portrait) {
   .brand-logo {
-    top: clamp(4px, 0.9vh, 9px);
+    top: auto;
+    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
     left: 50%;
     right: auto;
     transform: translateX(-50%);
-    width: clamp(46px, 13vw, 58px);
+    width: clamp(54px, 15vw, 68px);
     height: auto;                 /* aspect-ratio(243/142) 로 높이 자동 → 대략 폭*0.58 */
   }
 }
@@ -2006,3 +2010,38 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
     font-size: clamp(14px, 2.4vh, 20px);
   }
 }
+
+/* =============================================================================
+ * ★ v0.9.3-beta — Page1 "?" 픽토그램 · 필수 시청 영상 종료 UX
+ * ========================================================================== */
+/* Page1(MISSION) 아이 양옆 "?" — "어떤 바디워시를 써야 하지?" 궁금 연출.
+ *   과하지 않은 부드러운 둥실+살짝 회전 반복 모션. reduced-motion 시 정지. */
+.q-mark {
+  position: absolute;
+  top: 14%;
+  font-size: clamp(34px, 7.5vw, 64px);
+  font-weight: 900;
+  line-height: 1;
+  color: var(--key);
+  text-shadow: 0 3px 8px rgba(109, 161, 255, 0.35);
+  z-index: 4;
+  pointer-events: none;
+  animation: qFloat 2.6s ease-in-out infinite;
+}
+.q-left  { left: 4%;  animation-delay: 0s; }
+.q-right { right: 4%; animation-delay: 1.3s; }
+@keyframes qFloat {
+  0%, 100% { transform: translateY(0) rotate(-9deg); }
+  50%      { transform: translateY(-10px) rotate(9deg); }
+}
+@media (orientation: portrait) {
+  .q-mark { font-size: clamp(32px, 10vw, 60px); top: 10%; }
+  .q-left { left: 2%; }
+  .q-right { right: 2%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .q-mark { animation: none; }
+}
+
+/* 필수 시청 영상(Page6·Page11) 종료 후: 영역 테두리를 키컬러로 살짝 강조(자연스러운 "다음" 유도) */
+.info-video.is-ended { border-color: var(--key); }

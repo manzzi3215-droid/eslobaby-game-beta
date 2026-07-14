@@ -22,6 +22,7 @@
   var index = 0;
   var busy = false;
   var paused = false;                    // 정지(⏸): v0.8.x — 현재 화면의 영상·CSS 애니메이션 일시정지 (페이지 이동과 무관)
+  var videoGateLocked = false;           // v0.9.3: 필수 시청 영상(Page6·Page11)이 끝나기 전엔 다음 이동 잠금
 
   // 장면 간 유지되는 게임 상태 (자극 게이지 값 등)
   var state = { irritation: 0 };
@@ -143,7 +144,7 @@
   function badgeLabel(opts) {
     if (opts.step != null) return CFG.texts.step + opts.step;
     if (opts.type === 'missionIntro') return PHASES[0];
-    if (opts.type === 'missionSuccess') return PHASES[4];
+    // v0.9.3: Page10(missionSuccess) 파란 배지 삭제 — 아래 success-title/desc 와 중복이라 제거
     return null;
   }
 
@@ -233,6 +234,7 @@
   //   자동 전환은 없다. 사용자가 탭 또는 다음/이전을 눌러야만 이동.
   function goNext() {
     if (busy) return;
+    if (videoGateLocked) return;                 // v0.9.3: 필수 시청 영상이 끝나기 전엔 이동 금지(탭·다음 공통)
     if (index >= SCENES.length - 1) return;      // 마지막 장면: 이동 없음
     clearScene();
     index++;
@@ -273,10 +275,11 @@
       prevBtn.setAttribute('aria-disabled', atFirst ? 'true' : 'false');
     }
     if (nextBtn) {
-      var atLast = index >= SCENES.length - 1;
-      nextBtn.disabled = atLast;
-      nextBtn.classList.toggle('is-disabled', atLast);
-      nextBtn.setAttribute('aria-disabled', atLast ? 'true' : 'false');
+      // v0.9.3: 마지막 장면 또는 필수 시청 영상 재생 중이면 다음 버튼 비활성
+      var lockNext = (index >= SCENES.length - 1) || videoGateLocked;
+      nextBtn.disabled = lockNext;
+      nextBtn.classList.toggle('is-disabled', lockNext);
+      nextBtn.setAttribute('aria-disabled', lockNext ? 'true' : 'false');
     }
   }
 
@@ -296,6 +299,7 @@
   // 장면 이동 (테스트/시연용, config.options.stepNavigationEnabled)
   // step: 1=게이트, 2~=장면 순서 (내부 Scene 번호 — 사용자 표시 STEP1~3과 별개)
   function goToStep(step) {
+    if (videoGateLocked) return;         // v0.9.3: 필수 시청 영상 재생 중엔 페이지점 점프도 금지(끝까지 시청 강제)
     clearScene();
     if (step <= 1) { renderGate(); return; }
     index = Math.min(step - 2, SCENES.length - 1);
@@ -306,6 +310,7 @@
   function renderScene() {
     clearScene();
     toggleChrome(true);
+    videoGateLocked = false;             // v0.9.3: 장면 진입 시 영상 잠금 초기화(영상 렌더러가 필요 시 다시 잠금)
     var scene = SCENES[index];
     updateCtrlButtons();                 // 다음 버튼 활성/비활성 갱신
     if (window.Analytics) window.Analytics.enterScene(scene.id, scene.phase);  // v0.4.0: 통계
@@ -352,6 +357,14 @@
           shape: 'baby', variant: 'happy', className: 'child-body child-wonder',
         });
         stage.appendChild(childBody);
+
+        // v0.9.3: 아이 양옆에 "?" 픽토그램 — 어떤 바디워시를 써야 할지 궁금해하는 연출(부드러운 둥실 모션)
+        ['q-left', 'q-right'].forEach(function (side) {
+          var q = div('q-mark ' + side);
+          q.textContent = '?';
+          q.setAttribute('aria-hidden', 'true');
+          stage.appendChild(q);
+        });
 
         body.appendChild(badge);
         body.appendChild(goal);
@@ -735,11 +748,14 @@
 
         // 영상 or placeholder (영역 크기·스타일 동일)
         var vwrap = div('info-video');
+        var hint = makeHint(CFG.texts.hints.tapNext);   // v0.9.3: 종료 시 문구를 바꾸기 위해 참조 보관
         var src = scene.video ? (CFG.assets[scene.video] || scene.video) : null;
         if (src) {
+          // v0.9.3: requireEnd 영상은 반드시 끝까지 재생(loop 없이 1회) → 종료 전엔 이동 잠금
+          var mustWatch = !!scene.requireEnd;
           var v = document.createElement('video');
           v.muted = true; v.defaultMuted = true;           // muted 는 src 전에 (autoplay 허용)
-          v.loop = true; v.autoplay = true;
+          v.loop = !mustWatch; v.autoplay = true;
           v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
           v.setAttribute('preload', 'auto'); v.setAttribute('aria-hidden', 'true');
           v.src = src;
@@ -749,6 +765,22 @@
           tryPlay();
           // v0.9.1: 영상 영역 탭 → 다음 페이지로 이동(다른 페이지와 동일). 재생/정지는 좌측 ▶/⏸ 버튼 사용.
           //   (이전 v0.8.x의 "영상 탭=재생/정지 토글"은 PAGE 6→7 전환이 안 되는 원인이라 제거)
+          if (mustWatch) {
+            videoGateLocked = true;                        // 종료 전 이동 잠금
+            vwrap.classList.add('is-gated');
+            hint.textContent = CFG.texts.hints.videoWatch; // "영상을 끝까지 보면 다음으로 넘어가요"
+            var openGate = function () {
+              if (!videoGateLocked) return;
+              videoGateLocked = false;
+              vwrap.classList.remove('is-gated');
+              vwrap.classList.add('is-ended');             // 종료 후 UX(안내 강조)용
+              hint.textContent = CFG.texts.hints.tapNext;
+              updateCtrlButtons();                         // 다음 버튼 활성화
+            };
+            v.addEventListener('ended', openGate);
+            v.addEventListener('error', openGate);         // 로드 실패 시 영구 멈춤 방지(잠금 해제)
+            updateCtrlButtons();                           // 다음 버튼 비활성 즉시 반영
+          }
           // 씬 이탈 시 영상 정지·해제 (재진입 시 새 요소로 처음부터 재생)
           cleanups.push(function () { try { v.pause(); v.removeAttribute('src'); v.load(); } catch (_) {} });
         } else {
@@ -759,7 +791,7 @@
           vwrap.appendChild(ph);
         }
         body.appendChild(vwrap);
-        body.appendChild(makeHint(CFG.texts.hints.tapNext));
+        body.appendChild(hint);
       });
       tapAdvance(el);
     });
