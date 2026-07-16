@@ -14,7 +14,12 @@
 
 ## 현재 버전
 
-**v0.9.8-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.9.9-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.9.9-beta(patch): **모바일 세로 카드뉴스 카드 상하 중앙 정렬 + 브랜드 로고 상단 중앙**. 게임 로직·장면 순서·자동 전환·영상·드래그·버튼 기능·힌트·배경·데스크톱/가로 레이아웃·게이트 전부 불변.
+  - 원인: 세로에서 `.screen{justify-content:flex-start}`+`.scene-card{flex:none;min-height:60vh}`로 카드 상단 치우침.
+  - 수정: `.is-playing`(게임 화면) 스코프로 `@media (orientation: portrait)`에서 `.scene-card{margin-block:auto}`(auto 마진 중앙, 넘치면 위부터 스크롤) + `.screen{padding-top:calc(56px+safe-area)}`(로고 영역), `.brand-logo` 하단→상단 중앙. 카드/로고 크기·구성 불변.
+  - 게이트 제외: `toggleChrome(show)`가 게임일 때만 `app.classList.toggle('is-playing')` → 게이트는 미부여로 기존 배치 유지. game.css는 CSS만 추가(리팩터링 없음).
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.9.9-beta`.
 ※ v0.9.8-beta(patch): **UI 3건만 수정**. 게임 로직·진행 순서·Scene·영상·자동 전환·드래그·힌트·컨트롤 위치·레이아웃·배경 전부 불변.
   - 게이트: QR 삭제 + "채널 추가 하러가기" 버튼 신설(카카오 `https://pf.kakao.com/_nCzPn` 새 탭). "채널 추가 완료했어요!"(스타트)는 유지. `renderGate`만 수정. 신규 버튼 `.btn-kakao`(배경 `#FAE100`/텍스트 `#3C1E1E`, 캡슐 모양·폰트·크기 동일). config `gate.joinButton`/`joinUrl` 신설.
   - Page1: `childWonder` → `assets/images/baby-wonder_2.png`(경로만 교체, 위치·크기·애니메이션 동일). sw precache 추가.

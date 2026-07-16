@@ -1372,6 +1372,8 @@
     var d = show ? '' : 'none';
     if (controlPanel) controlPanel.style.display = d;
     if (bottomHint) bottomHint.style.display = d;
+    // v0.9.9: 게임(카드뉴스) 화면일 때만 .is-playing 부여 → 세로 중앙정렬/로고 상단 스코프(게이트 제외)
+    if (app) app.classList.toggle('is-playing', !!show);
   }
 
   /* ---------- 좌측 컨트롤 패널 (처음으로/플레이/정지/다음) ----------------- */

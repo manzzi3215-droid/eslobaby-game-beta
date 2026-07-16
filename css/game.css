@@ -1995,6 +1995,25 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
   }
 }
 
+/* =============================================================================
+ * v0.9.9-beta — 모바일 세로: 카드뉴스 카드 상하 중앙 정렬 + 브랜드 로고 상단 중앙
+ *   - 게임(카드뉴스) 화면에만 적용(.is-playing). 게이트는 미부여로 기존 배치 유지.
+ *   - 가로/데스크톱은 orientation:portrait 밖이라 전부 불변.
+ *   - 고정 top 대신 flex auto 마진으로 중앙(넘치면 위에서부터 스크롤) + safe-area 유지.
+ * ========================================================================== */
+@media (orientation: portrait) {
+  /* 카드가 상단에 치우치지 않도록: 하단(96px)과 대칭인 상단 여백 → 화면 세로 중앙(카드 중심≈화면 중심).
+     로고 영역도 함께 확보되어 겹침 없음. auto 마진으로 중앙, 내용이 길면 위에서부터 스크롤(잘림 없음). */
+  .is-playing .screen { padding-top: calc(96px + env(safe-area-inset-top, 0px)); }
+  .is-playing .scene-card { margin-top: auto; margin-bottom: auto; }
+
+  /* 브랜드 로고: 하단 중앙 → 상단 중앙(좌우 정확히 중앙·크기 유지). 게이트는 기존 하단 유지. */
+  .is-playing .brand-logo {
+    top: calc(8px + env(safe-area-inset-top, 0px));
+    bottom: auto;
+  }
+}
+
 /* (2) 마지막 페이지(브랜드) — 화면 높이가 낮은 가로 화면에서 제목·로고·제품·버튼이
  *     서로 겹치거나 카드 밖으로 잘리지 않도록, 요소 크기를 화면 높이(vh)에 맞춰 균형 있게 축소.
  *     세로(portrait)는 이 쿼리에 해당하지 않아 기존 모바일 디자인 그대로 유지됨. */
