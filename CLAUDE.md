@@ -14,8 +14,14 @@
 
 ## 현재 버전
 
-**v0.9.9-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
-※ v0.9.9-beta(patch): **모바일 세로 카드뉴스 카드 상하 중앙 정렬 + 브랜드 로고 상단 중앙**. 게임 로직·장면 순서·자동 전환·영상·드래그·버튼 기능·힌트·배경·데스크톱/가로 레이아웃·게이트 전부 불변.
+**v0.10.0-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.10.0-beta(minor): **게이트 중앙 정렬 · 로고 카드 위 배치 · 컨트롤 SVG · Page1/5/7/11 문구·색상**. 게임 로직·장면 순서·자동 전환·영상·드래그·배경·데스크톱 불변.
+  - 세로 중앙/로고: `.is-playing` 스코프 제거 → 공통 wrapper `.scene-wrap`(shell이 로고+카드 묶음)로 게이트 포함 전 카드뉴스 세로 중앙, 로고는 카드 바로 위 중앙 absolute(간격 12~20px 일정). 가로/데스크톱은 `.scene-wrap{display:contents}`로 무영향.
+  - Page5 색: `.warning-scene .card-title.is-warn`=#D1000A, `.warning-sub`=#1A3446(색만).
+  - 컨트롤: `CTRL_SVG` 인라인 SVG 5종(글리프→SVG, currentColor, `makeCtrlButton`이 innerHTML). `.ctrl-ico svg{width:1.25em}`.
+  - 문구(config): Page1 '샤워'→'피부', Page7 esloKeywords '…착한 계면활성제', Page11 bioLead '물에 쉽게 씻겨 내려가'. Page7 `.kw-1` 소폭 확대·이동.
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.10.0-beta`.
+※ v0.9.9-beta(patch): **모바일 세로 카드뉴스 카드 상하 중앙 정렬 + 브랜드 로고 상단 중앙**(v0.10.0에서 wrapper 방식으로 대체). 게임 로직·장면 순서·자동 전환·영상·드래그·버튼 기능·힌트·배경·데스크톱/가로 레이아웃·게이트 전부 불변.
   - 원인: 세로에서 `.screen{justify-content:flex-start}`+`.scene-card{flex:none;min-height:60vh}`로 카드 상단 치우침.
   - 수정: `.is-playing`(게임 화면) 스코프로 `@media (orientation: portrait)`에서 `.scene-card{margin-block:auto}`(auto 마진 중앙, 넘치면 위부터 스크롤) + `.screen{padding-top:calc(56px+safe-area)}`(로고 영역), `.brand-logo` 하단→상단 중앙. 카드/로고 크기·구성 불변.
   - 게이트 제외: `toggleChrome(show)`가 게임일 때만 `app.classList.toggle('is-playing')` → 게이트는 미부여로 기존 배치 유지. game.css는 CSS만 추가(리팩터링 없음).

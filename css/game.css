@@ -1996,21 +1996,28 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
 }
 
 /* =============================================================================
- * v0.9.9-beta — 모바일 세로: 카드뉴스 카드 상하 중앙 정렬 + 브랜드 로고 상단 중앙
- *   - 게임(카드뉴스) 화면에만 적용(.is-playing). 게이트는 미부여로 기존 배치 유지.
- *   - 가로/데스크톱은 orientation:portrait 밖이라 전부 불변.
- *   - 고정 top 대신 flex auto 마진으로 중앙(넘치면 위에서부터 스크롤) + safe-area 유지.
+ * v0.10.0-beta — 모바일 세로: 게이트 포함 모든 카드뉴스 카드 세로 중앙 + 로고를 카드 바로 위에
+ *   - .scene-wrap(공통 wrapper)가 로고+카드를 묶음. 세로에서만 활성.
+ *   - 카드는 wrapper의 auto 마진으로 화면 세로 중앙, 로고는 카드 상단 위 absolute(간격 일정, bbox 추적).
+ *   - 게이트도 동일 적용(별도 JS 분기·페이지별 고정 top 없음).
  * ========================================================================== */
-@media (orientation: portrait) {
-  /* 카드가 상단에 치우치지 않도록: 하단(96px)과 대칭인 상단 여백 → 화면 세로 중앙(카드 중심≈화면 중심).
-     로고 영역도 함께 확보되어 겹침 없음. auto 마진으로 중앙, 내용이 길면 위에서부터 스크롤(잘림 없음). */
-  .is-playing .screen { padding-top: calc(96px + env(safe-area-inset-top, 0px)); }
-  .is-playing .scene-card { margin-top: auto; margin-bottom: auto; }
+.scene-wrap { display: contents; }   /* 기본(가로/데스크톱): wrapper 투명 → 로고 fixed·카드 기존 그대로(무영향) */
 
-  /* 브랜드 로고: 하단 중앙 → 상단 중앙(좌우 정확히 중앙·크기 유지). 게이트는 기존 하단 유지. */
-  .is-playing .brand-logo {
-    top: calc(8px + env(safe-area-inset-top, 0px));
-    bottom: auto;
+@media (orientation: portrait) {
+  /* 카드 세로 중앙: 하단(96px)과 대칭인 상단 여백 → 카드 중심이 화면 중심에 오도록. 로고가 카드 위로 나올 공간 확보. */
+  .screen { padding-top: calc(96px + env(safe-area-inset-top, 0px)); }
+  .scene-wrap {
+    display: block; position: relative;
+    width: 100%; max-width: 560px;
+    margin: auto 0;                    /* 세로 중앙(내용이 길면 위에서부터 스크롤 — 잘림 없음) */
+  }
+  .scene-wrap > .scene-card { margin: 0 auto; }
+  /* 로고: 카드 박스 바로 위 중앙(가로 중심=카드 중심), 카드와 12~20px 간격(화면 높이 무관 일정, safe-area 유지). */
+  .scene-wrap > .brand-logo {
+    position: absolute; left: 50%; right: auto; top: auto; bottom: 100%;
+    transform: translateX(-50%);
+    margin-bottom: clamp(12px, 2.2vh, 20px);
+    width: clamp(54px, 15vw, 68px); height: auto;
   }
 }
 
@@ -2086,3 +2093,20 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
 
 /* 필수 시청 영상(Page6·Page11) 종료 후: 영역 테두리를 키컬러로 살짝 강조(자연스러운 "다음" 유도) */
 .info-video.is-ended { border-color: var(--key); }
+
+/* =============================================================================
+ * v0.10.0-beta — 컨트롤 SVG 아이콘 크기 · Page 5 문구 색 · Page 7 '생분해' 키워드 조정
+ * ========================================================================== */
+/* (4) 하단 컨트롤 인라인 SVG: 버튼 안 수직·수평 중앙, 반응형 크기(작은 화면에서도 선명·통통) */
+.ctrl-ico { display: inline-flex; align-items: center; justify-content: center; }
+.ctrl-ico svg { width: 1.25em; height: 1.25em; display: block; }
+
+/* (3) Page 5(경고) 문구 색상만 변경 — .warning-scene 전용(다른 페이지·공통 클래스 무영향, 내용/크기/굵기/위치/애니메이션 유지) */
+.warning-scene .card-title.is-warn { color: #D1000A; }
+.warning-scene .warning-sub { color: #1A3446; }
+
+/* (6) Page 7 '생분해'(kw-1) 키워드: 조금 더 크게 + 제품 쪽으로 조금 더(과도한 확대·이동 금지) */
+.kw-1 { font-size: clamp(13px, 2vw, 19px); left: 4%; }
+@media (orientation: portrait) {
+  .kw-1 { font-size: clamp(13px, 3.8vw, 17px); left: 3%; }
+}

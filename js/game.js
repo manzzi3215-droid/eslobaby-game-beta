@@ -192,7 +192,12 @@
       card.appendChild(pageNum);
     }
 
-    el.appendChild(card);
+    // v0.10.0: 로고를 카드 바로 위에 붙이기 위해 카드를 wrapper로 감싸고 로고를 wrapper 안으로 이동.
+    //   세로: wrapper가 카드를 세로 중앙 배치, 로고는 카드 상단 위 absolute(간격 일정). 가로/데스크톱: .scene-wrap{display:contents} 로 무영향.
+    var wrap = div('scene-wrap');
+    if (brandLogo) wrap.appendChild(brandLogo);   // 항상 떠있는 단일 로고 요소를 현재 화면 wrapper로 relocate
+    wrap.appendChild(card);
+    el.appendChild(wrap);
   }
 
   /* ---------- 게이트: 카카오 채널 추가 -------------------------------- */
@@ -1372,8 +1377,6 @@
     var d = show ? '' : 'none';
     if (controlPanel) controlPanel.style.display = d;
     if (bottomHint) bottomHint.style.display = d;
-    // v0.9.9: 게임(카드뉴스) 화면일 때만 .is-playing 부여 → 세로 중앙정렬/로고 상단 스코프(게이트 제외)
-    if (app) app.classList.toggle('is-playing', !!show);
   }
 
   /* ---------- 좌측 컨트롤 패널 (처음으로/플레이/정지/다음) ----------------- */
@@ -1383,7 +1386,7 @@
     b.type = 'button';
     b.setAttribute('aria-label', label);   // v0.8.x: 접근성
     var ico = div('ctrl-ico');
-    ico.textContent = icon;
+    ico.innerHTML = icon;   // v0.10.0: 유니코드 글리프 → 인라인 SVG(통통·둥근, OS 무관)
     ico.setAttribute('aria-hidden', 'true');
     var lbl = div('ctrl-lbl');
     lbl.textContent = label;
@@ -1392,14 +1395,22 @@
     b.addEventListener('click', onClick);
     return b;
   }
+  // v0.10.0: 컨트롤 픽토그램 — 통통·둥근 인라인 SVG(이모지/OS별 글리프 미사용). 5개 시각 무게 통일.
+  var CTRL_SVG = {
+    home: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 5.5h13"/><path d="M7.5 13.5 12 9l4.5 4.5"/><path d="M12 9.4V18.8"/></svg>',
+    play: '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2.8" stroke-linejoin="round"><path d="M9 6.5 17.3 12 9 17.5Z"/></svg>',
+    prev: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 6.5 8.4 12 14 17.5"/><path d="M8.8 12H18"/></svg>',
+    pause: '<svg viewBox="0 0 24 24" fill="currentColor"><rect x="6.2" y="5" width="4.3" height="14" rx="2.15"/><rect x="13.5" y="5" width="4.3" height="14" rx="2.15"/></svg>',
+    next: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10 6.5 15.6 12 10 17.5"/><path d="M15.2 12H6"/></svg>'
+  };
   function buildControlPanel() {
     controlPanel = div('control-panel');
     // v0.8.x 순서: 처음으로 / 플레이 / 이전 / 정지 / 다음
-    var homeB = makeCtrlButton('↑', CFG.texts.homeButton, goHome);   // v0.9.8: 집 아이콘 → 위쪽 화살표(↑, ←/→와 동일 스타일)
-    playBtn = makeCtrlButton('▶', '플레이', playGame);
-    prevBtn = makeCtrlButton('←', '이전', goPrev);   // v0.8.x — 이전 장면으로 이동
-    pauseBtn = makeCtrlButton('⏸', '정지', pauseGame);
-    nextBtn = makeCtrlButton('→', '다음', goNext);   // v0.2.7 — 다음 장면으로 즉시 이동
+    var homeB = makeCtrlButton(CTRL_SVG.home, CFG.texts.homeButton, goHome);   // v0.10.0: 맨 처음으로(상단 바+위 화살표)
+    playBtn = makeCtrlButton(CTRL_SVG.play, '플레이', playGame);
+    prevBtn = makeCtrlButton(CTRL_SVG.prev, '이전', goPrev);   // v0.8.x — 이전 장면으로 이동
+    pauseBtn = makeCtrlButton(CTRL_SVG.pause, '정지', pauseGame);
+    nextBtn = makeCtrlButton(CTRL_SVG.next, '다음', goNext);   // v0.2.7 — 다음 장면으로 즉시 이동
     prevBtn.classList.add('is-prev');
     nextBtn.classList.add('is-next');                // v0.2.8 — 파란 화살표 강조
     controlPanel.appendChild(homeB);
