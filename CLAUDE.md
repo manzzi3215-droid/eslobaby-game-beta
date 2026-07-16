@@ -14,7 +14,12 @@
 
 ## 현재 버전
 
-**v0.9.5-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.9.6-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.9.6-beta(patch): **배경 이미지만 교체**(게임 흐름·페이지·문구·UI·로직·애니메이션·레이아웃 전부 불변).
+  - 세로: 신규 원본 일러스트 → `assets/images/background-v3.jpg`(720×1280, 재인코딩 없이 원본 그대로).
+  - 가로: 위 원본을 **Higgsfield outpaint(16:9)**로 좌우만 자연 확장 → `assets/images/background-wide-v3.jpg`(1920×1072). 중앙 구도·오브젝트 위치·차가운 프로스트 창문·시안 색감·노이즈 질감 유지. 스트레치/타일/미러 없음.
+  - **코드 변경 없음**: `config.assets.background`/`backgroundWide` 경로만 v3(jpg)로 교체. game.js는 `new URL()` 절대경로로 읽어 포맷 무관. 기존 v1/v2 배경 파일은 보존.
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.9.6-beta`, precache 목록도 v3로 교체.
 ※ v0.9.5-beta(patch): Page6·11 영상 **종료 후 탭 안내 문구 제거**. 자동 전환·게이트·error 안전장치·디자인 불변.
   - `renderVideo`의 `unlock()`에서 `hint.textContent = tapNext` 제거 → 종료·오류 시 안내문 텍스트 미변경(재생 중 "영상을 끝까지 보면…" 유지). 깜빡임·레이아웃 흔들림 없음.
   - `hints.tapNext`는 config에 유지(다른 수동 이동 페이지 사용). 영상 흐름에서만 미표시.

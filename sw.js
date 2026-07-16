@@ -11,7 +11,7 @@
  * ========================================================================== */
 'use strict';
 
-var CACHE_NAME = 'eslo-game-v0.9.5-beta';
+var CACHE_NAME = 'eslo-game-v0.9.6-beta';
 
 // 미리 캐싱할 핵심 파일 (상대경로)
 var PRECACHE = [
@@ -51,9 +51,9 @@ var PRECACHE = [
   './assets/images/eslo-bath.png',
   './assets/images/eslo-cleanser.png',
   './assets/images/eslo-lotion.png',
-  // v0.6.0: 욕실 배경(세로/가로, 변기 제거 v2) — 오프라인 첫 로드에도 배경 표시
-  './assets/images/background-v2.png',
-  './assets/images/background-wide-v2.webp',
+  // v0.9.6: 욕실 배경(세로/가로, 신규 원본 v3 — 가로는 Higgsfield outpaint 확장) — 오프라인 첫 로드에도 배경 표시
+  './assets/images/background-v3.jpg',
+  './assets/images/background-wide-v3.jpg',
   // v0.7.0: PAGE1 비교 이미지 · 일반 바디워시 · 샤워헤드 (소형, 오프라인 대비 precache)
   './assets/images/baby-wonder.png',
   './assets/images/normal_wash.png',

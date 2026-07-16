@@ -19,7 +19,7 @@
 window.ESLO_CONFIG = {
   /* --- 프로젝트 메타 --------------------------------------------------- */
   meta: {
-    version: 'v0.9.5-beta',
+    version: 'v0.9.6-beta',
     title: '이슬로(eslo) 베이비 미니게임',
   },
 
@@ -34,8 +34,8 @@ window.ESLO_CONFIG = {
     childSad:  'assets/images/baby-sad.png',    // 피부 자극·실패(울상+발진)
     childHappy:'assets/images/baby-happy.png',  // 미션 성공·깨끗해진 상태
     childWonder:'assets/images/baby-wonder.png', // Page1(MISSION): 양손에 바디워시·이슬로 제품 (662×744)
-    background:'assets/images/background-v2.png',   // 욕실 배경(세로/모바일, v2: 변기 제거) — 비우면 SVG 욕실 연출
-    backgroundWide:'assets/images/background-wide-v2.webp', // 욕실 배경(가로/데스크톱, v2: 변기 제거) — 비우면 세로 배경 사용
+    background:'assets/images/background-v3.jpg',   // 욕실 배경(세로/모바일, v3: 신규 원본 일러스트) — 비우면 SVG 욕실 연출
+    backgroundWide:'assets/images/background-wide-v3.jpg', // 욕실 배경(가로/데스크톱, v3: v3 원본을 Higgsfield outpaint로 좌우 확장) — 비우면 세로 배경 사용
     magnifier: 'assets/images/magnifier.png',   // 돋보기 (현재 흐름 미사용)
     bubble:    'assets/images/bubble.png',      // 거품 (비우면 도형 거품)
     warningLight: 'assets/images/warning-light.png', // 경고등/비상등 (게이지 100%)
