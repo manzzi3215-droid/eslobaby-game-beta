@@ -211,12 +211,16 @@
         var title = div('gate-title');
         title.textContent = CFG.texts.gate.title;
 
-        var qr = C.createAsset({ src: CFG.assets.qr, label: CFG.placeholders.qr, shape: 'qr', className: 'qr-box' });
+        // v0.9.8: QR 이미지 삭제. 카카오 채널 이동 버튼(새 탭) 추가 + 기존 완료(스타트) 버튼 유지.
+        var joinBtn = C.createButton(CFG.texts.gate.joinButton, function () {
+          window.open(CFG.texts.gate.joinUrl, '_blank', 'noopener');
+        });
+        joinBtn.classList.add('btn-kakao');
 
         var btn = C.createButton(CFG.texts.gate.button, startGame);
 
         body.appendChild(title);
-        body.appendChild(qr);
+        body.appendChild(joinBtn);
         body.appendChild(btn);
       });
     });
@@ -1389,7 +1393,7 @@
   function buildControlPanel() {
     controlPanel = div('control-panel');
     // v0.8.x 순서: 처음으로 / 플레이 / 이전 / 정지 / 다음
-    var homeB = makeCtrlButton('🏠', CFG.texts.homeButton, goHome);
+    var homeB = makeCtrlButton('↑', CFG.texts.homeButton, goHome);   // v0.9.8: 집 아이콘 → 위쪽 화살표(↑, ←/→와 동일 스타일)
     playBtn = makeCtrlButton('▶', '플레이', playGame);
     prevBtn = makeCtrlButton('←', '이전', goPrev);   // v0.8.x — 이전 장면으로 이동
     pauseBtn = makeCtrlButton('⏸', '정지', pauseGame);

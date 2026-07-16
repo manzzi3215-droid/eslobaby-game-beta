@@ -19,7 +19,7 @@
 window.ESLO_CONFIG = {
   /* --- 프로젝트 메타 --------------------------------------------------- */
   meta: {
-    version: 'v0.9.7-beta',
+    version: 'v0.9.8-beta',
     title: '이슬로(eslo) 베이비 미니게임',
   },
 
@@ -33,7 +33,7 @@ window.ESLO_CONFIG = {
     child:     'assets/images/baby-basic.png',  // 기본 상태
     childSad:  'assets/images/baby-sad.png',    // 피부 자극·실패(울상+발진)
     childHappy:'assets/images/baby-happy.png',  // 미션 성공·깨끗해진 상태
-    childWonder:'assets/images/baby-wonder.png', // Page1(MISSION): 양손에 바디워시·이슬로 제품 (662×744)
+    childWonder:'assets/images/baby-wonder_2.png', // Page1(MISSION): 양손에 바디워시·이슬로 제품 (v0.9.8: baby-wonder_2로 교체, 위치/크기/애니메이션 동일)
     background:'assets/images/background-v3.jpg',   // 욕실 배경(세로/모바일, v3: 신규 원본 일러스트) — 비우면 SVG 욕실 연출
     backgroundWide:'assets/images/background-wide-v3.jpg', // 욕실 배경(가로/데스크톱, v3: v3 원본을 Higgsfield outpaint로 좌우 확장) — 비우면 세로 배경 사용
     magnifier: 'assets/images/magnifier.png',   // 돋보기 (현재 흐름 미사용)
@@ -97,7 +97,9 @@ window.ESLO_CONFIG = {
       step:   '카카오 채널 추가',
       title:  '카카오 채널을 추가하고\n게임을 시작해볼까요?',
       desc:   'QR 코드를 스캔하고 채널을 추가하면\n게임을 시작할 수 있어요',
-      button: '채널 추가 완료했어요!',
+      joinButton: '채널 추가 하러가기',              // v0.9.8: 카카오 채널로 이동(새 탭)
+      joinUrl:    'https://pf.kakao.com/_nCzPn',      // 카카오 채널 링크(버튼 클릭 시 새 탭 이동)
+      button: '채널 추가 완료했어요!',                // 게임 시작(스타트) 버튼 — 그대로 유지
       // (구버전 보존) title: '게임 참여 전\neslo 카카오 채널을 추가해주세요'
     },
 

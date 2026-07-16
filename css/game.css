@@ -541,6 +541,8 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
   transition: transform var(--t-fast);
 }
 .btn-primary:active { transform: scale(0.96); }
+/* v0.9.8: 게이트 '채널 추가 하러가기' 버튼 — 캡슐 모양/폰트/크기/둥근정도 동일, 배경·텍스트 색만 변경 */
+.btn-primary.btn-kakao { background: #FAE100; color: #3C1E1E; }
 
 /* =============================================================================
  * 오늘의 미션

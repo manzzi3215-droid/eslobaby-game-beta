@@ -11,7 +11,7 @@
  * ========================================================================== */
 'use strict';
 
-var CACHE_NAME = 'eslo-game-v0.9.7-beta';
+var CACHE_NAME = 'eslo-game-v0.9.8-beta';
 
 // 미리 캐싱할 핵심 파일 (상대경로)
 var PRECACHE = [
@@ -56,6 +56,7 @@ var PRECACHE = [
   './assets/images/background-wide-v3.jpg',
   // v0.7.0: PAGE1 비교 이미지 · 일반 바디워시 · 샤워헤드 (소형, 오프라인 대비 precache)
   './assets/images/baby-wonder.png',
+  './assets/images/baby-wonder_2.png',
   './assets/images/normal_wash.png',
   './assets/images/washhead.png',
   // ※ prof.mp4(8MB+, 206 Range)는 precache 제외 — 초기 설치 용량 과다 방지, 네트워크 스트리밍

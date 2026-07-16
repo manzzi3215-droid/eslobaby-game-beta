@@ -14,7 +14,12 @@
 
 ## 현재 버전
 
-**v0.9.7-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.9.8-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.9.8-beta(patch): **UI 3건만 수정**. 게임 로직·진행 순서·Scene·영상·자동 전환·드래그·힌트·컨트롤 위치·레이아웃·배경 전부 불변.
+  - 게이트: QR 삭제 + "채널 추가 하러가기" 버튼 신설(카카오 `https://pf.kakao.com/_nCzPn` 새 탭). "채널 추가 완료했어요!"(스타트)는 유지. `renderGate`만 수정. 신규 버튼 `.btn-kakao`(배경 `#FAE100`/텍스트 `#3C1E1E`, 캡슐 모양·폰트·크기 동일). config `gate.joinButton`/`joinUrl` 신설.
+  - Page1: `childWonder` → `assets/images/baby-wonder_2.png`(경로만 교체, 위치·크기·애니메이션 동일). sw precache 추가.
+  - 처음으로 아이콘: `🏠`→`↑`(컨트롤 글리프 `←`/`→`와 동일 스타일). 라벨·동작 불변.
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.9.8-beta`.
 ※ v0.9.7-beta(patch): **가로 배경만 재확장**(좌우 연결 자연스럽게). 세로 배경·게임 흐름·페이지·문구·UI·로직·애니메이션·레이아웃 전부 불변.
   - v0.9.6 가로본의 "칸막이 알코브"(중앙 밝은 벽 + 좌우 어두운 모서리) 개선 → 측벽이 넓은 평면(세로와 동일한 매끈 스타일)으로 중앙↔좌우가 부드럽게 이어지는 outpaint 컷 선택 → `assets/images/background-wide-v3.jpg`(1920×1072) 교체. 파일명·경로·세로 배경 그대로, 코드 변경 없음.
   - `sw.js` `CACHE_NAME`=`eslo-game-v0.9.7-beta`(배포본 캐시 무효화, precache 파일명 동일).
