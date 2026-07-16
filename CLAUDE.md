@@ -14,7 +14,10 @@
 
 ## 현재 버전
 
-**v0.9.6-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.9.7-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.9.7-beta(patch): **가로 배경만 재확장**(좌우 연결 자연스럽게). 세로 배경·게임 흐름·페이지·문구·UI·로직·애니메이션·레이아웃 전부 불변.
+  - v0.9.6 가로본의 "칸막이 알코브"(중앙 밝은 벽 + 좌우 어두운 모서리) 개선 → 측벽이 넓은 평면(세로와 동일한 매끈 스타일)으로 중앙↔좌우가 부드럽게 이어지는 outpaint 컷 선택 → `assets/images/background-wide-v3.jpg`(1920×1072) 교체. 파일명·경로·세로 배경 그대로, 코드 변경 없음.
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.9.7-beta`(배포본 캐시 무효화, precache 파일명 동일).
 ※ v0.9.6-beta(patch): **배경 이미지만 교체**(게임 흐름·페이지·문구·UI·로직·애니메이션·레이아웃 전부 불변).
   - 세로: 신규 원본 일러스트 → `assets/images/background-v3.jpg`(720×1280, 재인코딩 없이 원본 그대로).
   - 가로: 위 원본을 **Higgsfield outpaint(16:9)**로 좌우만 자연 확장 → `assets/images/background-wide-v3.jpg`(1920×1072). 중앙 구도·오브젝트 위치·차가운 프로스트 창문·시안 색감·노이즈 질감 유지. 스트레치/타일/미러 없음.
