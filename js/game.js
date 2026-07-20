@@ -34,6 +34,8 @@
   function clearScene() {
     timers.forEach(clearTimeout); timers = [];
     cleanups.forEach(function (f) { try { f(); } catch (_) {} }); cleanups = [];
+    // v0.10.6: 장면 이탈/이동 시 페이지 음성 즉시 정지(currentTime 0). 예약된 울음·웃음은 timers 정리로 취소.
+    try { if (window.SFX && window.SFX.stopVoice) window.SFX.stopVoice(); } catch (_) {}
   }
   function clamp01(v) { return Math.max(0, Math.min(1, v)); }
   // v0.4.3: 효과음 재생 (SFX 모듈 없거나 실패해도 게임에 영향 없음)
@@ -271,6 +273,25 @@
   // v0.10.5: 영상 재생 워치독 — ①미시작 시 터치 재생 유도, ②최종 안전망(잠금 해제, 갇힘 방지)
   var VIDEO_START_TIMEOUT = 5000;
   var VIDEO_HARD_TIMEOUT = 12000;
+  // v0.10.6: 페이지 음성 종료 후 울음/웃음 효과음까지의 간격(자연스러운 순차)
+  var VOICE_SFX_GAP = 250;
+
+  // v0.10.6: 페이지 진입 시 해당 PAGE(=index+1) 음성 1회 재생.
+  //   PAGE5=음성 종료 후 울음, PAGE10=음성 종료 후 웃음(순차). 음원 없으면 기존 효과음 즉시 재생.
+  //   장면 이탈 시 clearScene 이 음성 정지 + 예약 타이머(울음/웃음) 취소.
+  function playPageVoice(page) {
+    var myIndex = index;
+    var hasVoiceApi = window.SFX && window.SFX.playVoiceForPage;
+    var afterVoice = null;
+    if (page === 5)  afterVoice = function () { setTimer(function () { if (index === myIndex && !paused) sfx('cry'); }, VOICE_SFX_GAP); };
+    if (page === 10) afterVoice = function () { setTimer(function () { if (index === myIndex && !paused) sfx('laugh'); }, VOICE_SFX_GAP); };
+    var played = hasVoiceApi ? window.SFX.playVoiceForPage(page, afterVoice) : false;
+    if (!played) {
+      // 음원 없음(또는 API 없음) → 기존 정책: PAGE5 울음·PAGE10 웃음 즉시(정지 상태면 미재생)
+      if (page === 5 && !paused) sfx('cry');
+      if (page === 10 && !paused) sfx('laugh');
+    }
+  }
   //   delay 미지정 시 기본 여운(드래그/영상). v0.10.2: PAGE 13은 rewardHold(약 2초) 유지 후 전환.
   function scheduleAutoNext(fromIndex, delay) {
     if (autoNextScheduled) return;
@@ -293,6 +314,10 @@
       if (paused) { v.pause(); }
       else { var p = v.play(); if (p && p.catch) p.catch(function () {}); }
     }
+    // v0.10.6: 페이지 음성도 정지/재개 컨트롤과 연동(정지=pause, 재생=이어서)
+    try {
+      if (window.SFX) { if (paused) { if (SFX.pauseVoice) SFX.pauseVoice(); } else { if (SFX.resumeVoice) SFX.resumeVoice(); } }
+    } catch (_) {}
   }
   // ⏸ 정지 / ▶ 플레이: 현재 화면의 영상·CSS 애니메이션을 일시정지/재개(applyPauseState). BGM 제거 후에도 유효한 기능.
   function pauseGame() { paused = true; applyPauseState(); updateCtrlButtons(); }
@@ -352,7 +377,8 @@
     sfx('scene');                        // v0.4.3: Scene 시작 효과음
     // 진행 표시(페이지 점)는 카드 안쪽에서 shell 이 직접 그림 (v0.2.8)
     (RENDERERS[scene.type] || RENDERERS.message)(scene);
-    applyPauseState();                   // v0.8.x: 정지 상태면 새 화면의 영상·애니메이션도 정지 유지
+    playPageVoice(index + 1);            // v0.10.6: 페이지 진입 음성(1회). PAGE5/10은 음성 종료 후 울음/웃음 순차.
+    applyPauseState();                   // v0.8.x: 정지 상태면 새 화면의 영상·애니메이션·음성도 정지 유지
   }
 
   /* ---------- 타입별 렌더러 ------------------------------------------ */
@@ -463,8 +489,8 @@
         body.appendChild(stage);
         body.appendChild(makeHint(CFG.texts.hints.tapNext));
       });
-      sfx('success');                      // v0.4.3: 성공 효과음
-      if (!paused) sfx('laugh');           // v0.10.2: PAGE 10 진입 시 아이 웃음(정지 상태면 미재생, 재진입 시 1회)
+      sfx('success');                      // v0.4.3: 성공 효과음(진입 스팅어)
+      // v0.10.6: 아이 웃음(laugh)은 페이지 음성 종료 후 순차 재생 → renderScene 의 playPageVoice 가 처리.
       tapAdvance(el);    });
   }
 
@@ -648,8 +674,8 @@
         body.appendChild(stage);
         body.appendChild(makeHint(CFG.texts.hints.tapNext));
       }, 'warn');
-      sfx('warn');                         // v0.4.3: 경고/실패 효과음
-      if (!paused) sfx('cry');             // v0.10.2: PAGE 5 진입 시 아이 울음(정지 상태면 미재생, 재진입 시 1회)
+      sfx('warn');                         // v0.4.3: 경고/실패 효과음(진입 스팅어)
+      // v0.10.6: 아이 울음(cry)은 페이지 음성 종료 후 순차 재생 → renderScene 의 playPageVoice 가 처리.
       tapAdvance(el);    });
   }
 

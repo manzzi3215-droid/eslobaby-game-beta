@@ -19,7 +19,7 @@
 window.ESLO_CONFIG = {
   /* --- 프로젝트 메타 --------------------------------------------------- */
   meta: {
-    version: 'v0.10.5-beta',
+    version: 'v0.10.6-beta',
     title: '이슬로(eslo) 베이비 미니게임',
   },
 
@@ -251,6 +251,28 @@ window.ESLO_CONFIG = {
     volume: 0.32,           // 효과음(SFX) 마스터 볼륨(0~1) — PAGE5 울음·PAGE10 웃음·버튼음 등
     files: {},              // 비어있으면 합성음 사용
     // v0.10.5: 배경음악(BGM) 설정 제거 — 반복 BGM 완전 삭제(효과음만 유지).
+  },
+
+  /* --- 페이지별 AI 안내 음성 (v0.10.6-beta) ---------------------------
+   * PAGE 번호(사용자 표시 1~14) → 음성 파일 경로. scenes 인덱스 = PAGE − 1.
+   * 각 PAGE 진입 시 1회 재생, 페이지 이동 시 이전 음성 즉시 정지(currentTime 0).
+   * 원본은 (PAGE N).mp4(비디오+AAC) → 오디오만 무손실 추출한 .m4a(AAC). 파일 없으면 조용히 skip(게임 진행 무영향).
+   * ------------------------------------------------------------------- */
+  voice: {
+    1:  'assets/audio/voice/page01.m4a',
+    2:  'assets/audio/voice/page02.m4a',
+    3:  'assets/audio/voice/page03.m4a',
+    4:  'assets/audio/voice/page04.m4a',
+    5:  'assets/audio/voice/page05.m4a',
+    6:  'assets/audio/voice/page06.m4a',
+    7:  'assets/audio/voice/page07.m4a',
+    8:  'assets/audio/voice/page08.m4a',
+    9:  'assets/audio/voice/page09.m4a',
+    10: 'assets/audio/voice/page10.m4a',
+    11: 'assets/audio/voice/page11.m4a',
+    12: 'assets/audio/voice/page12.m4a',
+    13: 'assets/audio/voice/page13.m4a',
+    14: 'assets/audio/voice/page14.m4a',
   },
 
   /* --- 관리자(Admin) 모드 (v0.4.0-beta) -------------------------------

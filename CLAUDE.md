@@ -14,7 +14,15 @@
 
 ## 현재 버전
 
-**v0.10.5-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.10.6-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.10.6-beta(minor): **페이지별 AI 안내 음성(PAGE 1~14) 적용**. 페이지 구성·흐름·문구·완료 판정·자동 전환·영상 must-watch·드래그·효과음(울음/웃음) 전부 유지.
+  - 음원: 사용자 제공 ZIP의 `(PAGE 1)~(PAGE 14).mp4`(비디오+AAC)에서 **오디오만 무손실 추출**한 `.m4a`(AAC 44.1k stereo) → `assets/audio/voice/page01~14.m4a`(총 ~1.5MB). `배경음.mp4`(131초 배경음악)는 페이지가 아니고 v0.10.5에서 BGM 제거했으므로 **미적용**.
+  - 매핑: `config.voice{1..14}`(PAGE 번호 = scenes index+1, 게이트는 음성 없음). 하드코딩 금지·config 단일 관리.
+  - 재생: `renderScene`이 `playPageVoice(index+1)` 호출. 단일 HTMLAudioElement(`window.SFX.playVoiceForPage/stopVoice/pauseVoice/resumeVoice/hasVoiceForPage/stopAllAudio`). `clearScene`이 이동 시 이전 음성 즉시 정지(currentTime 0)+예약 효과음 취소 → 중복/겹침 없음. play() reject/error는 `console.warn`만(게임 무영향, 무한 재시도 없음).
+  - PAGE5/10: 페이지 음성 종료(`ended`) 후 `VOICE_SFX_GAP`(250ms) 뒤 울음/웃음 순차(기존 즉시 재생 → 순차로 이동). 이탈 시 예약 취소.
+  - PAGE6/11(영상): 영상은 muted라 페이지 음성과 충돌 없음 → 동시 재생. 영상 `ended`→자동 전환(6→7,11→12) 그대로. PAGE6 음성 6.8s≈영상 6.375s+전환지연, PAGE11 음성 5.85s<영상 7.375s → 정책 변경 없음.
+  - pause/play: `applyPauseState`가 영상·CSS 애니메이션과 함께 페이지 음성도 pause/resume.
+  - `sw.js`: 14개 m4a precache 편입(오프라인 음성), `CACHE_NAME`=`eslo-game-v0.10.6-beta`. 영상은 계속 precache 제외.
 ※ v0.10.5-beta(minor): **전체 BGM 제거 · PAGE 3·4·8·9 드래그 하단 그립 · PAGE 6·11 영상 사이니지 호환 재인코딩 + 재생실패 fallback**. 페이지 구성·흐름·문구·완료 판정·자동 전환은 불변.
   - BGM 제거: `js/sfx.js`의 Web Audio 합성 BGM 블록·export(startBGM/pauseBGM/resumeBGM 등) 삭제, `game.js` startGame/pause/play의 BGM 호출 삭제, `config.sfx.bgm` 삭제. **효과음(click·cry·laugh)·오디오 컨텍스트·제스처 활성화 구조는 유지.** 정지/플레이 버튼은 영상·CSS 애니메이션 제어(applyPauseState)라 BGM 제거 후에도 기능 유지. BGM은 파일이 아니라 코드였으므로 삭제할 음원 파일·preload·SW 캐시 없음.
   - 드래그 하단 그립: `interactions.js` `makeRubbable`에 `grabAnchorY` 옵션(기본 0.5). `game.js renderDrag`가 `grabAnchorY:0.9` 전달 → `moveToolTo`가 `translate(-50%,-90%)`로 도구를 손가락 위쪽에 표시(아기·화면중앙 가림 감소). 손가락 힌트(👆)는 도구 하단부(`tool` 자식, top 88%)로 이동. **판정(isOverBody/거리/완료/자동전환)은 손가락 좌표 기준 그대로.** `productIn` 등장 애니메이션이 인라인 transform을 덮으므로 `.stage.is-grabbed .drag-tool{animation:none}` 추가(기존 `:active` 보강).

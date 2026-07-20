@@ -184,9 +184,59 @@
   // v0.10.5: 배경음악(BGM) 제거 — 반복 BGM이 현장 분위기와 맞지 않아 완전 삭제.
   //   효과음(click/scene/pop/…, PAGE5 cry·PAGE10 laugh)과 오디오 컨텍스트/제스처 활성화 구조는 그대로 유지.
   //   BGM은 파일이 아니라 Web Audio 합성 코드였으므로 삭제할 음원 파일·preload·SW 캐시 항목은 없음.
+
+  /* =============================================================================
+   * 페이지 음성 플레이어 (v0.10.6) — 단일 HTMLAudioElement 로 상태 1개만 관리.
+   * -----------------------------------------------------------------------------
+   * - 페이지마다 Audio 객체를 새로 만들지 않음(단일 재사용) → 중복/겹침 방지.
+   * - 새 페이지 재생 전 기존 음성 즉시 정지(currentTime 0). play() reject/error 는 콘솔 warn 만.
+   * - 자동재생: 첫 사용자 제스처(게임 시작 버튼) 이후 각 페이지 재생 허용.
+   * ========================================================================== */
+  var voiceEl = null, voiceActive = false;
+  function ensureVoiceEl() {
+    if (!voiceEl) { voiceEl = new Audio(); voiceEl.preload = 'auto'; }
+    return voiceEl;
+  }
+  function stopVoice() {
+    voiceActive = false;
+    if (!voiceEl) return;
+    try { voiceEl.onended = null; voiceEl.onerror = null; } catch (e) {}
+    try { voiceEl.pause(); } catch (e) {}
+    try { voiceEl.currentTime = 0; } catch (e) {}
+  }
+  function voiceUrlForPage(page) {
+    var V = (CFG.voice || {});
+    return V[page] || V[String(page)] || null;
+  }
+  function hasVoiceForPage(page) { return !!voiceUrlForPage(page); }
+  // 해당 페이지 음성 재생(1회). onEnded: 정상 종료 시 콜백(중첩 방지 위해 stop 시 해제). 없으면 false.
+  function playVoiceForPage(page, onEnded) {
+    stopVoice();                                  // 이전 음성 즉시 정지 + currentTime 0
+    var url = voiceUrlForPage(page);
+    if (!url) return false;                        // 음원 없는 페이지 → 조용히 skip(게임 진행 무영향)
+    ensureVoiceEl();
+    voiceEl.onended = function () { voiceEl.onended = null; if (typeof onEnded === 'function') { try { onEnded(); } catch (e) {} } };
+    voiceEl.onerror = function () { try { console.warn('[eslo] voice load error:', url); } catch (e) {} };
+    try { voiceEl.src = url; voiceEl.currentTime = 0; } catch (e) {}
+    voiceActive = true;
+    var p = voiceEl.play();
+    if (p && p.catch) p.catch(function () { try { console.warn('[eslo] voice play blocked:', url); } catch (e) {} });   // 무한 재시도 X, 게임 무영향
+    return true;
+  }
+  function pauseVoice() { if (voiceActive && voiceEl && !voiceEl.paused) { try { voiceEl.pause(); } catch (e) {} } }
+  function resumeVoice() { if (voiceActive && voiceEl && voiceEl.paused) { var p = voiceEl.play(); if (p && p.catch) p.catch(function () {}); } }
+  function stopAllAudio() { stopVoice(); killOneShot('cry'); killOneShot('laugh'); }
+
   window.SFX = {
     play: play,
     setEnabled: function (v) { enabled = !!v; },
     setVolume: function (v) { master = v; if (masterGain) masterGain.gain.value = v; },
+    // v0.10.6: 페이지 음성 제어
+    playVoiceForPage: playVoiceForPage,
+    hasVoiceForPage: hasVoiceForPage,
+    stopVoice: stopVoice,
+    pauseVoice: pauseVoice,
+    resumeVoice: resumeVoice,
+    stopAllAudio: stopAllAudio,
   };
 })();
