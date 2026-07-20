@@ -14,7 +14,12 @@
 
 ## 현재 버전
 
-**v0.10.3-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.10.4-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.10.4-beta(patch): **릴리스 전 기술 정리만** — 화면·문구·애니메이션·오디오 값 전부 불변.
+  - PAGE 14 제품 이미지 최적화: `이슬로-바스앤샴푸-미니.png` 2754×5420 7.5MB → **610×1200 516KB(풀컬러 PNG, 92.9%↓)**. sharp `lanczos3` 리사이즈만(색상 변형 없음, 픽셀 MAD 0.2%), 알파 유지, 동일 파일명·경로(config/형식 불변). WebP(49.5KB)와 비교했으나 호환성·형식/경로 불변 우선으로 PNG 채택.
+  - warning-light 404 제거: `config.assets.warningLight` = 존재하지 않는 png 참조 → **`''`(빈 값)**. `createAsset`이 빈 src면 이미지 요청 없이 `shape:'siren'` SVG placeholder만 렌더(기존과 시각 동일, PAGE5 디자인 불변). 신규/기존 404 0건.
+  - `sw.js`: 최적화된 PAGE 14 이미지(516KB)를 **precache 편입**(오프라인 첫 로드 완료 화면). 영상(prof*.mp4)은 계속 precache 제외(런타임 캐시). `CACHE_NAME`=`eslo-game-v0.10.4-beta`.
+※ v0.10.3-beta(patch): **PAGE 13/14 등장 애니메이션·자동전환·오디오 볼륨·효과음 미세 조정만**. 페이지 구성·흐름·문구·게임 로직·필수영상·드래그 전부 불변.
 ※ v0.10.3-beta(patch): **PAGE 13/14 등장 애니메이션·자동전환·오디오 볼륨·효과음 미세 조정만**. 페이지 구성·흐름·문구·게임 로직·필수영상·드래그 전부 불변.
   - PAGE 13 reveal 고급화: `revealPop` = 아래(16px)→위 + opacity + scale 0.9→1, 부드러운 ease-out(`cubic-bezier(.22,.61,.36,1)`, 오버슈트/바운스 없음), 520ms. `STEP`=300ms(game.js, css와 동기화). 제품명 그룹감: 이미지↔제품명 gap 축소·`line-height:1.2`·`margin-top` 미세.
   - PAGE 14 순차 등장: 문구 `rewardTitlePop`(약간 Pop) → 제품 `rewardFadeScale`(240ms 지연) → 안내문 `rewardFadeUp`(560ms 지연). CSS animation-delay 기반(자동 전환 없음, JS 변경 없음).

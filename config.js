@@ -19,7 +19,7 @@
 window.ESLO_CONFIG = {
   /* --- 프로젝트 메타 --------------------------------------------------- */
   meta: {
-    version: 'v0.10.3-beta',
+    version: 'v0.10.4-beta',
     title: '이슬로(eslo) 베이비 미니게임',
   },
 
@@ -38,7 +38,7 @@ window.ESLO_CONFIG = {
     backgroundWide:'assets/images/background-wide-v3.jpg', // 욕실 배경(가로/데스크톱, v3: v3 원본을 Higgsfield outpaint로 좌우 확장) — 비우면 세로 배경 사용
     magnifier: 'assets/images/magnifier.png',   // 돋보기 (현재 흐름 미사용)
     bubble:    'assets/images/bubble.png',      // 거품 (비우면 도형 거품)
-    warningLight: 'assets/images/warning-light.png', // 경고등/비상등 (게이지 100%)
+    warningLight: '',   // v0.10.4: 경고등/비상등 — 실제 렌더는 SVG siren placeholder(shape:'siren'). 존재하지 않는 png 참조로 인한 404 제거(빈 값이면 이미지 요청 없이 placeholder 사용, 시각 동일).
     profVideo: 'assets/images/prof.mp4', // PAGE 5-1 설명 영상 (계면활성제 잔류)
     bioVideo:  'assets/images/prof_nongye.mp4', // PAGE 10-1 생분해 설명 영상 (v0.9.3: 필수 시청)
     // 계면이(gyemeon) — v0.4.2-beta: 실제 1x 에셋. 표정 변형 5종 + Scene 8 씻김용 sad.
