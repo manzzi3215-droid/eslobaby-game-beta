@@ -14,7 +14,12 @@
 
 ## 현재 버전
 
-**v0.10.0-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.10.1-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.10.1-beta(patch): **PAGE 12·13 문구/디자인만 수정**. 게임 로직·장면 순서·자동 전환·영상·드래그·배경·레이아웃·데스크톱 전부 불변.
+  - Page12 문구: `compareLead`='민감한 우리 아이 피부\n', `compareEmph`='생분해 케어는 선택이 아니라 필수!', `compareTail`=''(2줄). 우측 라벨 `compareGoodLabel`='착한 계면활성제\n이슬로 생분해 워시'.
+  - Page12 강조: `.compare-title .key-emph`(PAGE 12 한정 스코프)를 키컬러(`--key`) 배지(pill·흰 텍스트·`white-space:nowrap`·soft shadow)로 → 가장 먼저 눈에 들어오게. ≤360px는 폰트/패딩 축소로 한 줄 유지. 다른 페이지 `.key-emph`(Page11 등) 불변.
+  - Page13: `renderBrandFinal`에서 카드 중앙 엔딩 로고(`.ending-logo`) 제거(상단 브랜드 로고 `brandLogo`는 유지). 문구 `brandFinalTitle`='우리 아이 피부를 지키는\n착한 계면활성제\n안심 생분해 케어, 이슬로'(3줄).
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.10.1-beta`.
 ※ v0.10.0-beta(minor): **게이트 중앙 정렬 · 로고 카드 위 배치 · 컨트롤 SVG · Page1/5/7/11 문구·색상**. 게임 로직·장면 순서·자동 전환·영상·드래그·배경·데스크톱 불변.
   - 세로 중앙/로고: `.is-playing` 스코프 제거 → 공통 wrapper `.scene-wrap`(shell이 로고+카드 묶음)로 게이트 포함 전 카드뉴스 세로 중앙, 로고는 카드 바로 위 중앙 absolute(간격 12~20px 일정). 가로/데스크톱은 `.scene-wrap{display:contents}`로 무영향.
   - Page5 색: `.warning-scene .card-title.is-warn`=#D1000A, `.warning-sub`=#1A3446(색만).

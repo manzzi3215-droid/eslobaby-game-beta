@@ -465,12 +465,10 @@
     showScreen(function (el) {
       el.classList.add('is-brand-final');   // v0.9.2: 마지막 페이지 전용 스코프(낮은 가로 화면 겹침 방지 CSS용)
       shell(el, scene, scene.title, function (body) {
-        var logo = C.createAsset({ src: CFG.assets.logo, label: CFG.placeholders.logo, shape: 'logo', className: 'ending-logo' });
-
+        // v0.10.1: 카드 중앙 엔딩 로고(.ending-logo) 제거 — 상단 브랜드 로고(shell brandLogo)는 유지.
         // v0.4.4: Page 6과 동일한 3종 히어로 배치
         var hero = buildProductHero();
 
-        body.appendChild(logo);
         body.appendChild(hero);
         // v0.9.1: 하단 문구(brandFinalDesc) 삭제 — 값이 있을 때만 표시(현재는 빈 값이라 미표시).
         if (scene.desc) {

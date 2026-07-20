@@ -19,7 +19,7 @@
 window.ESLO_CONFIG = {
   /* --- 프로젝트 메타 --------------------------------------------------- */
   meta: {
-    version: 'v0.10.0-beta',
+    version: 'v0.10.1-beta',
     title: '이슬로(eslo) 베이비 미니게임',
   },
 
@@ -143,13 +143,13 @@ window.ESLO_CONFIG = {
       bioLead: '이슬로의 착한 계면활성제는\n물에 쉽게 씻겨 내려가\n',   // 앞 2줄(본문)
       bioEmph: '피부에 남지 않아요!',                                       // 마지막 줄 강조(키컬러)
       videoPlaceholder: '영상 준비 중',                                     // 영상 미첨부 시 안내
-      compareLead: '민감한 아이 피부일수록\n',
-      compareEmph: '생분해 계면활성제',
-      compareTail: '는 필수입니다!',
+      compareLead: '민감한 우리 아이 피부\n',                  // v0.10.1: 1줄 리드
+      compareEmph: '생분해 케어는 선택이 아니라 필수!',          // v0.10.1: 강조 문구(badge)
+      compareTail: '',
       compareBadLabel: '일반 계면활성제\n바디워시',           // v0.9.4: 2줄
-      compareGoodLabel: '생분해 계면활성제\n이슬로 베이비 워시',   // v0.9.4: 2줄
+      compareGoodLabel: '착한 계면활성제\n이슬로 생분해 워시',   // v0.10.1: 우측 라벨 문구 변경(2줄)
       compareVs: 'VS',
-      brandFinalTitle: '착한 계면활성제로\n우리 아이 피부를 지키는\n안심 생분해 케어, 이슬로',
+      brandFinalTitle: '우리 아이 피부를 지키는\n착한 계면활성제\n안심 생분해 케어, 이슬로',   // v0.10.1: 3줄 구성 변경
       brandFinalDesc:  '',   // v0.9.1: 마지막 페이지 하단 문구 삭제(로고·제품 정렬만 유지)
 
       // 이슬로 사용 장면 POINT 안내 박스 (v0.2.5: 흐름에서 제외 — 보존)

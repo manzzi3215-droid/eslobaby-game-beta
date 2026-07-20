@@ -1881,6 +1881,30 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
 
 /* PAGE 10-2 — 비포/애프터 비교 */
 .compare-title { margin-bottom: clamp(8px, 1.6vh, 16px); }
+/* v0.10.1: 강조 문구 "생분해 케어는 선택이 아니라 필수!"를 포인트 컬러 배지로 →
+   페이지에서 가장 먼저 눈에 들어오게(과하지 않게, 모바일 가독성 유지). PAGE 12 한정 스코프. */
+.compare-title .key-emph {
+  display: inline-block;
+  margin-top: clamp(5px, 1.1vh, 10px);
+  padding: clamp(4px, 0.9vh, 8px) clamp(11px, 2.6vw, 20px);
+  background: var(--key);
+  color: #fff;
+  font-weight: 900;
+  font-size: clamp(17px, 3vw, 30px);
+  line-height: 1.15;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+  border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(109, 161, 255, 0.35);
+  text-shadow: none;
+}
+/* 아주 좁은 화면(≤360px): 배지 폰트/패딩 축소로 한 줄 유지 */
+@media (max-width: 360px) {
+  .compare-title .key-emph {
+    font-size: clamp(14px, 4.2vw, 17px);
+    padding: clamp(4px, 0.9vh, 7px) clamp(9px, 3vw, 14px);
+  }
+}
 .compare-row {
   display: flex;
   align-items: stretch;
