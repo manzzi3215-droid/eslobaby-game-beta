@@ -103,6 +103,7 @@
     biodegradeInfo: 'brand',
     beforeAfterCompare: 'brand',
     brandFinal:     'brand',
+    rewardFinal:    'success',   // v0.10.2: 증정 안내 — 밝은 성공 톤
   };
 
   // 각 phase 가 시작되는 장면 index (클릭 이동용)
@@ -234,6 +235,8 @@
   /* ---------- 진행 제어 --------------------------------------------- */
   function startGame() {
     index = 0; state.irritation = 0; paused = false;
+    // v0.10.2: 게임 시작 버튼(사용자 제스처) 이후 BGM 시작 — 자동재생 정책 준수, 이후 페이지 전환에도 계속 재생.
+    try { if (window.SFX && window.SFX.startBGM) window.SFX.startBGM(); } catch (_) {}
     if (window.Analytics) window.Analytics.startSession();   // v0.4.0: 플레이 세션 시작
     renderScene();
   }
@@ -266,7 +269,8 @@
   //   - autoNextScheduled 로 장면당 1회 보장(중복 이벤트로 2페이지 이상 건너뜀 방지).
   //   - 발화 시 여전히 같은 장면인지 + busy/영상잠금 아님을 재확인(수동 이동과 경쟁 방지).
   var AUTO_NEXT_DELAY = 450;             // 완료 후 짧은 여운(ms)
-  function scheduleAutoNext(fromIndex) {
+  //   delay 미지정 시 기본 여운(드래그/영상). v0.10.2: PAGE 13은 rewardHold(약 2초) 유지 후 전환.
+  function scheduleAutoNext(fromIndex, delay) {
     if (autoNextScheduled) return;
     if (index !== fromIndex) return;
     autoNextScheduled = true;
@@ -274,7 +278,7 @@
       if (index !== fromIndex) return;            // 이미 이탈(수동 이동/이전/처음으로/goToStep)
       if (busy || videoGateLocked) return;        // 전환 중이거나 영상 잠김이면 스킵
       goNext();
-    }, AUTO_NEXT_DELAY);
+    }, (delay != null ? delay : AUTO_NEXT_DELAY));
   }
 
   // ⏸ 정지 / ▶ 플레이 (v0.8.x): 현재 화면의 영상·CSS 애니메이션만 일시정지/재개. 페이지 이동과 무관.
@@ -288,8 +292,14 @@
       else { var p = v.play(); if (p && p.catch) p.catch(function () {}); }
     }
   }
-  function pauseGame() { paused = true; applyPauseState(); updateCtrlButtons(); }
-  function playGame() { paused = false; applyPauseState(); updateCtrlButtons(); }
+  function pauseGame() {
+    paused = true; applyPauseState(); updateCtrlButtons();
+    try { if (window.SFX && window.SFX.pauseBGM) window.SFX.pauseBGM(); } catch (_) {}   // v0.10.2: 정지 시 BGM도 정지
+  }
+  function playGame() {
+    paused = false; applyPauseState(); updateCtrlButtons();
+    try { if (window.SFX && window.SFX.resumeBGM) window.SFX.resumeBGM(); } catch (_) {}  // v0.10.2: 재생 시 BGM 이어서 재생
+  }
 
   function updateCtrlButtons() {
     if (playBtn) playBtn.classList.toggle('is-active', !paused);
@@ -359,7 +369,8 @@
     compare: renderCompare,                 // v0.7.x — PAGE 10-2 비포/애프터 비교
     brand: renderBrand,
     missionSuccess: renderMissionSuccess,   // v0.2.5 — MISSION 성공!
-    brandFinal: renderBrandFinal,           // v0.2.5 — 최종 브랜드 페이지
+    brandFinal: renderBrandFinal,           // v0.2.5 — 최종 브랜드 페이지 (PAGE 13)
+    rewardFinal: renderRewardFinal,         // v0.10.2 — 미션 완료/증정 안내 (PAGE 14, 최종)
     mission: renderMission,     // (보존 — 현재 흐름 미사용)
     message: renderMessage,     // (보존 — 현재 흐름 미사용)
     reaction: renderReaction,   // (보존 — 현재 흐름 미사용)
@@ -456,29 +467,91 @@
         body.appendChild(makeHint(CFG.texts.hints.tapNext));
       });
       sfx('success');                      // v0.4.3: 성공 효과음
+      if (!paused) sfx('laugh');           // v0.10.2: PAGE 10 진입 시 아이 웃음(정지 상태면 미재생, 재진입 시 1회)
       tapAdvance(el);    });
   }
 
   // 최종 브랜드 페이지 (v0.2.5) — 제품 3종 + 브랜드 문구 + 다시하기
   // (장면 전환은 공통 Fade — showScreen 의 더블 버퍼 페이드 사용)
   function renderBrandFinal(scene) {
+    var myIndex = index;                   // v0.10.2: 순차 등장 완료 후 PAGE 14 자동 전환 대상 고정
     showScreen(function (el) {
       el.classList.add('is-brand-final');   // v0.9.2: 마지막 페이지 전용 스코프(낮은 가로 화면 겹침 방지 CSS용)
       shell(el, scene, scene.title, function (body) {
-        // v0.10.1: 카드 중앙 엔딩 로고(.ending-logo) 제거 — 상단 브랜드 로고(shell brandLogo)는 유지.
-        // v0.4.4: Page 6과 동일한 3종 히어로 배치
-        var hero = buildProductHero();
+        // v0.10.2: 제품 3종 + 제품명(제품 카드로 묶음), 순차 등장. 다시하기 버튼 제거(처음으로 컨트롤로 재시작).
+        var names = scene.names || [];
+        var items = [
+          { src: CFG.assets.ending.bath,     label: CFG.placeholders.endBath,     name: names[0] || '' },
+          { src: CFG.assets.ending.cleanser, label: CFG.placeholders.endCleanser, name: names[1] || '' },
+          { src: CFG.assets.ending.lotion,   label: CFG.placeholders.endLotion,   name: names[2] || '' },
+        ];
+        var group = div('final-products');
+        var revealEls = [];                 // 등장 순서: img1, name1, img2, name2, img3, name3
+        items.forEach(function (it) {
+          var card = div('final-prod-card');
+          var img = C.createAsset({
+            src: it.src, label: it.label, shape: 'product', variant: 'mint',
+            className: 'final-prod-img',
+          });
+          var nm = div('final-prod-name');
+          nm.textContent = it.name;
+          card.appendChild(img);
+          card.appendChild(nm);
+          group.appendChild(card);
+          revealEls.push(img, nm);          // 이미지 → 제품명 순서
+        });
+        body.appendChild(group);
 
-        body.appendChild(hero);
-        // v0.9.1: 하단 문구(brandFinalDesc) 삭제 — 값이 있을 때만 표시(현재는 빈 값이라 미표시).
-        if (scene.desc) {
-          var desc = div('ending-sub');
-          desc.textContent = scene.desc;
-          body.appendChild(desc);
+        // 순차 등장: 요소마다 등장 지연(step) 부여. CSS revealPop(both) 로 지연 중엔 숨김 유지.
+        var STEP = 260;                     // 요소 간 등장 간격(ms) — 순서가 명확히 느껴지되 답답하지 않게
+        var REVEAL_DUR = 420;               // revealPop 지속(css와 일치)
+        revealEls.forEach(function (elm, i) { elm.style.animationDelay = (i * STEP) + 'ms'; });
+        var hold = (CFG.timings && CFG.timings.rewardHold) || 2000;
+
+        // 1차: 마지막 요소(오른쪽 제품명)의 animationend = 전체 시퀀스 완료 시점 → rewardHold 후 PAGE 14 자동 전환.
+        //   (단순 추정 타이머 아님: 실제 애니메이션 종료 이벤트 기준. 정지 시 애니메이션도 멈춰 종료가 지연됨.)
+        var last = revealEls[revealEls.length - 1];
+        function armAutoNext() {
+          if (index !== myIndex) return;    // 이미 이탈했으면 무시
+          if (scene.autoNext) scheduleAutoNext(myIndex, hold);   // autoNextScheduled 가드로 1회만
         }
-        body.appendChild(C.createButton(CFG.texts.replayButton, renderGate));
+        last.addEventListener('animationend', function onSeqDone() {
+          last.removeEventListener('animationend', onSeqDone);
+          armAutoNext();
+        });
+        // 2차(안전망): 애니메이션이 진행되지 않는 환경(백그라운드 탭·스로틀·모션 차단)에서도
+        //   시퀀스 예상 소요시간 경과 후 자동 전환을 보장. clearScene 이 타이머를 정리(이탈 시 취소).
+        var seqTotal = (revealEls.length - 1) * STEP + REVEAL_DUR;
+        setTimer(armAutoNext, seqTotal + 300);
       });
       sfx('complete');                     // v0.4.3: 최종 완료 효과음
+    });
+  }
+
+  // PAGE 14 (v0.10.2) — 미션 완료 / 증정 안내 (최종 페이지, 자동 전환 없음, 다시하기 버튼 없음)
+  function renderRewardFinal(scene) {
+    showScreen(function (el) {
+      el.classList.add('is-reward-final');
+      shell(el, scene, '', function (body) {
+        // 완료 강조 문구(가장 먼저 눈에 들어오게)
+        var title = div('reward-title');
+        title.textContent = scene.title;
+
+        // 중앙 제품 이미지 (비율 유지)
+        var prod = C.createAsset({
+          src: CFG.assets.rewardProduct, label: CFG.placeholders.rewardProduct,
+          shape: 'product', variant: 'mint', className: 'reward-product',
+        });
+
+        // 하단 안내 문구 (정확히 2줄 — config \n)
+        var desc = div('reward-desc');
+        desc.textContent = scene.desc;
+
+        body.appendChild(title);
+        body.appendChild(prod);
+        body.appendChild(desc);
+      });
+      sfx('complete');                     // 도착 효과음(기존 완료음 재사용)
     });
   }
 
@@ -579,6 +652,7 @@
         body.appendChild(makeHint(CFG.texts.hints.tapNext));
       }, 'warn');
       sfx('warn');                         // v0.4.3: 경고/실패 효과음
+      if (!paused) sfx('cry');             // v0.10.2: PAGE 5 진입 시 아이 울음(정지 상태면 미재생, 재진입 시 1회)
       tapAdvance(el);    });
   }
 

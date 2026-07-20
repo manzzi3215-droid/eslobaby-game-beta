@@ -103,9 +103,16 @@
     // 장면 ⑨-3 (PAGE 10-2) — 비포/애프터 비교 (일반 바디워시 vs 이슬로)
     { id: 'beforeAfterCompare', type: 'compare', phase: 4 },
 
-    // 장면 ⑩ — 최종 브랜드 페이지 (제품 3종 + 문구 + 다시하기)
+    // 장면 ⑩ (PAGE 13) — 최종 브랜드 페이지 (제품 3종 + 제품명, 순차 등장)
+    //   v0.10.2: 다시하기 버튼 제거. 제품 이미지·제품명 순차 등장 완료 후 약 2초 유지 → PAGE 14 자동 전환.
     { id: 'brandFinal', type: 'brandFinal', phase: 4,
-      title: T.scenes.brandFinalTitle, desc: T.scenes.brandFinalDesc },
+      title: T.scenes.brandFinalTitle, desc: T.scenes.brandFinalDesc,
+      names: T.scenes.finalProductNames, autoNext: true },
+
+    // 장면 ⑪ (PAGE 14) — 미션 완료 / 증정 안내 (최종 페이지, 자동 전환 없음)
+    //   v0.10.2 신규: 완료 강조 문구 + 여행용 바스앤샴푸 이미지 + 2줄 안내. 다시하기 버튼 없음.
+    { id: 'rewardFinal', type: 'rewardFinal', phase: 4,
+      title: T.scenes.rewardTitle, desc: T.scenes.rewardDesc },
   ];
 
   /* (v0.2.4 이전 장면 구성 — 복구 대비 참고용 보존)

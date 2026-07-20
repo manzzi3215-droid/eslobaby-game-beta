@@ -14,7 +14,12 @@
 
 ## 현재 버전
 
-**v0.10.1-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.10.2-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.10.2-beta(minor): **PAGE 13 제품명·순차 등장·자동 전환 + PAGE 14 미션 완료/증정 안내(신규) + 전체 BGM·PAGE5 울음·PAGE10 웃음**. 총 **14페이지**. 기존 페이지 로직·자동 전환·필수 영상·드래그·배경·데스크톱 불변.
+  - PAGE 13(brandFinal): 다시하기 버튼 제거. 제품 3종 하단 제품명(`finalProductNames`=바스 앤 샴푸/엉덩이 클렌저/바디 로션), 이미지+제품명을 `.final-prod-card`로 묶음. 6요소 순차 등장(`revealPop`, 260ms 간격, 이미지→제품명). 카드 내부 중앙. 마지막 요소 `animationend`(+안전망 타이머) → `rewardHold`(2s) 후 PAGE 14 자동 전환(`scheduleAutoNext(idx, delay)` 확장, `autoNextScheduled` 1회 가드).
+  - PAGE 14(rewardFinal, 신규 최종): `rewardTitle`(💙 생분해 미션 완료 💙, 키컬러 강조) + 중앙 제품 이미지(`assets.rewardProduct`=이슬로-바스앤샴푸-미니.png) + `rewardDesc`(2줄). 자동 전환 없음·버튼 없음. RENDERERS.rewardFinal=renderRewardFinal, SCENE_THEME.rewardFinal='success'.
+  - 오디오(중앙 `window.SFX`): BGM=Web Audio 합성 오리지널 루프(startBGM/pauseBGM/resumeBGM, 별도 bgmGain·볼륨 0.15). 게임 시작 버튼(startGame)에서 시작, pause/play 연동, loop, 전환 지속. PAGE5=`cry`·PAGE10=`laugh`(진입 1회, `killOneShot` 중첩 방지, 정지 시 미재생). **외부 음원 없음 — 전부 코드 합성(라이선스 이슈 無).**
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.10.2-beta`. PAGE14 이미지(7.5MB)는 precache 제외(런타임 캐시). 합성 오디오는 sfx.js(precache)라 별도 음원 캐시 불필요.
 ※ v0.10.1-beta(patch): **PAGE 12·13 문구/디자인만 수정**. 게임 로직·장면 순서·자동 전환·영상·드래그·배경·레이아웃·데스크톱 전부 불변.
   - Page12 문구: `compareLead`='민감한 우리 아이 피부\n', `compareEmph`='생분해 케어는 선택이 아니라 필수!', `compareTail`=''(2줄). 우측 라벨 `compareGoodLabel`='착한 계면활성제\n이슬로 생분해 워시'.
   - Page12 강조: `.compare-title .key-emph`(PAGE 12 한정 스코프)를 키컬러(`--key`) 배지(pill·흰 텍스트·`white-space:nowrap`·soft shadow)로 → 가장 먼저 눈에 들어오게. ≤360px는 폰트/패딩 축소로 한 줄 유지. 다른 페이지 `.key-emph`(Page11 등) 불변.

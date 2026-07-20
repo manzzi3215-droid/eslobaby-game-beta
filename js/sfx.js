@@ -79,6 +79,57 @@
     src.start(t0); src.stop(t0 + dur + 0.02);
   }
 
+  /* ---------- 원샷 중첩 방지 (cry/laugh 재진입 시 정리 후 재생) -------- */
+  var oneShots = {};                  // name -> [oscillators]
+  function killOneShot(name) {
+    var arr = oneShots[name]; if (!arr) return;
+    arr.forEach(function (n) { try { n.stop(); } catch (e) {} try { n.disconnect(); } catch (e) {} });
+    oneShots[name] = [];
+  }
+  function regOneShot(name, node) { (oneShots[name] = oneShots[name] || []).push(node); }
+
+  // v0.10.2: 아이 울음 "으앙~" — 가벼운 비브라토 + 완만한 음정 곡선(약 0.95s, 귀엽게).
+  function cry() {
+    if (!ensureCtx()) return;
+    killOneShot('cry');
+    var t0 = ctx.currentTime;
+    var osc = ctx.createOscillator(), g = ctx.createGain();
+    var lfo = ctx.createOscillator(), lfoG = ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(520, t0);
+    osc.frequency.linearRampToValueAtTime(625, t0 + 0.15);
+    osc.frequency.linearRampToValueAtTime(430, t0 + 0.9);
+    lfo.type = 'sine'; lfo.frequency.value = 11; lfoG.gain.value = 16;   // 살짝 떨리는 울음
+    lfo.connect(lfoG); lfoG.connect(osc.frequency);
+    g.gain.setValueAtTime(0.0001, t0);
+    g.gain.exponentialRampToValueAtTime(0.5, t0 + 0.06);
+    g.gain.setValueAtTime(0.5, t0 + 0.62);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.95);
+    osc.connect(g); g.connect(masterGain);
+    osc.start(t0); lfo.start(t0); osc.stop(t0 + 0.98); lfo.stop(t0 + 0.98);
+    regOneShot('cry', osc); regOneShot('cry', lfo);
+  }
+
+  // v0.10.2: 아이 웃음 "꺄르르~" — 밝은 사인 톤 5연타 상승(약 0.7s).
+  function laugh() {
+    if (!ensureCtx()) return;
+    killOneShot('laugh');
+    var freqs = [700, 840, 980, 1120, 980];
+    for (var i = 0; i < freqs.length; i++) {
+      var t0 = ctx.currentTime + i * 0.11;
+      var osc = ctx.createOscillator(), g = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freqs[i], t0);
+      osc.frequency.linearRampToValueAtTime(freqs[i] * 1.15, t0 + 0.06);
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.32, t0 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.12);
+      osc.connect(g); g.connect(masterGain);
+      osc.start(t0); osc.stop(t0 + 0.14);
+      regOneShot('laugh', osc);
+    }
+  }
+
   // 이름별 합성 효과음 (귀엽고 가벼운 톤)
   var SOUNDS = {
     click:    function () { tone(680, 'triangle', 0.09, { slideTo: 900, gain: 0.42 }); },
@@ -90,6 +141,8 @@
     success:  function () { chord([523, 659, 784, 1046], 'sine', 0.5); },
     warn:     function () { tone(420, 'sine', 0.32, { slideTo: 250, gain: 0.4 }); },
     complete: function () { chord([659, 784, 988, 1318], 'triangle', 0.55); },
+    cry:      cry,      // v0.10.2: PAGE 5 진입 시 아이 울음
+    laugh:    laugh,    // v0.10.2: PAGE 10 진입 시 아이 웃음
   };
 
   var THROTTLE = { pop: 55, splash: 55, drip: 90, scene: 120, click: 40 };
@@ -122,9 +175,103 @@
     if (t && t.closest && t.closest('button')) play('click');
   }, true);
 
+  /* =============================================================================
+   * BGM — Web Audio 합성 오리지널 배경음악 (v0.10.2)
+   * -----------------------------------------------------------------------------
+   * - 외부 음원/파일 없음(전부 코드 합성) → 저작권/라이선스 이슈 없음, 오프라인 기본 지원.
+   * - 잔잔+발랄: 부드러운 패드 + 가벼운 벨 아르페지오. C→Am→F→G 16초 루프.
+   * - 자동재생 정책: startBGM()은 사용자 제스처(게임 시작 버튼) 이후에만 호출됨.
+   * - lookahead 스케줄러로 loop, pause/resume는 스케줄러 정지 + BGM 게인 램프.
+   * - 별도 bgmGain(효과음 masterGain과 독립) → BGM/효과음 볼륨 독립 제어.
+   * ========================================================================== */
+  var B = (S.bgm || {});
+  var bgmEnabled = B.enabled !== false;
+  var bgmVol = (B.volume != null) ? B.volume : 0.15;
+  var bgmGain = null, bgmOn = false, bgmPaused = false, bgmTimer = null, bgmNext = 0;
+  var BGM_LOOP = 16.0, BGM_LOOKAHEAD = 1.0, BGM_TICK = 250;
+  var BGM_BARS = [
+    [261.63, 329.63, 392.00],   // C major  (0s)
+    [220.00, 261.63, 329.63],   // A minor  (4s)
+    [174.61, 220.00, 261.63],   // F major  (8s)
+    [196.00, 246.94, 293.66],   // G major  (12s)
+  ];
+  function bgmVoice(freq, type, startAt, dur, peak, attack, release) {
+    if (!ctx || !bgmGain) return;
+    var osc = ctx.createOscillator(), g = ctx.createGain();
+    osc.type = type; osc.frequency.setValueAtTime(freq, startAt);
+    g.gain.setValueAtTime(0.0001, startAt);
+    g.gain.linearRampToValueAtTime(peak, startAt + attack);
+    g.gain.setValueAtTime(peak, startAt + Math.max(attack, dur - release));
+    g.gain.exponentialRampToValueAtTime(0.0001, startAt + dur);
+    osc.connect(g); g.connect(bgmGain);
+    osc.start(startAt); osc.stop(startAt + dur + 0.02);
+  }
+  function scheduleBgmIteration(base) {
+    for (var b = 0; b < 4; b++) {
+      var barT = base + b * 4, chord = BGM_BARS[b];
+      // 부드러운 패드(3음, 소절 길이만큼 지속 + 완만한 감쇠)
+      chord.forEach(function (f) { bgmVoice(f, 'triangle', barT, 4.4, 0.14, 0.6, 1.2); });
+      // 가벼운 벨 아르페지오(한 옥타브 위, 짧은 플럭) — 발랄함
+      var arp = [chord[0] * 2, chord[1] * 2, chord[2] * 2, chord[1] * 2, chord[2] * 2, chord[0] * 4];
+      for (var i = 0; i < arp.length; i++) {
+        bgmVoice(arp[i], 'sine', barT + i * 0.5, 0.42, 0.10, 0.01, 0.3);
+      }
+    }
+  }
+  function bgmTick() {
+    if (!ctx) return;
+    var now = ctx.currentTime;
+    while (bgmNext < now + BGM_LOOKAHEAD) { scheduleBgmIteration(bgmNext); bgmNext += BGM_LOOP; }
+  }
+  function startBGM() {
+    if (!bgmEnabled) return;
+    if (!ensureCtx()) return;
+    resume();
+    if (bgmOn) { if (bgmPaused) resumeBGM(); return; }   // 중복 시작 방지(이미 재생 중이면 무시/재개)
+    if (!bgmGain) { bgmGain = ctx.createGain(); bgmGain.connect(ctx.destination); }
+    var t = ctx.currentTime;
+    bgmGain.gain.cancelScheduledValues(t);
+    bgmGain.gain.setValueAtTime(bgmVol, t);
+    bgmOn = true; bgmPaused = false;
+    bgmNext = t + 0.06;
+    bgmTick();
+    if (bgmTimer) clearInterval(bgmTimer);
+    bgmTimer = setInterval(bgmTick, BGM_TICK);
+  }
+  function pauseBGM() {
+    if (!bgmOn || bgmPaused || !ctx || !bgmGain) return;
+    bgmPaused = true;
+    if (bgmTimer) { clearInterval(bgmTimer); bgmTimer = null; }
+    var t = ctx.currentTime;
+    bgmGain.gain.cancelScheduledValues(t);
+    bgmGain.gain.setValueAtTime(Math.max(0.0001, bgmGain.gain.value), t);
+    bgmGain.gain.linearRampToValueAtTime(0.0001, t + 0.2);   // 부드럽게 페이드 아웃(정지)
+  }
+  function resumeBGM() {
+    if (!bgmOn || !bgmPaused) return;
+    if (!ensureCtx()) return;
+    resume();
+    bgmPaused = false;
+    var t = ctx.currentTime;
+    bgmGain.gain.cancelScheduledValues(t);
+    bgmGain.gain.setValueAtTime(Math.max(0.0001, bgmGain.gain.value), t);
+    bgmGain.gain.linearRampToValueAtTime(bgmVol, t + 0.25);  // 이어서 재생(페이드 인)
+    bgmNext = t + 0.06;
+    bgmTick();
+    if (bgmTimer) clearInterval(bgmTimer);
+    bgmTimer = setInterval(bgmTick, BGM_TICK);
+  }
+
   window.SFX = {
     play: play,
     setEnabled: function (v) { enabled = !!v; },
     setVolume: function (v) { master = v; if (masterGain) masterGain.gain.value = v; },
+    // v0.10.2: BGM 제어(게임 시작 시 startBGM, pause/play 컨트롤과 연동)
+    startBGM: startBGM,
+    pauseBGM: pauseBGM,
+    resumeBGM: resumeBGM,
+    setBgmVolume: function (v) { bgmVol = v; if (bgmGain && ctx && !bgmPaused) bgmGain.gain.setValueAtTime(v, ctx.currentTime); },
+    setBgmEnabled: function (v) { bgmEnabled = !!v; if (!v) pauseBGM(); },
+    isBgmOn: function () { return bgmOn && !bgmPaused; },
   };
 })();

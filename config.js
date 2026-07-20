@@ -19,7 +19,7 @@
 window.ESLO_CONFIG = {
   /* --- 프로젝트 메타 --------------------------------------------------- */
   meta: {
-    version: 'v0.10.1-beta',
+    version: 'v0.10.2-beta',
     title: '이슬로(eslo) 베이비 미니게임',
   },
 
@@ -62,6 +62,8 @@ window.ESLO_CONFIG = {
       cleanser: 'assets/images/eslo-cleanser.png',
       lotion:   'assets/images/eslo-lotion.png',
     },
+    // v0.10.2: PAGE 14(미션 완료/증정 안내) 중앙 제품 이미지
+    rewardProduct: 'assets/images/이슬로-바스앤샴푸-미니.png',
   },
 
   /* --- Placeholder 라벨 ------------------------------------------------ */
@@ -80,6 +82,7 @@ window.ESLO_CONFIG = {
     endBath:     '바스앤샴푸',
     endCleanser: '엉덩이 클렌저',
     endLotion:   '로션',
+    rewardProduct: '이슬로 바스앤샴푸(여행용)',   // v0.10.2: PAGE 14 제품 이미지 대체 라벨
   },
 
   /* --- 문구(텍스트) ---------------------------------------------------- */
@@ -151,6 +154,11 @@ window.ESLO_CONFIG = {
       compareVs: 'VS',
       brandFinalTitle: '우리 아이 피부를 지키는\n착한 계면활성제\n안심 생분해 케어, 이슬로',   // v0.10.1: 3줄 구성 변경
       brandFinalDesc:  '',   // v0.9.1: 마지막 페이지 하단 문구 삭제(로고·제품 정렬만 유지)
+      // v0.10.2: PAGE 13 제품 3종 하단 제품명 (좌 → 중앙 → 우 순서)
+      finalProductNames: ['바스 앤 샴푸', '엉덩이 클렌저', '바디 로션'],
+      // v0.10.2: PAGE 14 — 미션 완료 / 증정 안내 화면
+      rewardTitle: '💙 생분해 미션 완료! 💙',
+      rewardDesc:  '직원에게 화면을 보여주시고\n여행용 바스 앤 샴푸 받아가세요!',   // 정확히 2줄
 
       // 이슬로 사용 장면 POINT 안내 박스 (v0.2.5: 흐름에서 제외 — 보존)
       pointTitle:   'POINT!',
@@ -205,6 +213,7 @@ window.ESLO_CONFIG = {
     warningHold:        2000,
     calmHold:           1600,   // 게이지 0% "진정 완료" 를 보여주는 시간
     successHold:        3600,
+    rewardHold:         2000,   // v0.10.2: PAGE 13 제품 순차 등장 완료 후 PAGE 14 자동 전환까지 유지(ms)
   },
 
   /* --- 게임 동작 옵션 --------------------------------------------------- */
@@ -238,8 +247,14 @@ window.ESLO_CONFIG = {
    * ------------------------------------------------------------------- */
   sfx: {
     enabled: true,
-    volume: 0.35,           // 마스터 볼륨(0~1, 너무 크지 않게)
+    volume: 0.35,           // 효과음(SFX) 마스터 볼륨(0~1, 너무 크지 않게)
     files: {},              // 비어있으면 합성음 사용
+    // v0.10.2: 배경음악(BGM) — Web Audio 합성 오리지널 루프(외부 음원·파일 없음, 라이선스 이슈 無).
+    //   첫 사용자 인터랙션(게임 시작 버튼) 이후에만 재생, loop, pause/재생 컨트롤과 연동.
+    bgm: {
+      enabled: true,
+      volume: 0.15,         // BGM 볼륨(효과음과 독립) — 안내/효과음을 방해하지 않도록 작게
+    },
   },
 
   /* --- 관리자(Admin) 모드 (v0.4.0-beta) -------------------------------
