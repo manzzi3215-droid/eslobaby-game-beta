@@ -11,7 +11,7 @@
  * ========================================================================== */
 'use strict';
 
-var CACHE_NAME = 'eslo-game-v0.10.4-beta';
+var CACHE_NAME = 'eslo-game-v0.10.5-beta';
 
 // 미리 캐싱할 핵심 파일 (상대경로)
 var PRECACHE = [
@@ -61,8 +61,8 @@ var PRECACHE = [
   './assets/images/washhead.png',
   // v0.10.4: PAGE 14 제품 이미지 — 7.5MB→516KB(610×1200 최적화)로 precache 편입(오프라인 첫 로드에도 완료 화면 표시)
   './assets/images/이슬로-바스앤샴푸-미니.png',
-  // ※ prof.mp4·prof_nongye.mp4(각 수 MB, 206 Range 영상)는 precache 제외 — 초기 설치 용량 과다 방지, 네트워크 스트리밍 + fetch 런타임 캐시(cache-first)로 재방문 시 캐시.
-  // ※ 오디오(BGM·울음·웃음)는 Web Audio 합성(js/sfx.js에 코드로 포함, 이미 precache)이라 별도 음원 파일/캐시 불필요 — 오프라인 기본 동작.
+  // ※ prof.mp4·prof_nongye.mp4(v0.10.5: 사이니지 호환 재인코딩 1.2/2.2MB, 206 Range 영상)는 precache 제외 — 초기 설치 용량·저장공간 고려, fetch 런타임 캐시(cache-first)로 재방문 시 캐시.
+  // ※ 효과음(PAGE5 울음·PAGE10 웃음 등)은 Web Audio 합성(js/sfx.js, 이미 precache)이라 별도 음원 파일/캐시 불필요. (v0.10.5: 반복 BGM 제거)
 ];
 
 self.addEventListener('install', function (e) {

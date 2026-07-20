@@ -11,6 +11,34 @@
 
 ---
 
+## [v0.10.5-beta] - 2026-07-20
+### 전체 BGM 제거 · PAGE 3·4·8·9 드래그 하단 그립 · PAGE 6·11 영상 사이니지 호환 재인코딩 + 재생실패 fallback
+페이지 구성·흐름·문구·완료 판정·자동 전환·필수 영상 정책은 **불변**. 아래 3건만 수정.
+
+### Removed — 전체 BGM
+- 반복 배경음악(BGM) **완전 제거**(현장 분위기 부적합). `js/sfx.js`의 Web Audio 합성 BGM 블록·`window.SFX`의 BGM 메서드(startBGM/pauseBGM/resumeBGM/setBgmVolume/setBgmEnabled/isBgmOn) 삭제, `js/game.js` startGame/pauseGame/playGame의 BGM 호출 삭제, `config.sfx.bgm` 삭제.
+- **유지**: 효과음(버튼음·PAGE5 울음·PAGE10 웃음, 전부 Web Audio 합성)·오디오 컨텍스트·첫 제스처 활성화 구조. 정지/플레이 버튼은 현재 화면의 영상·CSS 애니메이션을 제어(applyPauseState)하므로 BGM 제거 후에도 **기능이 남아 어색한 빈 버튼이 아님**.
+- BGM은 음원 파일이 아니라 코드 합성이었으므로 삭제할 **음원 파일·preload·서비스워커 캐시 항목·404 없음**.
+
+### Changed — PAGE 3·4·8·9 드래그 하단 그립
+- 도구(일반 바디워시/샤워기/이슬로 제품) 이미지의 **하단부를 잡고**, 드래그 중 이미지가 **손가락 위쪽**에 보이도록 변경 → 손가락·손이 아기·화면 중앙을 덜 가림. 측정: 이미지 중심이 손가락보다 54~71px 위, 손가락은 이미지 하단 6~7% 지점.
+- 구현: `js/interactions.js` `makeRubbable`에 `grabAnchorY` 옵션(0=상단·0.5=중앙·1=하단, 기본 0.5). `js/game.js renderDrag`가 `grabAnchorY: 0.9` 전달 → `moveToolTo`의 도구 transform을 `translate(-50%,-90%)`로. 손가락 안내(👆)를 도구 하단부(도구 자식, top 88%)로 이동해 잡는 위치와 일치.
+- **판정 불변**: 완료 판정·이동 거리(TARGET_DISTANCE)·드래그 임계·자동 전환은 손가락 좌표 기준 그대로(시각 앵커만 변경). 실측: 드래그 완료 시 게이지 100% → 445ms 후 다음 페이지 자동 전환(기존과 동일).
+- 도구 등장 애니메이션(`productIn`, animation-fill:both)이 인라인 transform을 덮어써 앵커가 무시되던 문제 → `.stage.is-grabbed .drag-tool { animation: none }` 추가(기존 `:active` 규칙을 JS 클래스로 보강, 데스크톱 마우스·모바일 터치 공통 적용).
+
+### Fixed — PAGE 6·11 영상 (삼성 LH55WMBWBGCXKR 재생 실패)
+- **원인 진단(ffprobe)**: 두 영상 모두 H.264 **Main@Level4.1**, 1024×768, yuv420p, 24fps CFR, faststart는 정상이나 **비디오 비트레이트가 ~10Mbps로 비정상적으로 높음**(prof.mp4 9.99Mbps/8.27MB, prof_nongye.mp4 10.5Mbps/10.0MB). 사이니지 내장 하드웨어 디코더의 비트레이트/레벨 한계 초과가 재생 실패의 유력 원인. 오디오(AAC-LC 스테레오)는 게임에서 `muted`라 미사용.
+- **재인코딩(보수적 사이니지 규격)**: H.264 **Constrained Baseline@Level3.1**, yuv420p, 24fps CFR, faststart, **오디오 트랙 제거**(muted라 무영향), 비트레이트 대폭 축소. 해상도·길이·화면 내용 유지. 결과: prof.mp4 **8.27MB→1.22MB(1.53Mbps)**, prof_nongye.mp4 **10.0MB→2.2MB(2.39Mbps)**. 동일 파일명·경로(config 불변), git 히스토리에 원본 보존.
+- **재생 실패 대응(fallback)**: `renderVideo`에 재생 시작 추적(playing/timeupdate) + `play()` 1회 자동 재시도 + 워치독 2단(①일정 시간 미재생 시 "화면을 터치하면 영상을 재생합니다" + ▶ 재생 버튼 표시, ②최종 안전망으로 gate 잠금 해제 → 무한 대기/빈 화면 갇힘 방지). 정상 종료(ended)→자동 전환(PAGE6→7, PAGE11→12)은 그대로. 하드 오류 시 콘솔 `warn`으로 원인 기록하되 화면엔 개발자용 오류문구 미노출.
+
+### Infra
+- `sw.js` `CACHE_NAME` `eslo-game-v0.10.5-beta`. 영상(1.2/2.2MB)은 계속 precache 제외(206 Range·런타임 cache-first). BGM 관련 캐시 항목 없음(코드 합성이었음).
+
+### QA
+- BGM: 시작 후 BGM 미재생·BGM 파일 요청 0, PAGE5 울음·PAGE10 웃음 정상, 정지/재생 정상. 드래그: PAGE 3·4·8·9 하단 그립·이미지 손가락 위·완료→자동 전환 정상. 영상: PAGE 6·11 새 영상 재생(1024×768, 200 video/mp4)·ended→자동 전환·오류 시 fallback+잠금 해제 확인. 14페이지 렌더 정상, 8해상도(360/375/390/412/1024/1280/844×390/812×375) 오버플로우 0, 콘솔 오류 0, 신규/기존 404 0.
+
+---
+
 ## [v0.10.4-beta] - 2026-07-20
 ### 릴리스 전 기술 정리 — PAGE 14 이미지 최적화 · warning-light 404 제거 · precache 반영
 화면·문구·애니메이션·오디오 값·게임 로직·페이지 흐름 **전부 불변**. 에셋 용량/네트워크 정리만.

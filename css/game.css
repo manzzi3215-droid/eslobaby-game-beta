@@ -1480,6 +1480,9 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
 }
 .stage.is-grabbed .drag-tool::before { animation: none; opacity: 0; }
 .stage.is-grabbed .drag-hint { opacity: 0; animation: none; transition: opacity var(--t-fast) ease; }
+/* v0.10.5: 잡는 순간 도구 등장 애니메이션(productIn) 해제 → 드래그 중 인라인 transform(하단 앵커)이 확실히 적용.
+   (기존 .drag-tool:active { animation:none } 은 :active 미지원/합성입력 환경에서 불안정 → is-grabbed 로 보강) */
+.stage.is-grabbed .drag-tool { animation: none; }
 
 /* 5) 이슬로 제품(Page 7 드래그 도구) — 실제 병 비율(세로) */
 .drag-tool.tool-eslo { width: clamp(66px, 10vw, 104px); height: auto; aspect-ratio: 500 / 1000; }
@@ -2249,4 +2252,39 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
   .reward-title { font-size: clamp(18px, 5vh, 38px); }
   .reward-product { height: clamp(96px, 40vh, 220px); }
   .reward-desc { font-size: clamp(13px, 3vh, 20px); }
+}
+
+/* =============================================================================
+ * v0.10.5-beta — 영상 재생 실패 대비 fallback(터치 재생) 오버레이
+ *   (자동재생 차단/디코드 실패 등에서 빈 화면·갇힘 방지. 개발자용 오류문구는 미노출.)
+ * ========================================================================== */
+.info-video { position: relative; }   /* fallback 오버레이 기준(overflow:hidden 로 라운드 클립 유지) */
+.video-fallback {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: clamp(8px, 1.6vh, 14px);
+  background: linear-gradient(160deg, rgba(224,238,255,0.94), rgba(214,245,235,0.94));
+  border-radius: inherit;
+  z-index: 3;
+  padding: 6%;
+  text-align: center;
+}
+.video-fallback .vf-play {
+  width: clamp(52px, 12vw, 72px); height: clamp(52px, 12vw, 72px);
+  border: none; border-radius: 50%;
+  background: var(--key); color: #fff;
+  font-size: clamp(20px, 4.4vw, 30px); line-height: 1;
+  padding-left: 4px;                       /* ▶ 시각 중심 보정 */
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(109,161,255,0.42);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.video-fallback .vf-play:active { transform: scale(0.94); }
+.video-fallback .vf-msg {
+  font-weight: 800;
+  font-size: clamp(13px, 2.6vw, 17px);
+  color: var(--key-deep);
+  letter-spacing: -0.2px;
+  word-break: keep-all;
 }

@@ -181,103 +181,12 @@
     if (t && t.closest && t.closest('button')) play('click');
   }, true);
 
-  /* =============================================================================
-   * BGM — Web Audio 합성 오리지널 배경음악 (v0.10.2)
-   * -----------------------------------------------------------------------------
-   * - 외부 음원/파일 없음(전부 코드 합성) → 저작권/라이선스 이슈 없음, 오프라인 기본 지원.
-   * - 잔잔+발랄: 부드러운 패드 + 가벼운 벨 아르페지오. C→Am→F→G 16초 루프.
-   * - 자동재생 정책: startBGM()은 사용자 제스처(게임 시작 버튼) 이후에만 호출됨.
-   * - lookahead 스케줄러로 loop, pause/resume는 스케줄러 정지 + BGM 게인 램프.
-   * - 별도 bgmGain(효과음 masterGain과 독립) → BGM/효과음 볼륨 독립 제어.
-   * ========================================================================== */
-  var B = (S.bgm || {});
-  var bgmEnabled = B.enabled !== false;
-  var bgmVol = (B.volume != null) ? B.volume : 0.15;
-  var bgmGain = null, bgmOn = false, bgmPaused = false, bgmTimer = null, bgmNext = 0;
-  var BGM_LOOP = 16.0, BGM_LOOKAHEAD = 1.0, BGM_TICK = 250;
-  var BGM_BARS = [
-    [261.63, 329.63, 392.00],   // C major  (0s)
-    [220.00, 261.63, 329.63],   // A minor  (4s)
-    [174.61, 220.00, 261.63],   // F major  (8s)
-    [196.00, 246.94, 293.66],   // G major  (12s)
-  ];
-  function bgmVoice(freq, type, startAt, dur, peak, attack, release) {
-    if (!ctx || !bgmGain) return;
-    var osc = ctx.createOscillator(), g = ctx.createGain();
-    osc.type = type; osc.frequency.setValueAtTime(freq, startAt);
-    g.gain.setValueAtTime(0.0001, startAt);
-    g.gain.linearRampToValueAtTime(peak, startAt + attack);
-    g.gain.setValueAtTime(peak, startAt + Math.max(attack, dur - release));
-    g.gain.exponentialRampToValueAtTime(0.0001, startAt + dur);
-    osc.connect(g); g.connect(bgmGain);
-    osc.start(startAt); osc.stop(startAt + dur + 0.02);
-  }
-  function scheduleBgmIteration(base) {
-    for (var b = 0; b < 4; b++) {
-      var barT = base + b * 4, chord = BGM_BARS[b];
-      // 부드러운 패드(3음, 소절 길이만큼 지속 + 완만한 감쇠)
-      chord.forEach(function (f) { bgmVoice(f, 'triangle', barT, 4.4, 0.14, 0.6, 1.2); });
-      // 가벼운 벨 아르페지오(한 옥타브 위, 짧은 플럭) — 발랄함
-      var arp = [chord[0] * 2, chord[1] * 2, chord[2] * 2, chord[1] * 2, chord[2] * 2, chord[0] * 4];
-      for (var i = 0; i < arp.length; i++) {
-        bgmVoice(arp[i], 'sine', barT + i * 0.5, 0.42, 0.10, 0.01, 0.3);
-      }
-    }
-  }
-  function bgmTick() {
-    if (!ctx) return;
-    var now = ctx.currentTime;
-    while (bgmNext < now + BGM_LOOKAHEAD) { scheduleBgmIteration(bgmNext); bgmNext += BGM_LOOP; }
-  }
-  function startBGM() {
-    if (!bgmEnabled) return;
-    if (!ensureCtx()) return;
-    resume();
-    if (bgmOn) { if (bgmPaused) resumeBGM(); return; }   // 중복 시작 방지(이미 재생 중이면 무시/재개)
-    if (!bgmGain) { bgmGain = ctx.createGain(); bgmGain.connect(ctx.destination); }
-    var t = ctx.currentTime;
-    bgmGain.gain.cancelScheduledValues(t);
-    bgmGain.gain.setValueAtTime(bgmVol, t);
-    bgmOn = true; bgmPaused = false;
-    bgmNext = t + 0.06;
-    bgmTick();
-    if (bgmTimer) clearInterval(bgmTimer);
-    bgmTimer = setInterval(bgmTick, BGM_TICK);
-  }
-  function pauseBGM() {
-    if (!bgmOn || bgmPaused || !ctx || !bgmGain) return;
-    bgmPaused = true;
-    if (bgmTimer) { clearInterval(bgmTimer); bgmTimer = null; }
-    var t = ctx.currentTime;
-    bgmGain.gain.cancelScheduledValues(t);
-    bgmGain.gain.setValueAtTime(Math.max(0.0001, bgmGain.gain.value), t);
-    bgmGain.gain.linearRampToValueAtTime(0.0001, t + 0.2);   // 부드럽게 페이드 아웃(정지)
-  }
-  function resumeBGM() {
-    if (!bgmOn || !bgmPaused) return;
-    if (!ensureCtx()) return;
-    resume();
-    bgmPaused = false;
-    var t = ctx.currentTime;
-    bgmGain.gain.cancelScheduledValues(t);
-    bgmGain.gain.setValueAtTime(Math.max(0.0001, bgmGain.gain.value), t);
-    bgmGain.gain.linearRampToValueAtTime(bgmVol, t + 0.25);  // 이어서 재생(페이드 인)
-    bgmNext = t + 0.06;
-    bgmTick();
-    if (bgmTimer) clearInterval(bgmTimer);
-    bgmTimer = setInterval(bgmTick, BGM_TICK);
-  }
-
+  // v0.10.5: 배경음악(BGM) 제거 — 반복 BGM이 현장 분위기와 맞지 않아 완전 삭제.
+  //   효과음(click/scene/pop/…, PAGE5 cry·PAGE10 laugh)과 오디오 컨텍스트/제스처 활성화 구조는 그대로 유지.
+  //   BGM은 파일이 아니라 Web Audio 합성 코드였으므로 삭제할 음원 파일·preload·SW 캐시 항목은 없음.
   window.SFX = {
     play: play,
     setEnabled: function (v) { enabled = !!v; },
     setVolume: function (v) { master = v; if (masterGain) masterGain.gain.value = v; },
-    // v0.10.2: BGM 제어(게임 시작 시 startBGM, pause/play 컨트롤과 연동)
-    startBGM: startBGM,
-    pauseBGM: pauseBGM,
-    resumeBGM: resumeBGM,
-    setBgmVolume: function (v) { bgmVol = v; if (bgmGain && ctx && !bgmPaused) bgmGain.gain.setValueAtTime(v, ctx.currentTime); },
-    setBgmEnabled: function (v) { bgmEnabled = !!v; if (!v) pauseBGM(); },
-    isBgmOn: function () { return bgmOn && !bgmPaused; },
   };
 })();

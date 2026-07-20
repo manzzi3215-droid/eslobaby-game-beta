@@ -14,7 +14,13 @@
 
 ## 현재 버전
 
-**v0.10.4-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.10.5-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.10.5-beta(minor): **전체 BGM 제거 · PAGE 3·4·8·9 드래그 하단 그립 · PAGE 6·11 영상 사이니지 호환 재인코딩 + 재생실패 fallback**. 페이지 구성·흐름·문구·완료 판정·자동 전환은 불변.
+  - BGM 제거: `js/sfx.js`의 Web Audio 합성 BGM 블록·export(startBGM/pauseBGM/resumeBGM 등) 삭제, `game.js` startGame/pause/play의 BGM 호출 삭제, `config.sfx.bgm` 삭제. **효과음(click·cry·laugh)·오디오 컨텍스트·제스처 활성화 구조는 유지.** 정지/플레이 버튼은 영상·CSS 애니메이션 제어(applyPauseState)라 BGM 제거 후에도 기능 유지. BGM은 파일이 아니라 코드였으므로 삭제할 음원 파일·preload·SW 캐시 없음.
+  - 드래그 하단 그립: `interactions.js` `makeRubbable`에 `grabAnchorY` 옵션(기본 0.5). `game.js renderDrag`가 `grabAnchorY:0.9` 전달 → `moveToolTo`가 `translate(-50%,-90%)`로 도구를 손가락 위쪽에 표시(아기·화면중앙 가림 감소). 손가락 힌트(👆)는 도구 하단부(`tool` 자식, top 88%)로 이동. **판정(isOverBody/거리/완료/자동전환)은 손가락 좌표 기준 그대로.** `productIn` 등장 애니메이션이 인라인 transform을 덮으므로 `.stage.is-grabbed .drag-tool{animation:none}` 추가(기존 `:active` 보강).
+  - 영상 사이니지 호환: `prof.mp4`(8.27MB, Main@4.1 ~10Mbps)→**1.22MB(Constrained Baseline@3.1, 1.53Mbps)**, `prof_nongye.mp4`(10.0MB, ~10.5Mbps)→**2.2MB(2.39Mbps)**. 동일 1024×768·24fps CFR·yuv420p·faststart, **오디오 제거**(게임서 muted). 삼성 LH55WMBWBGCXKR 등 사이니지 하드웨어 디코더 비트레이트/레벨 한계 대응. ffmpeg-static로 재인코딩(원본은 git 히스토리 보존).
+  - 영상 재생실패 fallback: `renderVideo`에 재생 시작 추적(playing/timeupdate) + play() 1회 재시도 + 워치독(①미시작 시 "화면을 터치하면 영상을 재생합니다"+▶ 버튼, ②최종 안전망 잠금 해제로 갇힘 방지). 정상 종료(ended)→자동 전환은 그대로. 개발자용 오류문구 미노출(콘솔 warn만).
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.10.5-beta`. 영상은 계속 precache 제외(206 Range·런타임 캐시).
 ※ v0.10.4-beta(patch): **릴리스 전 기술 정리만** — 화면·문구·애니메이션·오디오 값 전부 불변.
   - PAGE 14 제품 이미지 최적화: `이슬로-바스앤샴푸-미니.png` 2754×5420 7.5MB → **610×1200 516KB(풀컬러 PNG, 92.9%↓)**. sharp `lanczos3` 리사이즈만(색상 변형 없음, 픽셀 MAD 0.2%), 알파 유지, 동일 파일명·경로(config/형식 불변). WebP(49.5KB)와 비교했으나 호환성·형식/경로 불변 우선으로 PNG 채택.
   - warning-light 404 제거: `config.assets.warningLight` = 존재하지 않는 png 참조 → **`''`(빈 값)**. `createAsset`이 빈 src면 이미지 요청 없이 `shape:'siren'` SVG placeholder만 렌더(기존과 시각 동일, PAGE5 디자인 불변). 신규/기존 404 0건.

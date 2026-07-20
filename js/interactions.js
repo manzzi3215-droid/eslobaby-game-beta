@@ -28,6 +28,12 @@
     // 문지른 거리를 진행도로 환산할 때 기준이 되는 총 거리(px)
     var TARGET_DISTANCE = 900;
 
+    // v0.10.5: 잡는 기준점(세로 앵커). 0=이미지 상단, 0.5=중앙(기본), 1=하단.
+    //   값이 클수록 손가락이 이미지 아래쪽을 잡고 이미지는 손가락 "위쪽"에 보임(화면 중앙·아기 가림 감소).
+    //   판정(isOverBody/거리/완료)은 손가락 좌표 기준 그대로 — 시각 앵커만 변경.
+    var grabAnchorY = (p.grabAnchorY != null) ? p.grabAnchorY : 0.5;
+    var TOOL_TRANSFORM = 'translate(-50%, ' + (-grabAnchorY * 100) + '%)';
+
     function stageRect() { return p.stage.getBoundingClientRect(); }
 
     function moveToolTo(clientX, clientY) {
@@ -36,7 +42,7 @@
       var y = clientY - r.top;
       p.tool.style.left = x + 'px';
       p.tool.style.top = y + 'px';
-      p.tool.style.transform = 'translate(-50%, -50%)';
+      p.tool.style.transform = TOOL_TRANSFORM;
     }
 
     function isOverBody(clientX, clientY) {

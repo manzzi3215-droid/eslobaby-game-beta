@@ -235,8 +235,7 @@
   /* ---------- 진행 제어 --------------------------------------------- */
   function startGame() {
     index = 0; state.irritation = 0; paused = false;
-    // v0.10.2: 게임 시작 버튼(사용자 제스처) 이후 BGM 시작 — 자동재생 정책 준수, 이후 페이지 전환에도 계속 재생.
-    try { if (window.SFX && window.SFX.startBGM) window.SFX.startBGM(); } catch (_) {}
+    // v0.10.5: BGM 제거 — 시작 시 BGM 재생 로직 삭제(효과음은 유지).
     if (window.Analytics) window.Analytics.startSession();   // v0.4.0: 플레이 세션 시작
     renderScene();
   }
@@ -269,6 +268,9 @@
   //   - autoNextScheduled 로 장면당 1회 보장(중복 이벤트로 2페이지 이상 건너뜀 방지).
   //   - 발화 시 여전히 같은 장면인지 + busy/영상잠금 아님을 재확인(수동 이동과 경쟁 방지).
   var AUTO_NEXT_DELAY = 450;             // 완료 후 짧은 여운(ms)
+  // v0.10.5: 영상 재생 워치독 — ①미시작 시 터치 재생 유도, ②최종 안전망(잠금 해제, 갇힘 방지)
+  var VIDEO_START_TIMEOUT = 5000;
+  var VIDEO_HARD_TIMEOUT = 12000;
   //   delay 미지정 시 기본 여운(드래그/영상). v0.10.2: PAGE 13은 rewardHold(약 2초) 유지 후 전환.
   function scheduleAutoNext(fromIndex, delay) {
     if (autoNextScheduled) return;
@@ -292,14 +294,9 @@
       else { var p = v.play(); if (p && p.catch) p.catch(function () {}); }
     }
   }
-  function pauseGame() {
-    paused = true; applyPauseState(); updateCtrlButtons();
-    try { if (window.SFX && window.SFX.pauseBGM) window.SFX.pauseBGM(); } catch (_) {}   // v0.10.2: 정지 시 BGM도 정지
-  }
-  function playGame() {
-    paused = false; applyPauseState(); updateCtrlButtons();
-    try { if (window.SFX && window.SFX.resumeBGM) window.SFX.resumeBGM(); } catch (_) {}  // v0.10.2: 재생 시 BGM 이어서 재생
-  }
+  // ⏸ 정지 / ▶ 플레이: 현재 화면의 영상·CSS 애니메이션을 일시정지/재개(applyPauseState). BGM 제거 후에도 유효한 기능.
+  function pauseGame() { paused = true; applyPauseState(); updateCtrlButtons(); }
+  function playGame() { paused = false; applyPauseState(); updateCtrlButtons(); }
 
   function updateCtrlButtons() {
     if (playBtn) playBtn.classList.toggle('is-active', !paused);
@@ -741,14 +738,15 @@
         tool.style.top = scene.toolTop || '22%';
 
         // v0.4.4: "이걸 움직이세요" 드래그 유도 연출 — 펄스 링(tool::before) + 손가락 힌트 (판정 영향 없음)
-        var handHint = div('drag-hint'); handHint.textContent = '👆';
-        handHint.style.left = '30%'; handHint.style.top = '40%';
+        // v0.10.5: 손가락 힌트를 도구 이미지 "하단부"에 배치(잡는 위치와 일치). tool(.asset)이 position:relative 라 하단 중앙에 정렬.
+        var handHint = div('drag-hint is-bottom'); handHint.textContent = '👆';
+        handHint.style.left = '50%'; handHint.style.top = '88%';
         // 처음 잡는 순간 유도 연출 종료 (게임 로직/판정과 무관, UI만)
         tool.addEventListener('pointerdown', function () { stage.classList.add('is-grabbed'); }, { once: true });
 
         stage.appendChild(childBody);
         stage.appendChild(tool);
-        stage.appendChild(handHint);
+        tool.appendChild(handHint);   // v0.10.5: 도구 하단부에 손가락 안내(도구를 따라다니며 하단 표시)
         body.appendChild(makeHint(scene.hint));   // 보조문구 (제목 아래)
         body.appendChild(stage);
 
@@ -775,6 +773,7 @@
 
         var cleanup = window.Interactions.makeRubbable({
           tool: tool, body: childBody, stage: stage,
+          grabAnchorY: 0.9,   // v0.10.5: 도구 하단부를 잡아 이미지가 손가락 위쪽에 보이도록(화면 중앙·아기 가림 감소). PAGE 3·4·8·9 공통.
           onProgress: function (r) {
             fill.style.width = (r * 100) + '%';
             setFoam(bubbles, isRinse ? (1 - r) : r);   // 거품: 생성(foam) 또는 씻김(rinse)
@@ -863,18 +862,43 @@
           v.setAttribute('preload', 'auto'); v.setAttribute('aria-hidden', 'true');
           v.src = src;
           vwrap.appendChild(v);
-          var tryPlay = function () { var p = v.play(); if (p && p.catch) p.catch(function () {}); };
+          // v0.10.5: 재생 시작 추적 + 실패 대응(사이니지/자동재생 차단 등에서 갇힘 방지).
+          var playbackStarted = false, retried = false, fallbackEl = null;
+          var markPlaying = function () {
+            if (playbackStarted) return;
+            playbackStarted = true;
+            if (fallbackEl) { try { fallbackEl.remove(); } catch (_) {} fallbackEl = null; }
+            vwrap.classList.remove('is-fallback');
+          };
+          v.addEventListener('playing', markPlaying);
+          v.addEventListener('timeupdate', function () { if (v.currentTime > 0.1) markPlaying(); });
+          var tryPlay = function () {
+            var p = v.play();
+            if (p && p.catch) p.catch(function () {
+              // v0.10.5: 자동재생 실패 시 1회 재시도(짧은 지연 후)
+              if (!retried) { retried = true; setTimer(function () { var p2 = v.play(); if (p2 && p2.catch) p2.catch(function () {}); }, 350); }
+            });
+          };
           v.addEventListener('loadeddata', tryPlay);
           tryPlay();
+          // 재생 실패/차단 시: "화면을 터치하면 영상을 재생합니다" + ▶ 버튼(개발자용 오류문구 미노출). 터치/버튼으로 재시도.
+          var showFallback = function () {
+            if (fallbackEl || playbackStarted) return;
+            vwrap.classList.add('is-fallback');
+            fallbackEl = div('video-fallback');
+            var pb = document.createElement('button');
+            pb.type = 'button'; pb.className = 'vf-play'; pb.textContent = '▶';
+            pb.setAttribute('aria-label', CFG.texts.hints.videoTapPlay || '영상 재생');
+            pb.addEventListener('click', function (e) { e.stopPropagation(); retried = false; tryPlay(); });
+            var msg = div('vf-msg'); msg.textContent = CFG.texts.hints.videoTapPlay || '';
+            fallbackEl.appendChild(pb); fallbackEl.appendChild(msg);
+            vwrap.appendChild(fallbackEl);
+          };
           // v0.9.1: 영상 영역 탭 → 다음 페이지로 이동(다른 페이지와 동일). 재생/정지는 좌측 ▶/⏸ 버튼 사용.
-          //   (이전 v0.8.x의 "영상 탭=재생/정지 토글"은 PAGE 6→7 전환이 안 되는 원인이라 제거)
           if (mustWatch) {
             videoGateLocked = true;                        // 종료 전 이동 잠금
             vwrap.classList.add('is-gated');
             hint.textContent = CFG.texts.hints.videoWatch; // "영상을 끝까지 보면 다음으로 넘어가요"
-            // 잠금 해제(종료·오류 공통). 이미 해제됐으면 false(중복 방지).
-            // v0.9.5: 종료 후 자동 전환되므로 "화면을 탭하면…" 문구로 바꾸지 않는다(잘못된 탭 유도 방지).
-            //   안내문 텍스트를 유지(변경 없음) → 깜빡임·레이아웃 흔들림 없음. 오류 시에도 탭 문구 미표시.
             var unlock = function () {
               if (!videoGateLocked) return false;
               videoGateLocked = false;
@@ -888,8 +912,19 @@
               if (!unlock()) return;                       // 중복 ended 가드
               if (scene.autoNext) scheduleAutoNext(myIndex);
             });
-            v.addEventListener('error', function () { unlock(); });
+            // v0.10.5: 하드 오류 → 콘솔 경고(진단용) + 터치 재생 fallback + 잠금 해제(수동 진행 가능, 갇힘 방지). 자동 이동은 안 함.
+            v.addEventListener('error', function () {
+              try { console.warn('[eslo] video error:', src, v.error && v.error.code); } catch (_) {}
+              showFallback(); unlock();
+            });
+            // v0.10.5: 워치독① — 일정 시간 재생 미시작(자동재생 차단 등)이면 터치 재생 유도(잠금은 유지 → 터치로 재생 후 정상 흐름).
+            setTimer(function () { if (!playbackStarted) { try { console.warn('[eslo] video not started → tap-to-play'); } catch (_) {} showFallback(); } }, VIDEO_START_TIMEOUT);
+            // v0.10.5: 워치독②(최종 안전망) — 그래도 재생 불가 시 잠금 해제(영구 갇힘 방지).
+            setTimer(function () { if (!playbackStarted && videoGateLocked) { try { console.warn('[eslo] video still not playing → unlock gate'); } catch (_) {} unlock(); } }, VIDEO_HARD_TIMEOUT);
             updateCtrlButtons();                           // 다음 버튼 비활성 즉시 반영
+          } else {
+            // 비필수(루프) 영상도 장시간 미재생이면 터치 재생 유도(빈 화면 방지)
+            setTimer(function () { if (!playbackStarted) showFallback(); }, VIDEO_START_TIMEOUT);
           }
           // 씬 이탈 시 영상 정지·해제 (재진입 시 새 요소로 처음부터 재생)
           cleanups.push(function () { try { v.pause(); v.removeAttribute('src'); v.load(); } catch (_) {} });
