@@ -88,7 +88,7 @@
   }
   function regOneShot(name, node) { (oneShots[name] = oneShots[name] || []).push(node); }
 
-  // v0.10.2: 아이 울음 "으앙~" — 가벼운 비브라토 + 완만한 음정 곡선(약 0.95s, 귀엽게).
+  // v0.10.3: 아이 울음 "으앙~" — 조금 더 높고 둥근 톤 + 부드러운 비브라토(약 0.82s, 더 귀엽게·덜 자극적).
   function cry() {
     if (!ensureCtx()) return;
     killOneShot('cry');
@@ -96,33 +96,39 @@
     var osc = ctx.createOscillator(), g = ctx.createGain();
     var lfo = ctx.createOscillator(), lfoG = ctx.createGain();
     osc.type = 'triangle';
-    osc.frequency.setValueAtTime(520, t0);
-    osc.frequency.linearRampToValueAtTime(625, t0 + 0.15);
-    osc.frequency.linearRampToValueAtTime(430, t0 + 0.9);
-    lfo.type = 'sine'; lfo.frequency.value = 11; lfoG.gain.value = 16;   // 살짝 떨리는 울음
+    osc.frequency.setValueAtTime(600, t0);
+    osc.frequency.linearRampToValueAtTime(720, t0 + 0.12);   // 살짝 "으" 올림(귀여운 시작)
+    osc.frequency.linearRampToValueAtTime(480, t0 + 0.78);   // 완만히 "앙~" 내림
+    lfo.type = 'sine'; lfo.frequency.value = 9; lfoG.gain.value = 12;   // 더 부드럽게 떨리는 울음(덜 자극적)
     lfo.connect(lfoG); lfoG.connect(osc.frequency);
     g.gain.setValueAtTime(0.0001, t0);
-    g.gain.exponentialRampToValueAtTime(0.5, t0 + 0.06);
-    g.gain.setValueAtTime(0.5, t0 + 0.62);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.95);
+    g.gain.exponentialRampToValueAtTime(0.44, t0 + 0.05);
+    g.gain.setValueAtTime(0.44, t0 + 0.5);
+    g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.82);
     osc.connect(g); g.connect(masterGain);
-    osc.start(t0); lfo.start(t0); osc.stop(t0 + 0.98); lfo.stop(t0 + 0.98);
+    osc.start(t0); lfo.start(t0); osc.stop(t0 + 0.85); lfo.stop(t0 + 0.85);
     regOneShot('cry', osc); regOneShot('cry', lfo);
   }
 
-  // v0.10.2: 아이 웃음 "꺄르르~" — 밝은 사인 톤 5연타 상승(약 0.7s).
+  // v0.10.3: 아이 웃음 "꺄르르~" — 밝은 사인 톤 + 자연스러운 오르내림 리듬(약 0.62s, 더 밝고 자연스럽게).
   function laugh() {
     if (!ensureCtx()) return;
     killOneShot('laugh');
-    var freqs = [700, 840, 980, 1120, 980];
-    for (var i = 0; i < freqs.length; i++) {
-      var t0 = ctx.currentTime + i * 0.11;
+    var notes = [                                   // 자연스러운 "하-하-하" 오르내림(밝게)
+      { f: 760,  at: 0.00 },
+      { f: 940,  at: 0.10 },
+      { f: 1080, at: 0.19 },
+      { f: 940,  at: 0.30 },
+      { f: 1200, at: 0.40 },
+    ];
+    for (var i = 0; i < notes.length; i++) {
+      var t0 = ctx.currentTime + notes[i].at;
       var osc = ctx.createOscillator(), g = ctx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(freqs[i], t0);
-      osc.frequency.linearRampToValueAtTime(freqs[i] * 1.15, t0 + 0.06);
+      osc.frequency.setValueAtTime(notes[i].f, t0);
+      osc.frequency.linearRampToValueAtTime(notes[i].f * 1.18, t0 + 0.05);   // 밝게 살짝 올림
       g.gain.setValueAtTime(0.0001, t0);
-      g.gain.exponentialRampToValueAtTime(0.32, t0 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.3, t0 + 0.02);
       g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.12);
       osc.connect(g); g.connect(masterGain);
       osc.start(t0); osc.stop(t0 + 0.14);

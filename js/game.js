@@ -503,8 +503,8 @@
         body.appendChild(group);
 
         // 순차 등장: 요소마다 등장 지연(step) 부여. CSS revealPop(both) 로 지연 중엔 숨김 유지.
-        var STEP = 260;                     // 요소 간 등장 간격(ms) — 순서가 명확히 느껴지되 답답하지 않게
-        var REVEAL_DUR = 420;               // revealPop 지속(css와 일치)
+        var STEP = 300;                     // v0.10.3: 요소 간 등장 간격(ms) — 제품 소개 느낌으로 조금 더 여유롭게
+        var REVEAL_DUR = 520;               // revealPop 지속(css와 일치)
         revealEls.forEach(function (elm, i) { elm.style.animationDelay = (i * STEP) + 'ms'; });
         var hold = (CFG.timings && CFG.timings.rewardHold) || 2000;
 

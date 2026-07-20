@@ -14,7 +14,13 @@
 
 ## 현재 버전
 
-**v0.10.2-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.10.3-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.10.3-beta(patch): **PAGE 13/14 등장 애니메이션·자동전환·오디오 볼륨·효과음 미세 조정만**. 페이지 구성·흐름·문구·게임 로직·필수영상·드래그 전부 불변.
+  - PAGE 13 reveal 고급화: `revealPop` = 아래(16px)→위 + opacity + scale 0.9→1, 부드러운 ease-out(`cubic-bezier(.22,.61,.36,1)`, 오버슈트/바운스 없음), 520ms. `STEP`=300ms(game.js, css와 동기화). 제품명 그룹감: 이미지↔제품명 gap 축소·`line-height:1.2`·`margin-top` 미세.
+  - PAGE 14 순차 등장: 문구 `rewardTitlePop`(약간 Pop) → 제품 `rewardFadeScale`(240ms 지연) → 안내문 `rewardFadeUp`(560ms 지연). CSS animation-delay 기반(자동 전환 없음, JS 변경 없음).
+  - 자동 전환: `timings.rewardHold` 2000→**2200ms**(완성 화면 충분히). PAGE13 `REVEAL_DUR`=520 동기화로 안전망 타이머 정확.
+  - 오디오 볼륨: `sfx.volume` 0.35→**0.32**, `sfx.bgm.volume` 0.15→**0.13**(권장 범위 내, 밸런스). 효과음: `cry`(더 높고 둥근 톤·부드러운 비브라토, ~0.82s), `laugh`(밝은 오르내림 리듬, ~0.62s).
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.10.3-beta`.
 ※ v0.10.2-beta(minor): **PAGE 13 제품명·순차 등장·자동 전환 + PAGE 14 미션 완료/증정 안내(신규) + 전체 BGM·PAGE5 울음·PAGE10 웃음**. 총 **14페이지**. 기존 페이지 로직·자동 전환·필수 영상·드래그·배경·데스크톱 불변.
   - PAGE 13(brandFinal): 다시하기 버튼 제거. 제품 3종 하단 제품명(`finalProductNames`=바스 앤 샴푸/엉덩이 클렌저/바디 로션), 이미지+제품명을 `.final-prod-card`로 묶음. 6요소 순차 등장(`revealPop`, 260ms 간격, 이미지→제품명). 카드 내부 중앙. 마지막 요소 `animationend`(+안전망 타이머) → `rewardHold`(2s) 후 PAGE 14 자동 전환(`scheduleAutoNext(idx, delay)` 확장, `autoNextScheduled` 1회 가드).
   - PAGE 14(rewardFinal, 신규 최종): `rewardTitle`(💙 생분해 미션 완료 💙, 키컬러 강조) + 중앙 제품 이미지(`assets.rewardProduct`=이슬로-바스앤샴푸-미니.png) + `rewardDesc`(2줄). 자동 전환 없음·버튼 없음. RENDERERS.rewardFinal=renderRewardFinal, SCENE_THEME.rewardFinal='success'.

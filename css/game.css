@@ -2150,7 +2150,7 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
 .final-prod-card {
   flex: 1 1 0; min-width: 0; max-width: 33.3%;
   display: flex; flex-direction: column; align-items: center;
-  gap: clamp(6px, 1.4vh, 12px);          /* 이미지 ↔ 제품명 균일 간격 */
+  gap: clamp(3px, 0.9vh, 8px);           /* v0.10.3: 이미지 ↔ 제품명 간격 축소 → 하나의 그룹처럼 */
 }
 .final-prod-img {
   width: 100%; height: auto;
@@ -2160,19 +2160,20 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
 .final-prod-name {
   font-weight: 800;
   font-size: clamp(12px, 2.6vw, 18px);
-  line-height: 1.25;
+  line-height: 1.2;                      /* v0.10.3: 줄간격 정리(그룹감) */
   color: var(--key-deep);
   text-align: center;
   letter-spacing: -0.2px;
+  margin-top: clamp(1px, 0.4vh, 4px);    /* v0.10.3: 이미지와 붙는 느낌 + 미세 여백 */
   word-break: keep-all;                  /* 모바일에서 어색한 줄바꿈 방지 */
   white-space: nowrap;                   /* 짧은 제품명 한 줄 유지(겹침 방지) */
 }
-/* 순차 등장(fade + scale + 살짝 위로). 지연은 JS 인라인 animation-delay, both 로 지연 중 숨김 유지. */
+/* v0.10.3: 순차 등장 고급화 — 살짝 아래에서 위로 + opacity 증가 + scale 0.9→1, 부드러운 ease-out(오버슈트/바운스 없음). */
 .final-prod-img, .final-prod-name {
-  animation: revealPop 420ms cubic-bezier(.2, .8, .3, 1.05) both;
+  animation: revealPop 520ms cubic-bezier(.22, .61, .36, 1) both;
 }
 @keyframes revealPop {
-  from { opacity: 0; transform: translateY(10px) scale(0.92); }
+  from { opacity: 0; transform: translateY(16px) scale(0.9); }
   to   { opacity: 1; transform: none; }
 }
 /* 아주 좁은 화면(≤360px): 제품명 폰트 축소로 한 줄 유지 */
@@ -2194,6 +2195,7 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
 /* ---- PAGE 14: 미션 완료 / 증정 안내 (최종, 자동 전환 없음) ---- */
 .is-reward-final .screen-body { justify-content: center; gap: clamp(10px, 2.4vh, 22px); }
 /* 완료 강조 문구 — 가장 먼저 눈에 들어오게(키컬러 딥 + 굵게 + 부드러운 강조) */
+/* v0.10.3: "이벤트 참여 완료" 느낌 — 문구가 먼저 약간 Pop 하며 등장. */
 .reward-title {
   font-weight: 900;
   font-size: clamp(24px, 6.2vw, 46px);
@@ -2203,14 +2205,18 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
   letter-spacing: -0.4px;
   word-break: keep-all;
   text-shadow: 0 2px 10px rgba(109, 161, 255, 0.22);
+  animation: rewardTitlePop 540ms cubic-bezier(.2, .7, .3, 1.25) both;
 }
 /* 중앙 제품 이미지 — 비율 유지, 화면 높이에 맞춰 스크롤 없이 표시 */
+/* v0.10.3: 문구 다음(240ms) Fade + Scale 로 등장. */
 .reward-product {
   width: auto; height: clamp(150px, 34vh, 300px);
   aspect-ratio: 2754 / 5420;             /* 원본 비율(왜곡 방지) */
   filter: drop-shadow(0 12px 20px rgba(60, 110, 160, 0.26));
+  animation: rewardFadeScale 520ms cubic-bezier(.22, .61, .36, 1) 240ms both;
 }
 /* 하단 안내 문구 — 정확히 2줄(config \n), 멀리서도 읽기 쉽게 */
+/* v0.10.3: 제품 다음(560ms) 약간 늦게 아래→위로 등장. */
 .reward-desc {
   font-weight: 700;
   font-size: clamp(15px, 3.6vw, 23px);
@@ -2221,6 +2227,21 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
   word-break: keep-all;
   letter-spacing: -0.2px;
   max-width: 92%;
+  animation: rewardFadeUp 480ms cubic-bezier(.22, .61, .36, 1) 560ms both;
+}
+/* PAGE 14 순차 등장 키프레임 */
+@keyframes rewardTitlePop {
+  0%   { opacity: 0; transform: scale(0.8); }
+  60%  { opacity: 1; transform: scale(1.05); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes rewardFadeScale {
+  from { opacity: 0; transform: scale(0.9); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes rewardFadeUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
 }
 /* 낮은 가로 화면: 완료 화면도 겹침/스크롤 없이 균형 축소 */
 @media (orientation: landscape) and (max-height: 880px) {
