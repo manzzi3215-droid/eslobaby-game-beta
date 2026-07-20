@@ -11,7 +11,7 @@
  * ========================================================================== */
 'use strict';
 
-var CACHE_NAME = 'eslo-game-v0.10.6-beta';
+var CACHE_NAME = 'eslo-game-v0.10.7-beta';
 
 // 미리 캐싱할 핵심 파일 (상대경로)
 var PRECACHE = [
@@ -76,7 +76,7 @@ var PRECACHE = [
   './assets/audio/voice/page12.m4a',
   './assets/audio/voice/page13.m4a',
   './assets/audio/voice/page14.m4a',
-  // ※ prof.mp4·prof_nongye.mp4(v0.10.5: 사이니지 호환 재인코딩 1.2/2.2MB, 206 Range 영상)는 precache 제외 — 초기 설치 용량·저장공간 고려, fetch 런타임 캐시(cache-first)로 재방문 시 캐시.
+  // ※ 영상(prof-signage.mp4·prof-nongye-signage.mp4 및 -lo 폴백)은 precache 제외 + fetch 핸들러에서 명시적 bypass(아래) — 브라우저 네이티브 Range/스트리밍 처리.
   // ※ 효과음(PAGE5 울음·PAGE10 웃음 등)은 Web Audio 합성(js/sfx.js, 이미 precache)이라 별도 음원 파일/캐시 불필요. (v0.10.5: 반복 BGM 제거)
 ];
 
@@ -104,6 +104,11 @@ self.addEventListener('activate', function (e) {
 self.addEventListener('fetch', function (e) {
   var req = e.request;
   if (req.method !== 'GET') return;               // GET 요청만 캐싱
+
+  // v0.10.7: 영상(.mp4)·Range 요청은 서비스워커가 절대 개입하지 않고 네트워크로 그대로 통과.
+  //   (삼성 Tizen 등에서 SW가 Range 요청에 200(전체) 응답을 반환해 재생이 깨지는 문제 예방.
+  //    영상은 precache 제외 상태 유지 — 브라우저 네이티브 스트리밍/Range 처리에 위임.)
+  if (req.headers.has('range') || /\.mp4($|\?)/i.test(req.url)) return;   // respondWith 미호출 → 브라우저 기본 처리
 
   e.respondWith(
     caches.match(req).then(function (cached) {

@@ -11,6 +11,36 @@
 
 ---
 
+## [v0.10.7-beta] - 2026-07-20
+### PAGE 6·11 영상 삼성 LH55WMBWBGCXKR(Tizen 사이니지) 다단계 재생 폴백
+페이지 흐름·문구·음성·드래그·완료 판정·PAGE6→7·11→12 자동 전환 정책 **불변**. 영상 재생 견고화만.
+
+### 진단 (재인코딩 반복 금지)
+- **라이브 서버 Range 정상**: `prof.mp4`/`prof_nongye.mp4` 모두 `206 Partial Content`+`Content-Range`+`Accept-Ranges: bytes`. 서버측 Range 문제 아님.
+- **영상 인코딩은 이미 최적**(ffprobe): H.264 **Constrained Baseline**, **has_b_frames=0**, **refs=1**, yuv420p(tv), L3.1, ~1s GOP, faststart. Constrained Baseline은 **CABAC 금지(CAVLC 강제)**라 CABAC 이미 off. → **추가 재인코딩만 반복하지 않고** 아래 다단계 폴백으로 해결.
+- 유력 원인: ①동일 파일명 HTTP 캐시(구 10Mbps 영상 잔존) ②`play()` 조기 호출 race ③Tizen muted 자동재생 제한 ④SW의 영상/Range 요청 개입.
+
+### Changed / Added
+- **캐시버스트(파일명 변경)**: `prof.mp4`→**`prof-signage.mp4`**, `prof_nongye.mp4`→**`prof-nongye-signage.mp4`**(git mv, 규격 동일 Constrained Baseline L3.1 1024×768). `config.assets.profVideo/bioVideo` 경로 변경. 새 URL이라 삼성 기기에 남은 구 영상 HTTP 캐시를 확실히 우회.
+- **서비스워커 영상 bypass**: `sw.js` fetch 핸들러 최상단 — `Range` 헤더 요청 또는 `.mp4` URL은 `event.respondWith` 미호출(`return`)로 **브라우저 네이티브 처리에 위임**. SW가 Range 요청에 200(전체)을 반환해 재생이 깨지는 문제 예방. 영상 precache 제외·런타임 미캐시 유지(검증: SW 등록 상태에서 영상 Range 요청 206 통과·영상 캐시 안 됨).
+- **재생 시퀀스 개선(renderVideo 재작성)**: HTML attribute + **JS property 둘 다 명시**(`muted/defaultMuted/playsInline=true`, `autoplay=false`, `preload='auto'`, `controls=false`) → `src` → DOM 삽입 → **`load()`** → **`canplay`(또는 1.4s 타임아웃) 후 `play()`**(load 직후 즉시 play 안 함 → Tizen race 방지) → `play()` reject 시 1회 재시도.
+- **다중 소스 폴백**: `scene.videoFallback` 추가(config `profVideoLo`/`bioVideoLo` = **640×480, H.264 Baseline L3.0, B-frame 0, CABAC off, refs 1, 무음, ~650kbps, GOP 24, faststart**). 1차 소스 `error`/재시도 실패 시 **2차 보수 소스로 `load()`+재생 교체**(검증: 1차 오류→`prof-signage-lo.mp4` 자동 교체 재생).
+- **강화 터치 재생 폴백**: 모든 소스 실패/워치독 시 `.video-fallback`(큰 ▶ 버튼 + "화면을 터치하면 영상을 재생합니다"). **영상 영역 전체 클릭**으로 재생(re-mute + 필요 시 `load()` + `play()`), 성공 시 폴백 숨김. **재생 전엔 gate 유지**(화면탭·다음 이동 금지, 재생 실패 시 자동 다음 이동 금지 → 사용자가 재생하기 전까지 페이지 유지). 최종 안전망(hard timeout)은 gate만 해제(수동 next 허용, 자동 이동 X → 영구 갇힘 방지).
+- **진단 로그**: `pushVideoDiag` → `sessionStorage['eslo_video_diag']`(userAgent·page·videoUrl·srcIdx·이벤트(loadedmetadata/canplay/playing/stalled/waiting/suspend/abort/emptied/error)·readyState·networkState·currentTime·MediaError code·play reject name/msg·fallback 표시·터치 재생). **`?debug=1`일 때만** 화면 하단 숨김 패널 표시(일반 사용자 미노출, 개인정보·민감정보 저장 안 함).
+- **이미지 시퀀스 폴백(4차)**: 이번엔 **미구현**(설계·용량만 검토). 위 조치로 대부분 해결 예상하며, 실기기에서 여전히 실패 시 후속 구현 권장(8~12fps WebP/JPEG ≤720p, 영상당 ~1~2.5MB 추정).
+- `sw.js` `CACHE_NAME` `eslo-game-v0.10.7-beta`(구버전 캐시 정리).
+
+### 기존/신규 영상 규격 비교
+| | 1차 primary(변경 전=후, 파일명만 변경) | 2차 fallback(신규 Lo) |
+|---|---|---|
+| 파일 | prof.mp4 → **prof-signage.mp4** / prof_nongye.mp4 → **prof-nongye-signage.mp4** | **prof-signage-lo.mp4**(403KB) / **prof-nongye-signage-lo.mp4**(516KB) |
+| 규격 | H.264 Constrained Baseline L3.1, 1024×768, 24fps, yuv420p, ~1.5/2.4Mbps, 무음, faststart | H.264 Baseline **L3.0, 640×480**, 24fps, yuv420p, B-frame 0, CABAC off, ~650kbps, 무음, faststart |
+
+### QA
+- PAGE 6·11 정상 재생(load→canplay→play 시퀀스, JS property 설정, currentTime 진행)·영상 종료→PAGE 7/12 자동 전환(7.0s/8.1s). 1차 오류→2차(Lo) 교체 재생·양 소스 실패→터치 폴백(gate 유지)·진단 로그(MediaError code 기록) 확인. SW 영상 Range 206 bypass·영상 캐시 안 됨·음성 14개 precache 유지. 구 파일명 인게임 요청 0(신 파일명 200). 14페이지 렌더·음성·드래그 정상, 8해상도 오버플로우 0, 콘솔 오류 0.
+
+---
+
 ## [v0.10.6-beta] - 2026-07-20
 ### 페이지별 AI 안내 음성(PAGE 1~14) 적용
 페이지 구성·흐름·문구·완료 판정·자동 전환·영상 must-watch·드래그·효과음(울음/웃음) **전부 유지**. 페이지 음성만 추가.

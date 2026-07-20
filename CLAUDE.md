@@ -14,7 +14,17 @@
 
 ## 현재 버전
 
-**v0.10.6-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.10.7-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.10.7-beta(minor): **PAGE 6·11 영상 삼성 LH55WMBWBGCXKR(Tizen 사이니지) 다단계 재생 폴백**. 페이지 흐름·문구·음성·드래그·PAGE6→7·11→12 자동 전환 유지.
+  - 진단(ffprobe): 라이브 서버 Range 완전 지원(206), 영상 인코딩은 이미 최적(Constrained Baseline·B-frame 0·refs 1·CABAC 없음(Baseline=CAVLC)·yuv420p·~1s GOP·faststart) → **단순 재인코딩 반복 불필요**. 원인은 ①동일 파일명 HTTP 캐시(구 10Mbps 잔존) ②재생 시퀀스 race ③Tizen 자동재생 제한 ④SW의 영상/Range 개입 가능성.
+  - 캐시버스트: `prof.mp4`→`prof-signage.mp4`, `prof_nongye.mp4`→`prof-nongye-signage.mp4`(git mv, config 경로 변경). 새 URL로 구 캐시 확실히 우회.
+  - SW 영상 bypass: `sw.js` fetch 핸들러 최상단에서 `.mp4` 또는 `Range` 헤더 요청은 `respondWith` 미호출(`return`) → 브라우저 네이티브 Range/스트리밍 위임(SW가 206 대신 200 반환해 깨지는 문제 예방). 영상 precache 제외 유지.
+  - 재생 시퀀스(renderVideo 재작성): HTML attribute+JS property 둘 다 명시(`muted/defaultMuted/playsInline=true`, `autoplay=false`, `preload=auto`) → `src` 설정 → DOM 삽입 → `load()` → `canplay`(또는 1.4s 타임아웃) → `play()`(조기 play 미호출, Tizen race 방지) → reject 시 1회 재시도.
+  - 다중 소스 체인: `scene.videoFallback`(config `profVideoLo/bioVideoLo` = 640×480 Baseline L3.0·무B프레임·CABAC off·무음). 1차 error/실패 → 2차 소스로 `load()`+재생 교체. 모두 실패 → 터치 재생 폴백.
+  - 강화 터치 폴백: `.video-fallback`(큰 ▶ + "화면을 터치하면 영상을 재생합니다"), **영상 영역 전체 클릭**으로 재생(re-mute+load+play). 재생 전엔 gate 유지(화면탭·다음 금지, 자동 이동 금지) — 사용자가 재생하기 전까지 페이지 유지. 워치독②(hard timeout)은 gate만 해제(수동 next 허용, 자동 이동 X, 영구 갇힘 방지).
+  - 진단 로그: `pushVideoDiag`가 `sessionStorage['eslo_video_diag']`에 기록(userAgent·page·url·srcIdx·이벤트(loadedmetadata/canplay/playing/stalled/waiting/error)·readyState·networkState·MediaError code·play reject). `?debug=1`일 때만 화면 숨김 패널 표시(일반 사용자 미노출, 개인정보 없음).
+  - 이미지 시퀀스 폴백(4차)은 이번엔 미구현(설계·용량만 검토) — 위 조치(캐시버스트+SW bypass+시퀀스+2차 소스+터치)로 대부분 해결 예상, 실기기에서 여전히 실패 시 후속.
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.10.7-beta`.
 ※ v0.10.6-beta(minor): **페이지별 AI 안내 음성(PAGE 1~14) 적용**. 페이지 구성·흐름·문구·완료 판정·자동 전환·영상 must-watch·드래그·효과음(울음/웃음) 전부 유지.
   - 음원: 사용자 제공 ZIP의 `(PAGE 1)~(PAGE 14).mp4`(비디오+AAC)에서 **오디오만 무손실 추출**한 `.m4a`(AAC 44.1k stereo) → `assets/audio/voice/page01~14.m4a`(총 ~1.5MB). `배경음.mp4`(131초 배경음악)는 페이지가 아니고 v0.10.5에서 BGM 제거했으므로 **미적용**.
   - 매핑: `config.voice{1..14}`(PAGE 번호 = scenes index+1, 게이트는 음성 없음). 하드코딩 금지·config 단일 관리.

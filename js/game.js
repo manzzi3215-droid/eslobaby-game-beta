@@ -41,6 +41,39 @@
   // v0.4.3: 효과음 재생 (SFX 모듈 없거나 실패해도 게임에 영향 없음)
   function sfx(name) { try { if (window.SFX) window.SFX.play(name); } catch (_) {} }
 
+  // v0.10.7: 영상 진단 로그 — 삼성 사이니지 등에서 원인 파악용. sessionStorage 에만 저장(개인정보 없음),
+  //   ?debug=1 일 때만 화면 숨김 패널에 표시. 일반 사용자에겐 미노출. 실패해도 게임 무영향.
+  var VIDEO_DIAG_KEY = 'eslo_video_diag';
+  function videoDebugOn() { try { return /[?&]debug=1/.test(location.search); } catch (_) { return false; } }
+  function pushVideoDiag(rec) {
+    try {
+      rec.ts = Date.now();
+      rec.ua = (navigator.userAgent || '').slice(0, 160);
+      var arr = [];
+      try { arr = JSON.parse(sessionStorage.getItem(VIDEO_DIAG_KEY) || '[]'); } catch (_) {}
+      arr.push(rec);
+      if (arr.length > 200) arr = arr.slice(-200);
+      sessionStorage.setItem(VIDEO_DIAG_KEY, JSON.stringify(arr));
+      if (videoDebugOn()) renderVideoDebugPanel(arr);
+    } catch (_) {}
+  }
+  function renderVideoDebugPanel(arr) {
+    try {
+      var el = document.getElementById('video-diag-panel');
+      if (!el) {
+        el = document.createElement('pre'); el.id = 'video-diag-panel';
+        el.style.cssText = 'position:fixed;left:6px;bottom:6px;max-width:96vw;max-height:40vh;overflow:auto;z-index:99999;'
+          + 'background:rgba(0,0,0,0.82);color:#8f8;font:10px/1.35 monospace;padding:6px 8px;border-radius:8px;white-space:pre-wrap;pointer-events:none;';
+        (document.body || document.documentElement).appendChild(el);
+      }
+      el.textContent = arr.slice(-16).map(function (r) {
+        return (r.page != null ? 'P' + r.page + ' ' : '') + (r.ev || '') + (r.srcIdx != null ? ' s' + r.srcIdx : '')
+          + (r.code != null ? ' err' + r.code : '') + (r.rs != null ? ' rs' + r.rs : '') + (r.ns != null ? ' ns' + r.ns : '')
+          + (r.err ? ' ' + r.err : '') + (r.url ? ' ' + String(r.url).split('/').pop() : '');
+      }).join('\n');
+    } catch (_) {}
+  }
+
   function lerpColor(a, b, t) {
     function rgb(h) {
       h = h.replace('#', '');
@@ -881,77 +914,113 @@
         if (src) {
           // v0.9.3: requireEnd 영상은 반드시 끝까지 재생(loop 없이 1회) → 종료 전엔 이동 잠금
           var mustWatch = !!scene.requireEnd;
+          var page = myIndex + 1;
+          // v0.10.7: 재생 소스 체인 — [1차(기본), 2차(보수 폴백 Lo)]. 1차 실패 시 2차로 교체 재생.
+          var sources = [src];
+          var lo = scene.videoFallback ? (CFG.assets[scene.videoFallback] || scene.videoFallback) : null;
+          if (lo) sources.push(lo);
+
           var v = document.createElement('video');
-          v.muted = true; v.defaultMuted = true;           // muted 는 src 전에 (autoplay 허용)
-          v.loop = !mustWatch; v.autoplay = true;
+          // v0.10.7: HTML attribute + JS property 둘 다 명시(autoplay attribute 미의존). Tizen 호환.
+          v.muted = true; v.defaultMuted = true; v.playsInline = true;
+          v.autoplay = false; v.preload = 'auto'; v.loop = !mustWatch; v.controls = false;
           v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
           v.setAttribute('preload', 'auto'); v.setAttribute('aria-hidden', 'true');
-          v.src = src;
           vwrap.appendChild(v);
-          // v0.10.5: 재생 시작 추적 + 실패 대응(사이니지/자동재생 차단 등에서 갇힘 방지).
-          var playbackStarted = false, retried = false, fallbackEl = null;
-          var markPlaying = function () {
-            if (playbackStarted) return;
-            playbackStarted = true;
-            if (fallbackEl) { try { fallbackEl.remove(); } catch (_) {} fallbackEl = null; }
-            vwrap.classList.remove('is-fallback');
-          };
+
+          var playbackStarted = false, retriedSrc = false, canplaySeen = false, fallbackEl = null, srcIdx = -1;
+          function diag(ev, extra) {
+            var r = { page: page, ev: ev, srcIdx: srcIdx, rs: v.readyState, ns: v.networkState,
+              ct: +(v.currentTime || 0).toFixed(2), code: (v.error && v.error.code) || null, url: sources[srcIdx] };
+            if (extra) for (var k in extra) r[k] = extra[k];
+            pushVideoDiag(r);
+          }
+          function hideFallback() { if (fallbackEl) { try { fallbackEl.remove(); } catch (_) {} fallbackEl = null; } vwrap.classList.remove('is-fallback'); }
+          function markPlaying() { if (playbackStarted) return; playbackStarted = true; hideFallback(); diag('playing'); }
           v.addEventListener('playing', markPlaying);
           v.addEventListener('timeupdate', function () { if (v.currentTime > 0.1) markPlaying(); });
-          var tryPlay = function () {
+          v.addEventListener('loadedmetadata', function () { diag('loadedmetadata'); });
+          v.addEventListener('canplay', function () { canplaySeen = true; diag('canplay'); attemptPlay(); });   // v0.10.7: canplay 후 재생(조기 play 방지)
+          ['stalled', 'waiting', 'suspend', 'abort', 'emptied'].forEach(function (ev) { v.addEventListener(ev, function () { diag(ev); }); });
+
+          function attemptPlay() {
+            if (playbackStarted) return;
+            diag('play_attempt');
             var p = v.play();
-            if (p && p.catch) p.catch(function () {
-              // v0.10.5: 자동재생 실패 시 1회 재시도(짧은 지연 후)
-              if (!retried) { retried = true; setTimer(function () { var p2 = v.play(); if (p2 && p2.catch) p2.catch(function () {}); }, 350); }
+            if (p && p.catch) p.catch(function (err) {
+              diag('play_reject', { err: (err && err.name) + ':' + String((err && err.message) || '').slice(0, 50) });
+              if (!retriedSrc) { retriedSrc = true; setTimer(function () { if (playbackStarted) return; var p2 = v.play(); if (p2 && p2.catch) p2.catch(function () { onSourceFail(); }); }, 350); }   // 1회 재시도
+              else onSourceFail();
             });
-          };
-          v.addEventListener('loadeddata', tryPlay);
-          tryPlay();
-          // 재생 실패/차단 시: "화면을 터치하면 영상을 재생합니다" + ▶ 버튼(개발자용 오류문구 미노출). 터치/버튼으로 재시도.
-          var showFallback = function () {
+          }
+          function loadSource(i) {
+            srcIdx = i; retriedSrc = false; canplaySeen = false;
+            try { v.src = sources[i]; } catch (_) {}
+            try { v.load(); } catch (_) {}   // v0.10.7: load() 후 canplay 대기 → attemptPlay (load 직후 즉시 play 안 함: Tizen race 방지)
+            diag('load_source');
+            setTimer(function () { if (!playbackStarted && !canplaySeen) attemptPlay(); }, 1400);   // canplay 미발생 대비 타임아웃 재생
+          }
+          function onSourceFail() {
+            diag('source_fail');
+            if (srcIdx < sources.length - 1) loadSource(srcIdx + 1);   // 2차(보수) 소스로 교체
+            else showFallback();                                       // 모든 소스 실패 → 터치 재생 폴백
+          }
+          v.addEventListener('error', function () { diag('error'); onSourceFail(); });
+
+          // v0.10.7: 사용자 제스처 재생(▶ 버튼·영상 영역 터치): re-mute + 필요 시 load + play. 개발자용 오류문구 미노출.
+          function userPlay(e) {
+            if (e) { try { e.stopPropagation(); } catch (_) {} }
+            if (playbackStarted) return;
+            v.muted = true; v.defaultMuted = true; retriedSrc = false;
+            if (v.networkState === 0 || v.readyState === 0) { try { v.load(); } catch (_) {} }
+            diag('user_play');
+            var p = v.play();
+            if (p && p.catch) p.catch(function (err) { diag('user_play_reject', { err: (err && err.name) }); onSourceFail(); });
+          }
+          function showFallback() {
             if (fallbackEl || playbackStarted) return;
             vwrap.classList.add('is-fallback');
             fallbackEl = div('video-fallback');
             var pb = document.createElement('button');
             pb.type = 'button'; pb.className = 'vf-play'; pb.textContent = '▶';
             pb.setAttribute('aria-label', CFG.texts.hints.videoTapPlay || '영상 재생');
-            pb.addEventListener('click', function (e) { e.stopPropagation(); retried = false; tryPlay(); });
+            pb.addEventListener('click', userPlay);
             var msg = div('vf-msg'); msg.textContent = CFG.texts.hints.videoTapPlay || '';
             fallbackEl.appendChild(pb); fallbackEl.appendChild(msg);
             vwrap.appendChild(fallbackEl);
-          };
-          // v0.9.1: 영상 영역 탭 → 다음 페이지로 이동(다른 페이지와 동일). 재생/정지는 좌측 ▶/⏸ 버튼 사용.
+            diag('fallback_shown');
+          }
+          // v0.10.7: 영상 영역 전체 터치로 재생(미재생·잠금/폴백 상태). 재생 전 화면탭으로 페이지 넘어가지 않도록 여기서 처리(stopPropagation).
+          vwrap.addEventListener('click', function (e) { if (!playbackStarted && (fallbackEl || vwrap.classList.contains('is-gated'))) userPlay(e); });
+
           if (mustWatch) {
-            videoGateLocked = true;                        // 종료 전 이동 잠금
+            videoGateLocked = true;                        // 종료 전 이동 잠금(재생 전 탭·다음 금지)
             vwrap.classList.add('is-gated');
             hint.textContent = CFG.texts.hints.videoWatch; // "영상을 끝까지 보면 다음으로 넘어가요"
             var unlock = function () {
               if (!videoGateLocked) return false;
               videoGateLocked = false;
               vwrap.classList.remove('is-gated');
-              vwrap.classList.add('is-ended');             // 종료 표시(테두리 강조)용 — 문구는 그대로 유지
-              updateCtrlButtons();                         // 다음 버튼 활성화(오류 시 수동 이동 대비)
+              vwrap.classList.add('is-ended');
+              updateCtrlButtons();
               return true;
             };
-            // v0.9.4: 정상 종료(ended)에만 자동 전환 예약. 오류(error)는 잠금 해제만(자동 이동 안 함).
+            // v0.9.4: 정상 종료(ended)에만 자동 전환. 오류/실패에는 자동 이동하지 않음(사용자 재생 전까지 페이지 유지).
             v.addEventListener('ended', function () {
-              if (!unlock()) return;                       // 중복 ended 가드
-              if (scene.autoNext) scheduleAutoNext(myIndex);
+              diag('ended');
+              if (!unlock()) return;
+              if (scene.autoNext) scheduleAutoNext(myIndex);   // PAGE6→7 / PAGE11→12 자동 전환 유지
             });
-            // v0.10.5: 하드 오류 → 콘솔 경고(진단용) + 터치 재생 fallback + 잠금 해제(수동 진행 가능, 갇힘 방지). 자동 이동은 안 함.
-            v.addEventListener('error', function () {
-              try { console.warn('[eslo] video error:', src, v.error && v.error.code); } catch (_) {}
-              showFallback(); unlock();
-            });
-            // v0.10.5: 워치독① — 일정 시간 재생 미시작(자동재생 차단 등)이면 터치 재생 유도(잠금은 유지 → 터치로 재생 후 정상 흐름).
-            setTimer(function () { if (!playbackStarted) { try { console.warn('[eslo] video not started → tap-to-play'); } catch (_) {} showFallback(); } }, VIDEO_START_TIMEOUT);
-            // v0.10.5: 워치독②(최종 안전망) — 그래도 재생 불가 시 잠금 해제(영구 갇힘 방지).
-            setTimer(function () { if (!playbackStarted && videoGateLocked) { try { console.warn('[eslo] video still not playing → unlock gate'); } catch (_) {} unlock(); } }, VIDEO_HARD_TIMEOUT);
-            updateCtrlButtons();                           // 다음 버튼 비활성 즉시 반영
+            // 워치독① 미시작 시 터치 재생 유도(잠금 유지 → 사용자가 재생하기 전까지 페이지 유지, 자동 이동 금지)
+            setTimer(function () { if (!playbackStarted) { diag('watchdog_no_start'); showFallback(); } }, VIDEO_START_TIMEOUT);
+            // 워치독②(최종 안전망) 그래도 재생 불가 시 gate 만 해제(수동 다음 허용, 자동 이동은 안 함 → 영구 갇힘 방지)
+            setTimer(function () { if (!playbackStarted && videoGateLocked) { diag('watchdog_unlock'); unlock(); } }, VIDEO_HARD_TIMEOUT);
+            updateCtrlButtons();
           } else {
-            // 비필수(루프) 영상도 장시간 미재생이면 터치 재생 유도(빈 화면 방지)
             setTimer(function () { if (!playbackStarted) showFallback(); }, VIDEO_START_TIMEOUT);
           }
+
+          loadSource(0);   // v0.10.7: 1차 소스 로드 시작(canplay/타임아웃 → attemptPlay)
           // 씬 이탈 시 영상 정지·해제 (재진입 시 새 요소로 처음부터 재생)
           cleanups.push(function () { try { v.pause(); v.removeAttribute('src'); v.load(); } catch (_) {} });
         } else {

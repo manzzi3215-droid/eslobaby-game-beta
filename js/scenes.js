@@ -62,7 +62,8 @@
     // 장면 ⑤ (PAGE 5-1) — 설명: 계면활성제 잔류 (v0.6.x: 피부 클로즈업 → prof.mp4 영상으로 교체)
     //   기존 skin/붉은원/계면이 제거. 문구는 residueVideoLead + 강조 residueVideoEmph.
     { id: 'residue', type: 'video', phase: 1,
-      video: 'profVideo', requireEnd: true, autoNext: true,   // v0.9.3 잠금 + v0.9.4 종료 후 Page7 자동 전환
+      video: 'profVideo', videoFallback: 'profVideoLo',   // v0.10.7: 1차 실패 시 2차 보수 소스로 교체
+      requireEnd: true, autoNext: true,   // v0.9.3 잠금 + v0.9.4 종료 후 Page7 자동 전환
       lead: T.scenes.residueVideoLead, emph: T.scenes.residueVideoEmph,
       tail: T.scenes.residueVideoTail, emphClass: 'bad-emph' },   // v0.9.4: '나쁜 계면활성제' 붉은 강조
 
@@ -97,7 +98,8 @@
     // 장면 ⑨-2 (PAGE 10-1) — 생분해 설명 영상 (v0.9.3: prof_nongye.mp4, 필수 시청)
     //   Page6과 동일하게 requireEnd → 영상이 끝나야 다음으로 이동 가능.
     { id: 'biodegradeInfo', type: 'video', phase: 4,
-      video: 'bioVideo', requireEnd: true, autoNext: true,   // v0.9.3 잠금 + v0.9.4 종료 후 Page12 자동 전환
+      video: 'bioVideo', videoFallback: 'bioVideoLo',   // v0.10.7: 1차 실패 시 2차 보수 소스로 교체
+      requireEnd: true, autoNext: true,   // v0.9.3 잠금 + v0.9.4 종료 후 Page12 자동 전환
       lead: T.scenes.bioLead, emph: T.scenes.bioEmph, emphClass: 'key-emph' },
 
     // 장면 ⑨-3 (PAGE 10-2) — 비포/애프터 비교 (일반 바디워시 vs 이슬로)

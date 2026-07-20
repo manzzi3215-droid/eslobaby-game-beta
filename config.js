@@ -19,7 +19,7 @@
 window.ESLO_CONFIG = {
   /* --- 프로젝트 메타 --------------------------------------------------- */
   meta: {
-    version: 'v0.10.6-beta',
+    version: 'v0.10.7-beta',
     title: '이슬로(eslo) 베이비 미니게임',
   },
 
@@ -39,8 +39,12 @@ window.ESLO_CONFIG = {
     magnifier: 'assets/images/magnifier.png',   // 돋보기 (현재 흐름 미사용)
     bubble:    'assets/images/bubble.png',      // 거품 (비우면 도형 거품)
     warningLight: '',   // v0.10.4: 경고등/비상등 — 실제 렌더는 SVG siren placeholder(shape:'siren'). 존재하지 않는 png 참조로 인한 404 제거(빈 값이면 이미지 요청 없이 placeholder 사용, 시각 동일).
-    profVideo: 'assets/images/prof.mp4', // PAGE 5-1 설명 영상 (계면활성제 잔류)
-    bioVideo:  'assets/images/prof_nongye.mp4', // PAGE 10-1 생분해 설명 영상 (v0.9.3: 필수 시청)
+    // v0.10.7: 파일명 변경(캐시버스트) — 삼성 사이니지에 남은 구 영상 HTTP 캐시 우회. 1차 재생 소스.
+    profVideo: 'assets/images/prof-signage.mp4',        // PAGE 6 영상 (1024×768, Constrained Baseline L3.1)
+    bioVideo:  'assets/images/prof-nongye-signage.mp4', // PAGE 11 영상 (동일 규격)
+    // v0.10.7: 2차 보수 폴백 소스(1차 재생 실패 시 교체) — 640×480 Baseline L3.0, 무B프레임·CABAC off·무음.
+    profVideoLo: 'assets/images/prof-signage-lo.mp4',
+    bioVideoLo:  'assets/images/prof-nongye-signage-lo.mp4',
     // 계면이(gyemeon) — v0.4.2-beta: 실제 1x 에셋. 표정 변형 5종 + Scene 8 씻김용 sad.
     surfactant:   'assets/images/gyemeon1.png',       // 기본 단일 fallback
     gyemeon: [
