@@ -2436,7 +2436,7 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
   color: #5f7fae;                              /* 중간 톤 블루(보조) */
   text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
 }
-/* 2줄: 선택 행동 강조(더 크고 굵게 + 선명한 딥 키 블루 = 대비↑). 밑줄/버튼형 아님, 글로우 아님 */
+/* 2줄: 선택 행동 강조 — 크기/굵기/박스/위치 그대로, v0.10.19 에서 색상만 따뜻한 골드로 변경(가독성·차별화↑) */
 .compare-quiz-hint-action {
   display: block;
   margin-top: clamp(1px, 0.4vh, 4px);
@@ -2444,8 +2444,8 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
   font-weight: 900;
   line-height: 1.3;
   letter-spacing: -0.3px;
-  color: var(--key-deep);                      /* 선명한 딥 키 블루(강조·대비 ↑) */
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.95), 0 1px 6px rgba(78, 134, 236, 0.16);   /* 은은한 강조(정답 글로우보다 약함) */
+  color: #C8820A;                              /* v0.10.19: 따뜻한 앰버-골드(블루 일색에서 즉시 눈에·정답 파란 글로우와 구분·형광 아님·정적) */
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 3px rgba(120, 80, 0, 0.30);   /* 흰 하이라이트 + 웜 다크 그림자(흰 배경 대비↑) */
 }
 /* 아주 좁은 화면(≤360px): 각 줄 1줄 유지되게 폰트/패딩 축소(2줄째가 더 큼) */
 @media (max-width: 360px) {
@@ -2459,3 +2459,19 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
   .compare-quiz-hint-sub { font-size: clamp(13px, 2.4vw, 17px); line-height: 1.25; }
   .compare-quiz-hint-action { font-size: clamp(15px, 2.8vw, 19px); line-height: 1.2; }
 }
+
+/* =============================================================================
+ * v0.10.19 — PAGE 5 경고 문구 위치·간격 정리 (위치·여백만, 내용/폰트/색/애니메이션 불변)
+ * -----------------------------------------------------------------------------
+ * 경고 제목이 카드 상단에 너무 붙고, 아래 설명(.warning-sub)과 간격이 벌어져 있던 것 조정.
+ * 제목을 조금 내리고(margin-top) 설명과의 간격을 좁혀(margin-bottom) 하나의 경고 메시지처럼.
+ * .warning-scene 스코프 → 다른 페이지 공통 .card-title 무영향. vh 기반 clamp 로 세로/가로/Flip Pro 대응.
+ * ========================================================================== */
+.warning-scene .card-title {
+  margin-top: clamp(6px, 1.5vh, 16px);         /* 카드 상단에서 살짝 아래로(너무 붙지 않게) */
+  margin-bottom: clamp(6px, 1.2vh, 12px);      /* 아래 설명과의 간격(하나의 메시지처럼) — flex-start 라 이 값이 gap 을 직접 결정 */
+}
+/* 경고 본문(설명)을 제목 바로 아래로 붙임 — 기존 screen-body 의 세로 center 는 큰 화면에서 제목·설명 간격이
+   과도하게 벌어지므로(예: 데스크톱 82px) 경고 화면만 flex-start 로 변경. 아기 무대는 남은 공간에서 다시 중앙. */
+.warning-scene .screen-body { justify-content: flex-start; }
+.warning-scene .stage { margin-top: auto; margin-bottom: auto; }   /* 남은 공간에서 아기 무대 세로 중앙 */

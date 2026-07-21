@@ -14,7 +14,11 @@
 
 ## 현재 버전
 
-**v0.10.18-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.10.19-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.10.19-beta(patch): **PAGE 5 경고 문구 위치·간격 정리 · PAGE 12 선택 CTA 골드 강조.** 텍스트/폰트/애니메이션/음성/효과음/퀴즈 로직·카드·자동 진행 전부 불변(CSS 위치·간격/색상만).
+  - PAGE 5(`css/game.css` `.warning-scene` 스코프): `.card-title` `margin-top: clamp(6px,1.5vh,16px)`(상단에서 살짝 내림)+`margin-bottom: clamp(6px,1.2vh,12px)`, `.screen-body { justify-content: flex-start }`(제목↔설명 큰 화면에서 벌어짐 방지 — center 는 데스크톱 82px까지 벌어짐), `.stage { margin: auto 0 }`(아기 무대 남은 공간 세로 중앙). 제목↔설명 간격 전 해상도 16~21px 통일. 공통 `.card-title`/`.screen-body`/`.stage` 무영향.
+  - PAGE 12(`.compare-quiz-hint-action`): **색상만** `var(--key-deep)`→`#C8820A`(따뜻한 앰버-골드)+그림자 웜 다크 tint. 크기/굵기/박스/위치 불변. 노란/골드 채택(블루 일색에서 즉시 눈에·정답 파란 글로우와 구분·정적·형광 아님·대비 AA 라지 통과). Glow 미채택(블루 위 블루라 차별화 약·정답 글로우와 혼동 위험).
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.10.19-beta`. 신규 자산 없음.
 ※ v0.10.18-beta(patch): **PAGE 12 선택 안내 문구 변경·카드 아래 배치·2번째 줄 행동 강조.** 상단 제목/질문·카드 라벨·퀴즈 로직·효과음·자동 전환·BGM 전부 불변(안내 문구 텍스트·DOM·스타일만).
   - `config` `hints.quizSelect` → `우리 아이에게 꼭 필요한\n안심 워시를 선택해주세요.`(2줄). 상단 제목 `민감한 우리 아이 피부`/질문 `생분해 케어는 선택이 아니라 필수!`는 page12.m4a 음성 일치 위해 유지.
   - `game.js renderCompare`: 안내 문구를 카드 **아래**로 이동(제목→카드→안내). 2줄을 별도 요소로 분리 — `div('hint compare-quiz-hint')` + `<span .compare-quiz-hint-sub>`(1줄) + `<strong .compare-quiz-hint-action>`(2줄). `\n` 기준 split. `makeHint` 미변경(공통 구조 보존). 카드 이벤트/정답·오답 로직 무변경.
