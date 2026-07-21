@@ -44,6 +44,7 @@
       tool: 'bodywash', action: 'foam', hint: T.hints.dragWash,
       gauge: 'rise', gaugeFrom: 0, gaugeTo: 0.5,
       surfactant: true, surfactantGrow: true, surfactantMood: 'playful',
+      requireInteraction: true,   // v0.10.12: 문지르기 완료 전 수동 이동 금지(다음버튼 숨김·탭 차단)
       autoNext: true },   // v0.9.4: 계면이 모두 생성(완료) 직후 Page4 자동 전환
 
     // 장면 ③-2 — STEP1 ②: 샤워기로 헹구기 (거품만 사라지고 계면이는 그대로 남음)
@@ -54,6 +55,7 @@
       toolLeft: '3%', toolTop: '18%',   // v0.6.x: 샤워기를 왼쪽으로 이동(아기 얼굴 가림 방지)
       gauge: 'rise', gaugeFrom: 0.5, gaugeTo: 1,
       surfactant: true, surfactantFrom: 1, surfactantTo: 1, surfactantMood: 'clinging',
+      requireInteraction: true,   // v0.10.12: 헹구기 완료 전 수동 이동 금지
       autoNext: true },   // v0.9.4: 거품 모두 제거(완료) 직후 Page5 자동 전환
 
     // 장면 ④ — 설명: 민감도 100% 경고 (STEP 배지·제목 없음, 게이지만 유지)
@@ -78,6 +80,7 @@
       tool: 'eslo', action: 'foam', hint: T.hints.dragWashEslo,
       gauge: 'fall', gaugeFrom: 1, gaugeTo: 0.5,
       surfactant: true, surfactantGrow: true, surfactantMood: 'anxious',
+      requireInteraction: true,   // v0.10.12: 문지르기 완료 전 수동 이동 금지
       autoNext: true },   // v0.9.4: 계면이 모두 생성(완료) 직후 Page9 자동 전환
 
     // 장면 ⑧ — STEP3: 샤워 (거품과 계면이가 함께 씻겨 내려가 모두 사라짐)
@@ -89,6 +92,7 @@
       surfactant: true, surfactantFrom: 1, surfactantTo: 0, surfactantMood: 'panic',
       washFace: true,           // v0.4.2: Scene 8 — 씻길 때 gyemeon6-sad 로 표정 교체
       requireGaugeZero: true,
+      requireInteraction: true,   // v0.10.12: 헹구기 완료 전 수동 이동 금지
       autoNext: true },   // v0.9.4: 거품·계면이 모두 제거(완료) 직후 Page10 자동 전환
 
     // 장면 ⑨ — MISSION 성공! (웃는 아이 + 반짝임, 제품 이미지 없음)

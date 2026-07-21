@@ -11,6 +11,30 @@
 
 ---
 
+## [v0.10.12-beta] - 2026-07-21
+### PAGE 3·4·8·9 인터랙션 필수화 · 첫 화면부터 BGM 지속 재생
+**PAGE 6·11 영상 재생·autoplay·must-watch·영상 종료 후 자동 전환·has-video CSS·음성 1.2배속·BGM Ducking·카드 내부 이전/다음 구조는 변경 없음.**
+
+### 1. PAGE 3·4·8·9 다음 버튼 삭제 + 인터랙션 강제 완료
+- `js/scenes.js`: bodywashUse(3)·bodywashRinse(4)·esloUse(8)·esloRinse(9)에 `requireInteraction: true` 추가.
+- `js/game.js`: 전역 `interactionLocked` 도입(videoGateLocked과 동일 패턴). 완료 전 **모든 수동 이동 차단** — `goNext`/`goToStep`/`scheduleAutoNext`/`updateCtrlButtons`(다음 버튼 disabled→CSS `.card-nav:disabled{opacity:0}`로 숨김)에 `interactionLocked` 조건 추가. 화면 탭(`tapAdvance`)·카드 탭·페이지점 점프 모두 `goNext`/`goToStep` 경유라 함께 차단.
+- 잠금 설정: `renderDrag`의 buildBody에서 `if (scene.requireInteraction) interactionLocked = true`(shell이 직후 updateCtrlButtons 호출 → 다음 버튼 숨김). 해제: 드래그 `onComplete`(makeRubbable `completed` 가드로 1회)에서 `interactionLocked = false` 후 기존 `scheduleAutoNext(myIndex)` → **완료 이벤트 기준 자동 전환**(새 타이머 미추가). 3→4·4→5·8→9·9→10.
+- 재진입 초기화: `renderScene` 진입 시 `interactionLocked = false` 리셋 → 이전으로 돌아갔다 재진입하면 새 makeRubbable(completed=false)로 다시 완료해야 이동. 이전 버튼은 유지(잠금은 다음/탭/점프만).
+- accidental tap 방지: 완료 전 `interactionLocked`로 탭 이동 자체가 차단(+ 기존 tapAdvance의 드래그/이동거리 예외 유지).
+
+### 2. 첫 화면부터 BGM 지속 재생 (싱글턴·위치 유지)
+- `js/sfx.js`: `startBGM`에서 `currentTime = 0` **제거** → 재시작 없이 현재 위치에서 재생. 브라우저 자동재생 정책 대응 — `bindBgmUnlock`(pointerdown/touchstart/mousedown/keydown 캡처 리스너)로 **자동재생 차단 시 첫 사용자 제스처에서 재생**, 실제 재생되면 즉시 `unbindBgmUnlock`(이후 정지/재생 버튼과 충돌 없음). 차단 시 콘솔 반복 출력 없음(`play().then(…, ()=>{})`).
+- `js/game.js`: `renderGate()`의 `SFX.stopBGM()` → `SFX.startBGM()`(첫 화면·게이트 복귀 모두 재생 시도, **정지·0초 초기화 안 함**). `startGame()`의 `startBGM` 호출 제거(게이트에서 이미 시작·유지). BGM Audio는 기존 싱글턴(`bgmEl`) 그대로 — 페이지마다 새로 생성하지 않음.
+- 결과: 카카오 채널 추가(첫 화면)부터 재생, 게임 전체·PAGE 14·게이트 복귀까지 끊김/재시작 없이 위치 유지, loop 유지. 정지 버튼=BGM+음성 일시정지, 재생 버튼=이어서(applyPauseState). 음성 재생 중 Ducking·종료 후 복귀 그대로.
+
+### 기타
+- `sw.js` `CACHE_NAME` `eslo-game-v0.10.12-beta`(수정된 JS/CSS/오디오가 새 캐시에 포함). PRECACHE 목록(bgm.m4a·voice·JS/CSS) 그대로.
+
+### QA (로컬 PC)
+- PAGE 3·4·8·9 다음 버튼 미표시·탭/점프 이동 불가·미완료 이동 불가·이전 정상·재진입 초기화·완료 후 1회 자동 이동(3→4·4→5·8→9·9→10, 2페이지 스킵 없음). BGM: 첫 화면 재생 시도·첫 제스처 재생·게이트↔게임 끊김 없음·위치 유지·loop·Ducking·정지/재생·인스턴스 중복 없음. 회귀: PAGE 6·11 영상·6→7·11→12·must-watch·PAGE 13→14·콘솔 0·404 0.
+
+---
+
 ## [v0.10.11-beta] - 2026-07-21
 ### 음성 타이밍 · 자동전환 · 네비게이션 UX · 배경음(BGM)+Ducking
 **영상 렌더링 수정(has-video+CSS)·PAGE 6·11 영상 재생·autoplay·fallback·must-watch·영상 파일은 변경 없음**(Flip Pro 검증본 유지).

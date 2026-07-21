@@ -14,7 +14,11 @@
 
 ## 현재 버전
 
-**v0.10.11-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.10.12-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.10.12-beta(minor): **PAGE 3·4·8·9 인터랙션 필수화(다음 버튼·탭 이동 차단) · 첫 화면부터 BGM 지속 재생(위치 유지)**. **PAGE 6·11 영상 재생·autoplay·must-watch·has-video CSS·음성 1.2배속·BGM Ducking·카드 내부 이전/다음 구조 불변.**
+  - 인터랙션 필수: scenes.js PAGE3·4·8·9에 `requireInteraction:true`. game.js 전역 `interactionLocked`(videoGateLocked과 동일 패턴) → `goNext`/`goToStep`/`scheduleAutoNext`/`updateCtrlButtons`에 조건 추가(다음 버튼 disabled→숨김, 탭·점프 차단). `renderDrag` buildBody에서 잠금 설정, `onComplete`에서 해제 후 기존 `scheduleAutoNext`(완료 이벤트 기준, 새 타이머 없음). `renderScene` 진입 시 리셋(재진입 재완료). 이전 버튼 유지.
+  - 첫 화면 BGM: sfx.js `startBGM`에서 `currentTime=0` 제거(위치 유지), 자동재생 차단 대응 제스처 언락(bind/unbindBgmUnlock, 재생되면 즉시 해제, 콘솔 미출력). game.js `renderGate`의 `stopBGM`→`startBGM`(정지·재시작 안 함), `startGame`의 startBGM 제거. 싱글턴 `bgmEl` 유지. loop·Ducking·정지/재생 유지.
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.10.12-beta`.
 ※ v0.10.11-beta(minor): **음성 1.2배속 · PAGE13 음성종료 자동전환 · 이전/다음 카드 내부 이동 · 모션 문구 가독성 · BGM+Ducking**. **Flip Pro 영상 렌더링 수정(has-video+CSS)·PAGE 6·11 영상 재생·autoplay·fallback·must-watch·영상 파일은 변경 금지·불변.**
   - 음성: `voice/page01~14.m4a`를 ffmpeg `atempo=1.2`(피치 보존)로 재인코딩(파일명·config 매핑 불변).
   - PAGE13: `renderBrandFinal`의 타이머 자동전환 제거, `playPageVoice(13)` onEnded(audio `ended`)에서 `goNext()`(타이머 미사용, 음성 종료 전 이동 금지). 순차 등장 애니 유지.

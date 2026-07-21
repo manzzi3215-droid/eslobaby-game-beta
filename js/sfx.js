@@ -283,14 +283,35 @@
       if (k >= 1) clearBgmFade();
     }, 30);
   }
+  // v0.10.12: 브라우저 자동재생 정책 대응 — 첫 화면에서 재생 시도, 차단되면 첫 사용자 제스처에서 재생.
+  //   제스처 리스너는 BGM이 실제로 재생되면 즉시 해제(이후 정지/재생 버튼과 충돌하지 않음).
+  var bgmUnlockBound = false;
+  function bgmTryPlay() {
+    if (!bgmEl) return;
+    if (!bgmEl.paused) { unbindBgmUnlock(); return; }   // 이미 재생 중 → 위치 유지, 제스처 해제
+    var p = bgmEl.play();
+    if (p && p.then) p.then(function () { unbindBgmUnlock(); }, function () { /* 자동재생 차단: 조용히 대기(콘솔 미출력) */ });
+    else unbindBgmUnlock();
+  }
+  function bgmUnlockHandler() { if (bgmActive) bgmTryPlay(); }
+  function bindBgmUnlock() {
+    if (bgmUnlockBound) return; bgmUnlockBound = true;
+    ['pointerdown', 'touchstart', 'mousedown', 'keydown'].forEach(function (ev) { document.addEventListener(ev, bgmUnlockHandler, true); });
+  }
+  function unbindBgmUnlock() {
+    if (!bgmUnlockBound) return; bgmUnlockBound = false;
+    ['pointerdown', 'touchstart', 'mousedown', 'keydown'].forEach(function (ev) { document.removeEventListener(ev, bgmUnlockHandler, true); });
+  }
+  // v0.10.12: 첫 화면부터 BGM(싱글턴). currentTime 은 초기화하지 않음 → 게이트↔게임 이동에도 위치 유지·재시작 금지.
   function startBGM() {
     var el = ensureBgmEl(); if (!el) return;
-    bgmActive = true; clearBgmFade();
-    try { el.currentTime = 0; el.volume = BGM_BASE; } catch (e) {}
-    var p = el.play(); if (p && p.catch) p.catch(function () {});   // 제스처 없으면 조용히 실패(게임 무영향)
+    bgmActive = true;
+    bindBgmUnlock();     // 자동재생 차단 대비 첫 제스처 재생 예약
+    bgmTryPlay();        // 자동재생 허용 시 즉시 재생(현재 위치에서 이어서)
   }
+  // 완전 정지(위치 0). 게이트 복귀에서는 호출하지 않음(BGM 지속). 필요 시(세션 완전 종료 등)만 사용.
   function stopBGM() {
-    bgmActive = false; clearBgmFade();
+    bgmActive = false; clearBgmFade(); unbindBgmUnlock();
     if (!bgmEl) return;
     try { bgmEl.pause(); bgmEl.currentTime = 0; bgmEl.volume = BGM_BASE; } catch (e) {}
   }

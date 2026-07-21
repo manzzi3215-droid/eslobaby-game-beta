@@ -23,6 +23,7 @@
   var busy = false;
   var paused = false;                    // 정지(⏸): v0.8.x — 현재 화면의 영상·CSS 애니메이션 일시정지 (페이지 이동과 무관)
   var videoGateLocked = false;           // v0.9.3: 필수 시청 영상(Page6·Page11)이 끝나기 전엔 다음 이동 잠금
+  var interactionLocked = false;         // v0.10.12: PAGE3·4·8·9 — 문지르기/헹굼 인터랙션 완료 전엔 다음 이동 잠금(수동 이동 전면 차단)
   var autoNextScheduled = false;         // v0.9.4: 완료 이벤트 기반 자동 전환 — 장면당 1회 가드
 
   // 장면 간 유지되는 게임 상태 (자극 게이지 값 등)
@@ -301,7 +302,8 @@
   function renderGate() {
     clearScene();
     if (window.Analytics) window.Analytics.endSession();   // v0.4.0: 진행 중 세션 종료
-    try { if (window.SFX && SFX.stopBGM) SFX.stopBGM(); } catch (_) {}   // v0.10.11: 게임 종료(게이트 복귀) 시 BGM 정지
+    // v0.10.12: 첫 화면(게이트)에서도 BGM 재생 시도(자동재생 허용 시 즉시, 차단 시 첫 제스처에서). 게이트 복귀 시 정지·재시작하지 않음(위치 유지).
+    try { if (window.SFX && SFX.startBGM) SFX.startBGM(); } catch (_) {}
     index = 0;
     state.irritation = 0;
     paused = false;            // 게이트 복귀 시 정지 상태 초기화
@@ -332,8 +334,8 @@
   /* ---------- 진행 제어 --------------------------------------------- */
   function startGame() {
     index = 0; state.irritation = 0; paused = false;
-    // v0.10.11: 배경음(BGM) 시작 — 게임 시작 버튼(첫 사용자 제스처) 이후. 다시 시작 시 처음부터(startBGM이 currentTime 0).
-    try { if (window.SFX && SFX.startBGM) SFX.startBGM(); } catch (_) {}
+    // v0.10.12: BGM은 게이트(첫 화면)에서 이미 시작·유지되므로 여기서 재시작하지 않음(위치 유지).
+    //   게이트 시작 버튼 클릭 자체가 제스처이므로, 자동재생이 차단됐더라도 이 클릭에서 BGM이 재생됨(sfx.js 제스처 언락).
     if (window.Analytics) window.Analytics.startSession();   // v0.4.0: 플레이 세션 시작
     renderScene();
   }
@@ -345,6 +347,7 @@
   function goNext() {
     if (busy) return;
     if (videoGateLocked) return;                 // v0.9.3: 필수 시청 영상이 끝나기 전엔 이동 금지(탭·다음 공통)
+    if (interactionLocked) return;               // v0.10.12: PAGE3·4·8·9 인터랙션 완료 전엔 이동 금지(탭·다음·수동 공통)
     if (index >= SCENES.length - 1) return;      // 마지막 장면: 이동 없음
     clearScene();
     index++;
@@ -398,7 +401,7 @@
     autoNextScheduled = true;
     setTimer(function () {
       if (index !== fromIndex) return;            // 이미 이탈(수동 이동/이전/처음으로/goToStep)
-      if (busy || videoGateLocked) return;        // 전환 중이거나 영상 잠김이면 스킵
+      if (busy || videoGateLocked || interactionLocked) return;   // 전환 중이거나 영상/인터랙션 잠김이면 스킵
       goNext();
     }, (delay != null ? delay : AUTO_NEXT_DELAY));
   }
@@ -438,7 +441,7 @@
     }
     if (nextBtn) {
       // v0.9.3: 마지막 장면 또는 필수 시청 영상 재생 중이면 다음 버튼 비활성
-      var lockNext = (index >= SCENES.length - 1) || videoGateLocked;
+      var lockNext = (index >= SCENES.length - 1) || videoGateLocked || interactionLocked;
       nextBtn.disabled = lockNext;
       nextBtn.classList.toggle('is-disabled', lockNext);
       nextBtn.setAttribute('aria-disabled', lockNext ? 'true' : 'false');
@@ -462,6 +465,7 @@
   // step: 1=게이트, 2~=장면 순서 (내부 Scene 번호 — 사용자 표시 STEP1~3과 별개)
   function goToStep(step) {
     if (videoGateLocked) return;         // v0.9.3: 필수 시청 영상 재생 중엔 페이지점 점프도 금지(끝까지 시청 강제)
+    if (interactionLocked) return;       // v0.10.12: 인터랙션 완료 전엔 페이지점 점프도 금지(강제 완료)
     clearScene();
     if (step <= 1) { renderGate(); return; }
     index = Math.min(step - 2, SCENES.length - 1);
@@ -473,6 +477,7 @@
     clearScene();
     toggleChrome(true);
     videoGateLocked = false;             // v0.9.3: 장면 진입 시 영상 잠금 초기화(영상 렌더러가 필요 시 다시 잠금)
+    interactionLocked = false;           // v0.10.12: 장면 진입 시 인터랙션 잠금 초기화(드래그 렌더러가 필요 시 다시 잠금) → 재진입 시 반드시 다시 완료
     autoNextScheduled = false;           // v0.9.4: 자동 전환 예약 초기화(이전 장면 타이머는 clearScene 이 이미 정리)
     var scene = SCENES[index];
     updateCtrlButtons();                 // 다음 버튼 활성/비활성 갱신
@@ -776,6 +781,9 @@
     showScreen(function (el) {
       shell(el, scene, scene.title, function (body) {
         var mode = scene.gauge;               // 'rise' | 'hold' | 'fall'
+        // v0.10.12: 인터랙션 필수 페이지(PAGE3·4·8·9) — 완료 전 수동 이동 전면 차단(탭·다음버튼·페이지점).
+        //   shell 이 이 buildBody 직후 updateCtrlButtons()를 호출하므로 다음 버튼은 자동으로 숨겨짐(.card-nav:disabled).
+        if (scene.requireInteraction) interactionLocked = true;
         var gauge = null, startLevel = 0, endLevel = 0;
         if (mode) {
           gauge = buildGauge(mode);
@@ -911,8 +919,10 @@
               state.irritation = 0;
               if (gauge) gauge.set(0);
             }
+            // v0.10.12: 인터랙션 완료 → 잠금 해제(자동 전환 허용). 완료 전에는 어떤 수동 경로로도 이동 불가.
+            if (scene.requireInteraction) interactionLocked = false;
             // v0.9.4: 지정 장면(Page3·4·8·9)만 — 드래그 완료(계면이 모두 생성 / 거품 모두 제거) 직후 자동 전환.
-            //   완료 이벤트(onComplete) 1회 기준. clearScene 이 이탈/수동이동 시 예약 취소.
+            //   완료 이벤트(onComplete) 1회 기준(makeRubbable completed 가드). clearScene 이 이탈/수동이동 시 예약 취소.
             if (scene.autoNext) scheduleAutoNext(myIndex);
           },
         });
