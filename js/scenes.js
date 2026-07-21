@@ -111,8 +111,9 @@
       hideNext: true,   // v0.10.13: 영상 종료 자동 이동 → 카드 내부 다음 버튼 숨김(이전 버튼은 유지)
       lead: T.scenes.bioLead, emph: T.scenes.bioEmph, emphClass: 'key-emph' },
 
-    // 장면 ⑨-3 (PAGE 10-2) — 비포/애프터 비교 (일반 바디워시 vs 이슬로)
-    { id: 'beforeAfterCompare', type: 'compare', phase: 4 },
+    // 장면 ⑨-3 (PAGE 12) — 선택형 퀴즈 (일반 바디워시 vs 이슬로 생분해 워시)
+    //   v0.10.15: 정답(이슬로 생분해 워시) 선택 시에만 PAGE 13 이동. 진입 시 quizLocked → 탭/다음/이전/점프 차단.
+    { id: 'beforeAfterCompare', type: 'compare', phase: 4, quizRequired: true },
 
     // 장면 ⑩ (PAGE 13) — 최종 브랜드 페이지 (제품 3종 + 제품명, 순차 등장)
     //   v0.10.2: 다시하기 버튼 제거. 제품 이미지·제품명 순차 등장 완료 후 약 2초 유지 → PAGE 14 자동 전환.

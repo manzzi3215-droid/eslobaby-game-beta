@@ -14,7 +14,13 @@
 
 ## 현재 버전
 
-**v0.10.14-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.10.15-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.10.15-beta(minor): **PAGE 12 선택형 퀴즈(정답 선택 시에만 진행) · 오답/정답 연출 · 문구 수정.** **PAGE 5 경보음→음성→PAGE6·PAGE 6·11 영상·PAGE 7·10·13 음성 자동 전환·PAGE 3·4·8·9 인터랙션·BGM 엔진·Flip Pro has-video CSS 전부 불변.**
+  - 문구: `config` `compareLead`=`소중한 우리 아이 피부`, `compareEmph`=`어떤 선택으로 지켜주시겠어요?`, 신규 `hints.quizSelect`=`두 워시 중 하나를 선택해주세요.`. 카드 라벨/폰트/컬러/레이아웃 유지.
+  - 퀴즈: `scenes.js` beforeAfterCompare 에 `quizRequired:true`. `game.js` 전역 `quizLocked`(renderScene 진입 초기화 후 quizRequired 면 잠금 → goNext/goPrev/goToStep 전부 차단, updateCtrlButtons 가 다음·이전 모두 숨김, `!!` boolean). `renderGate` 에서 `quizLocked=false`(처음으로 잔류 방지). `renderCompare` 는 tapAdvance 미호출.
+  - 카드: 두 `.compare-card` = `role=button`+`tabindex=0`+`aria-label`+click/keydown(Enter·Space) → 카드 전체 터치/키보드 선택. 오답(compare-bad=일반 바디워시)=`wrong()` 부저+`.is-wrong-shake`(cardShake)+`.is-wrong`(붉은 경고, 760ms 후 복귀), 페이지 유지·재선택. 정답(compare-good=이슬로 생분해 워시)=`success` 재사용+`.is-correct`(cardCorrect 파란 강조), `answered`+`row.is-answered` 로 잠금, **animationend(+900ms fallback)**→`moved`/`index===myIndex` 가드 후 `quizLocked=false`→`goNext()`(PAGE 13 1회, PAGE14 스킵 방지).
+  - 오디오: `sfx.js` `wrong()`·`playFeedback(type)`(정답/오답음+`duckBGM`→`!voiceActive` 시 unduck, 정답→PAGE13 음성 볼륨 안 튐)·`stopFeedbackSfx`·`stopAllAudio`에 wrong 추가. **신규 오디오 파일 없음(합성) → sw PRECACHE 변경 없음.** `clearScene` 이 `stopFeedbackSfx` 로 정리.
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.10.15-beta`.
 ※ v0.10.14-beta(minor): **음성 종료 자동 전환(PAGE 5·7·10) · PAGE 5 경보 알람(Web Audio) · 다음 버튼 표시 회귀 수정(PAGE 1·2·12) · PAGE 7 문구 위치 재조정.** **PAGE 6·11 영상 자동재생·6→7·11→12 자동 이동·PAGE 13 음성 종료 자동 이동·PAGE 3·4·8·9 인터랙션 필수화·BGM·Flip Pro has-video CSS 전부 불변.**
   - 다음 버튼 회귀 수정: v0.10.13에서 `updateCtrlButtons` `lockNext` 가 `(curScene && curScene.hideNext)`로 인해 hideNext 없는 페이지에서 `undefined`가 되고 `classList.toggle(cls, undefined)`가 토글되어 PAGE 1·2·12 다음 버튼이 사라짐 → `lockNext = !!(...)` boolean 강제로 수정.
   - 음성 자동 전환: `scenes.js` warning(5)·esloIntro(7)·missionSuccess(10)에 `voiceNext:true`. `game.js` 전역 `voiceGateLocked`(renderScene 진입 초기화 후 voiceNext 면 잠금 → goNext/goToStep/updateCtrlButtons 차단, 이전 버튼 유지). `playPageVoice` 의 `autoAdvance`(음성 ended 콜백, index 가드+goNext busy 가드)로 1회만 이동. PAGE 5는 `playAlarm(startVoice5)` → 알람 종료 후 음성 → 음성 종료 후 이동. **임의 타이머 아님(음성 ended 기준)**, 재진입 재실행, 오디오 실패 시 `VOICE_HARD_TIMEOUT`(12s) 워치독이 잠금만 해제(영구 갇힘 방지). `renderWarning`/`renderBrand`/`renderMissionSuccess`의 안내 문구(makeHint) 제거, `sfx('warn')` 제거(알람으로 대체), PAGE 5·10 울음/웃음 미재생.

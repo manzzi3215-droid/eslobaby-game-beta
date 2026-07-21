@@ -170,6 +170,49 @@
   }
   function stopAlarm() { killOneShot('alarm'); }
 
+  // v0.10.15: PAGE 12 퀴즈 오답음 "삐-빅" — 짧은 2톤 하강 부저(경보 알람과 구분되는 짧고 명확한 오답 피드백).
+  //   square + lowpass(1.3kHz) 로 거슬리는 고주파 억제, 총 ~0.27s. 재생 실패해도 시각 피드백/게임엔 영향 없음.
+  function wrong() {
+    if (!ensureCtx()) return;
+    killOneShot('wrong');
+    var t0 = ctx.currentTime;
+    var seq = [440, 340];                                // 삐-빅(하강 = 오답 느낌)
+    var beep = 0.11, gap = 0.05;
+    for (var i = 0; i < seq.length; i++) {
+      var st = t0 + i * (beep + gap);
+      var osc = ctx.createOscillator(), g = ctx.createGain();
+      var lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1300;
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(seq[i], st);
+      g.gain.setValueAtTime(0.0001, st);
+      g.gain.exponentialRampToValueAtTime(0.42, st + 0.01);
+      g.gain.setValueAtTime(0.42, st + beep - 0.025);
+      g.gain.exponentialRampToValueAtTime(0.0001, st + beep);
+      osc.connect(g); g.connect(lp); lp.connect(masterGain);
+      osc.start(st); osc.stop(st + beep + 0.02);
+      regOneShot('wrong', osc);
+    }
+  }
+  function stopFeedbackSfx() { killOneShot('wrong'); }
+
+  // v0.10.15: 퀴즈 오답/정답 피드백음 + BGM Ducking(자기완결).
+  //   - 'wrong' = 짧은 오답 부저, 'correct' = 기존 성공음(success, 밝은 상승 아르페지오) 재사용.
+  //   - 재생 시작 시 duckBGM → holdMs 후 unduck. 단, 페이지 음성이 이어지면(voiceActive) unduck 하지 않아
+  //     (정답→PAGE 13 음성) BGM 볼륨이 튀지 않음. 실패해도 게임/이동엔 무영향.
+  var sfxDuckTimer = null;
+  function playFeedback(type) {
+    try {
+      if (type === 'correct') { if (SOUNDS.success) SOUNDS.success(); }
+      else { wrong(); }
+    } catch (e) {}
+    try {
+      duckBGM();
+      if (sfxDuckTimer) clearTimeout(sfxDuckTimer);
+      var hold = (type === 'correct') ? 2400 : 620;      // 정답: PAGE 13 음성이 이어받을 시간 확보
+      sfxDuckTimer = setTimeout(function () { sfxDuckTimer = null; if (!voiceActive) unduckBGM(); }, hold);
+    } catch (e) {}
+  }
+
   // 이름별 합성 효과음 (귀엽고 가벼운 톤)
   var SOUNDS = {
     click:    function () { tone(680, 'triangle', 0.09, { slideTo: 900, gain: 0.42 }); },
@@ -281,7 +324,7 @@
   }
   function pauseVoice() { if (voiceActive && voiceEl && !voiceEl.paused) { try { voiceEl.pause(); } catch (e) {} } }
   function resumeVoice() { if (voiceActive && voiceEl && voiceEl.paused) { var p = voiceEl.play(); if (p && p.catch) p.catch(function () {}); } }
-  function stopAllAudio() { stopVoice(); killOneShot('cry'); killOneShot('laugh'); killOneShot('alarm'); }
+  function stopAllAudio() { stopVoice(); killOneShot('cry'); killOneShot('laugh'); killOneShot('alarm'); killOneShot('wrong'); }
 
   /* =============================================================================
    * 배경음(BGM) + 자동 Ducking (v0.10.11)
@@ -368,6 +411,9 @@
     // v0.10.14: PAGE 5 경보 알람(합성). onDone 은 알람 종료 시 1회 호출 → 이어서 안내 음성.
     playAlarm: alarm,
     stopAlarm: stopAlarm,
+    // v0.10.15: PAGE 12 퀴즈 오답/정답 피드백음(+BGM Ducking 자기완결). type='wrong'|'correct'.
+    playFeedback: playFeedback,
+    stopFeedbackSfx: stopFeedbackSfx,
     // v0.10.11: 배경음(BGM) 제어 (loop·ducking은 내부에서 페이지 음성과 연동)
     startBGM: startBGM,
     stopBGM: stopBGM,

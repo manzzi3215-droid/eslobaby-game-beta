@@ -1982,6 +1982,50 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
   .compare-img { width: clamp(70px, 26vw, 96px); }
 }
 
+/* v0.10.15: PAGE 12 선택형 퀴즈 — 카드 전체 클릭 가능 + 오답(붉은 경고·흔들림)·정답(파란 강조) 피드백 */
+.compare-card {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.12s ease;
+  will-change: transform;
+}
+.compare-card:focus-visible { outline: 3px solid var(--key); outline-offset: 3px; }
+@media (hover: hover) { .compare-card:hover { box-shadow: 0 8px 20px rgba(70, 120, 160, 0.22); } }
+.compare-card:active { transform: scale(0.98); }
+.compare-row.is-answered .compare-card { pointer-events: none; }   /* 정답 선택 후 두 카드 클릭 잠금 */
+
+/* 오답: 붉은 테두리·외곽광(카드 이미지/문구는 가리지 않음). 잠시 후 원상 복귀 */
+.compare-card.is-wrong {
+  border-color: #e0554e !important;
+  box-shadow: 0 0 0 3px rgba(224, 85, 78, 0.35), 0 6px 18px rgba(224, 85, 78, 0.30);
+}
+/* 오답 흔들림 — 선택 카드 중심, 짧게 1회(멀미 방지 소폭) */
+.compare-card.is-wrong-shake { animation: cardShake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+@keyframes cardShake {
+  10%, 90% { transform: translateX(-2px); }
+  20%, 80% { transform: translateX(3px); }
+  30%, 50%, 70% { transform: translateX(-6px); }
+  40%, 60% { transform: translateX(6px); }
+}
+/* 정답: 파란 테두리·외곽광, 은은한 강조 1회(animationName=cardCorrect 로 이동 트리거) */
+.compare-card.is-correct {
+  border-color: var(--key) !important;
+  animation: cardCorrect 0.62s ease-out both;
+}
+@keyframes cardCorrect {
+  0%   { box-shadow: 0 6px 16px rgba(70, 120, 160, 0.14); }
+  35%  { box-shadow: 0 0 0 4px rgba(109, 161, 255, 0.45), 0 8px 22px rgba(109, 161, 255, 0.42); transform: scale(1.03); }
+  100% { box-shadow: 0 0 0 3px rgba(109, 161, 255, 0.35), 0 8px 20px rgba(109, 161, 255, 0.30); transform: scale(1); }
+}
+/* 모션 최소화: 흔들림/펄스 제거, 정답 강조는 정적 외곽광으로 유지(이동은 JS 짧은 fallback 이 담당) */
+@media (prefers-reduced-motion: reduce) {
+  .compare-card.is-wrong-shake { animation: none; }
+  .compare-card.is-correct {
+    animation: none;
+    box-shadow: 0 0 0 3px rgba(109, 161, 255, 0.35), 0 8px 20px rgba(109, 161, 255, 0.30);
+  }
+}
+
 /* =============================================================================
  * ★ v0.8.x — 컨트롤(처음으로/플레이/이전/정지/다음) + 정지 시 애니메이션 일시정지
  * ========================================================================== */

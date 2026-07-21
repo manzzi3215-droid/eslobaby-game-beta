@@ -11,6 +11,39 @@
 
 ---
 
+## [v0.10.15-beta] - 2026-07-22
+### PAGE 12 선택형 퀴즈(정답 선택 시에만 진행) · 오답/정답 연출 · 문구 수정
+**PAGE 5 경보음→음성→PAGE 6 자동 이동·PAGE 6·11 영상 자동재생·PAGE 7·10·13 음성 자동 전환·PAGE 3·4·8·9 인터랙션·BGM 엔진·Flip Pro has-video CSS는 변경 없음.**
+
+### 1. PAGE 12 텍스트 수정
+- `config.js`: `compareLead` `민감한 우리 아이 피부` → **`소중한 우리 아이 피부`**, `compareEmph` `생분해 케어는 선택이 아니라 필수!` → **`어떤 선택으로 지켜주시겠어요?`**, 신규 `hints.quizSelect` = **`두 워시 중 하나를 선택해주세요.`**(안내 문구). 카드 라벨(`compareBadLabel`/`compareGoodLabel`)·폰트·컬러·레이아웃은 유지.
+
+### 2. PAGE 12를 선택형 퀴즈로 변경 (정답 선택 시에만 진행)
+- `js/scenes.js`: beforeAfterCompare(PAGE 12)에 `quizRequired: true`.
+- `js/game.js`: 전역 `quizLocked`(videoGate/interaction/voiceGate 와 동일 패턴). `renderScene` 진입 시 초기화 후 `scene.quizRequired` 면 잠금 → `goNext`/`goPrev`/`goToStep`(페이지점) 전부 차단, `updateCtrlButtons` 가 **다음·이전 버튼 모두 숨김**. `renderCompare` 는 `tapAdvance` 미호출(화면/빈 공간 탭 이동 없음). 처음으로(goHome)는 유지 + `renderGate` 에서 `quizLocked=false`(잠금 잔류 방지).
+- 카드 선택: 두 `.compare-card` 에 `role=button`·`tabindex=0`·`aria-label` + `click`/`keydown`(Enter·Space) → **카드 전체(이미지·라벨·배경) 터치/키보드 선택**. 카드 사이 여백·빈 공간은 미선택.
+
+### 3. 오답 카드 연출 (일반 계면활성제 바디워시 = 오답)
+- 오답음: `js/sfx.js` `wrong()` — 짧은 2톤 하강 부저(square+lowpass 1.3kHz, ~0.27s, 경보 알람과 구분). Web Audio 합성(신규 파일 없음). 재생 실패해도 시각 피드백 정상.
+- 흔들림: `.compare-card.is-wrong-shake { animation: cardShake .4s }`(선택 카드 중심, 소폭 1회). 연속 오답 시 클래스 remove→reflow→add 로 재실행. `prefers-reduced-motion` 시 흔들림 없음.
+- 붉은 경고: `.compare-card.is-wrong`(붉은 테두리 `#e0554e` + 외곽광, 화면 전체 플래시 없음). `setTimer`(760ms) 후 원상 복귀(이미지/문구 미가림).
+- 오답 후 PAGE 12 유지, 다른 카드 재선택 가능(오답만으로 이동 없음), 안내 문구 유지.
+
+### 4. 정답 카드 연출 (착한 계면활성제 이슬로 생분해 워시 = 정답)
+- 정답음: 기존 `success`(밝은 상승 아르페지오) 재사용(`SFX.playFeedback('correct')`).
+- 파란 강조: `.compare-card.is-correct { animation: cardCorrect .62s }`(파란 테두리+외곽광, 은은한 1회, 네온/전체 플래시 없음). `prefers-reduced-motion` 시 정적 파란 외곽광 유지.
+- 이동: 정답 선택 시 `answered=true`(두 카드 `pointer-events` 잠금) → `cardCorrect` **animationend** 기준 이동, `setTimer`(900ms) 짧은 fallback(reduced-motion/animationend 미발생·오디오 실패 대비). `advanceOnce` = `moved` 가드 + `index===myIndex` 확인 후 `quizLocked=false`→`goNext()` → **PAGE 13 정확히 1회**(중복·PAGE 14 스킵 방지). PAGE 13→14(음성 종료) 기존 유지.
+
+### 5. 오디오/BGM·재진입·정리
+- BGM Ducking: `SFX.playFeedback` 가 `duckBGM` → holdMs 후 `!voiceActive` 일 때만 `unduckBGM`(정답→PAGE 13 음성이 이어지면 볼륨 안 튐). 단일 fade 엔진 재사용(기존 음성 Ducking과 충돌 없음).
+- 재진입: `renderScene` 이 새 DOM+`quizLocked` 재적용 → 이전 오답 붉은 효과·흔들림·정답 파란 강조·완료 플래그(answered/moved) 모두 초기화, 두 카드 재선택 가능. `clearScene` 이 `stopFeedbackSfx`(오답/정답음)·타이머 정리 → 늦은 animationend/timeout 은 `index` 가드로 무시.
+- `js/sfx.js` `stopAllAudio` 에 `killOneShot('wrong')` 추가.
+
+### 6. 버전·캐시
+- `config.js` `meta.version`=`v0.10.15-beta`, `sw.js` `CACHE_NAME`=`eslo-game-v0.10.15-beta`. **오답/정답음은 합성 → 신규 오디오 파일 없음(PRECACHE 변경 없음).**
+
+---
+
 ## [v0.10.14-beta] - 2026-07-22
 ### 음성 종료 자동 전환(PAGE 5·7·10) · PAGE 5 경보 알람 · 다음 버튼 표시 회귀 수정 · PAGE 7 문구 위치 재조정
 **PAGE 6·11 영상 자동재생·6→7·11→12 자동 이동·PAGE 13 음성 종료 자동 이동·PAGE 3·4·8·9 인터랙션 필수화·BGM·Flip Pro has-video CSS·모바일 레이아웃은 변경 없음.**

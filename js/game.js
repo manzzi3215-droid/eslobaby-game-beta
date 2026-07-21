@@ -25,6 +25,7 @@
   var videoGateLocked = false;           // v0.9.3: 필수 시청 영상(Page6·Page11)이 끝나기 전엔 다음 이동 잠금
   var interactionLocked = false;         // v0.10.12: PAGE3·4·8·9 — 문지르기/헹굼 인터랙션 완료 전엔 다음 이동 잠금(수동 이동 전면 차단)
   var voiceGateLocked = false;           // v0.10.14: PAGE5·7·10 — 안내 음성이 끝나기 전엔 다음 이동 잠금(탭·다음 차단, 이전은 허용)
+  var quizLocked = false;                // v0.10.15: PAGE12 선택형 퀴즈 — 정답 선택 전엔 모든 이동 잠금(탭·다음·이전·점프 차단, 처음으로만 허용)
   var autoNextScheduled = false;         // v0.9.4: 완료 이벤트 기반 자동 전환 — 장면당 1회 가드
 
   // 장면 간 유지되는 게임 상태 (자극 게이지 값 등)
@@ -40,6 +41,8 @@
     try { if (window.SFX && window.SFX.stopVoice) window.SFX.stopVoice(); } catch (_) {}
     // v0.10.14: 장면 이탈 시 경보 알람도 정지(PAGE 5). 늦은 알람 종료 콜백은 playPageVoice 의 index 가드로 무시됨.
     try { if (window.SFX && window.SFX.stopAlarm) window.SFX.stopAlarm(); } catch (_) {}
+    // v0.10.15: 장면 이탈 시 PAGE 12 퀴즈 오답/정답 피드백음도 정리(처음으로·이동 시 잔여 효과음 취소).
+    try { if (window.SFX && window.SFX.stopFeedbackSfx) window.SFX.stopFeedbackSfx(); } catch (_) {}
   }
   function clamp01(v) { return Math.max(0, Math.min(1, v)); }
   // v0.4.3: 효과음 재생 (SFX 모듈 없거나 실패해도 게임에 영향 없음)
@@ -310,6 +313,7 @@
     index = 0;
     state.irritation = 0;
     paused = false;            // 게이트 복귀 시 정지 상태 초기화
+    quizLocked = false;        // v0.10.15: 게이트 복귀 시 퀴즈 잠금 해제(처음으로로 나가면 잠금 잔류 방지 → 이후 goToStep/goPrev 정상)
     updateCtrlButtons();
     toggleChrome(false);
     showScreen(function (el) {
@@ -352,6 +356,7 @@
     if (videoGateLocked) return;                 // v0.9.3: 필수 시청 영상이 끝나기 전엔 이동 금지(탭·다음 공통)
     if (interactionLocked) return;               // v0.10.12: PAGE3·4·8·9 인터랙션 완료 전엔 이동 금지(탭·다음·수동 공통)
     if (voiceGateLocked) return;                 // v0.10.14: PAGE5·7·10 안내 음성 종료 전엔 이동 금지(탭·다음 공통, 자동 전환은 음성 ended 콜백이 잠금 해제 후 호출)
+    if (quizLocked) return;                       // v0.10.15: PAGE12 정답 선택 전엔 이동 금지(정답 처리에서 잠금 해제 후 호출)
     if (index >= SCENES.length - 1) return;      // 마지막 장면: 이동 없음
     clearScene();
     index++;
@@ -360,6 +365,7 @@
   }
   function goPrev() {
     if (busy) return;
+    if (quizLocked) return;                       // v0.10.15: PAGE12 퀴즈 중엔 이전도 금지(카드 선택만 허용, 처음으로는 별도)
     if (index <= 0) return;                       // PAGE 1: 이전 없음(비활성)
     clearScene();
     index--;
@@ -469,10 +475,11 @@
     if (pauseBtn) pauseBtn.classList.toggle('is-active', paused);
     // 이전: PAGE 1(index 0)에서 비활성 / 다음: 마지막 장면에서 비활성
     if (prevBtn) {
-      var atFirst = index <= 0;
-      prevBtn.disabled = atFirst;
-      prevBtn.classList.toggle('is-disabled', atFirst);
-      prevBtn.setAttribute('aria-disabled', atFirst ? 'true' : 'false');
+      // v0.10.15: PAGE12 퀴즈(quizLocked)에서는 이전 버튼도 숨김. !! 로 boolean 강제.
+      var lockPrev = !!((index <= 0) || quizLocked);
+      prevBtn.disabled = lockPrev;
+      prevBtn.classList.toggle('is-disabled', lockPrev);
+      prevBtn.setAttribute('aria-disabled', lockPrev ? 'true' : 'false');
     }
     if (nextBtn) {
       // v0.9.3: 마지막 장면 또는 필수 시청 영상 재생 중이면 다음 버튼 비활성
@@ -481,7 +488,7 @@
       //   ★ 반드시 boolean 으로 강제(!!): (curScene && curScene.hideNext) 는 hideNext 없으면 undefined 이고,
       //     classList.toggle(cls, undefined) 는 force 무시 → 토글(깜빡임)되어 PAGE 1·2·12 다음 버튼이 사라지는 회귀 발생.
       var curScene = SCENES[index];
-      var lockNext = !!((index >= SCENES.length - 1) || videoGateLocked || interactionLocked || voiceGateLocked
+      var lockNext = !!((index >= SCENES.length - 1) || videoGateLocked || interactionLocked || voiceGateLocked || quizLocked
         || (curScene && curScene.hideNext));
       nextBtn.disabled = lockNext;
       nextBtn.classList.toggle('is-disabled', lockNext);
@@ -508,6 +515,7 @@
     if (videoGateLocked) return;         // v0.9.3: 필수 시청 영상 재생 중엔 페이지점 점프도 금지(끝까지 시청 강제)
     if (interactionLocked) return;       // v0.10.12: 인터랙션 완료 전엔 페이지점 점프도 금지(강제 완료)
     if (voiceGateLocked) return;         // v0.10.14: PAGE5·7·10 음성 종료 전엔 페이지점 점프도 금지
+    if (quizLocked) return;              // v0.10.15: PAGE12 정답 선택 전엔 페이지점 점프도 금지
     clearScene();
     if (step <= 1) { renderGate(); return; }
     index = Math.min(step - 2, SCENES.length - 1);
@@ -521,9 +529,11 @@
     videoGateLocked = false;             // v0.9.3: 장면 진입 시 영상 잠금 초기화(영상 렌더러가 필요 시 다시 잠금)
     interactionLocked = false;           // v0.10.12: 장면 진입 시 인터랙션 잠금 초기화(드래그 렌더러가 필요 시 다시 잠금) → 재진입 시 반드시 다시 완료
     voiceGateLocked = false;             // v0.10.14: 진입 시 음성 잠금 초기화 → scene.voiceNext 면 아래서 다시 잠금(재진입 시 음성 다시 듣고 이동)
+    quizLocked = false;                  // v0.10.15: 진입 시 퀴즈 잠금 초기화 → scene.quizRequired 면 아래서 다시 잠금(재진입 시 퀴즈 초기 상태)
     autoNextScheduled = false;           // v0.9.4: 자동 전환 예약 초기화(이전 장면 타이머는 clearScene 이 이미 정리)
     var scene = SCENES[index];
     if (scene && scene.voiceNext) voiceGateLocked = true;   // v0.10.14: PAGE 5·7·10 — 음성 종료 전 이동 잠금(shell 의 updateCtrlButtons 가 다음 버튼 숨김)
+    if (scene && scene.quizRequired) quizLocked = true;     // v0.10.15: PAGE 12 — 정답 선택 전 모든 이동 잠금(이전/다음 버튼 숨김)
     updateCtrlButtons();                 // 다음 버튼 활성/비활성 갱신
     if (window.Analytics) window.Analytics.enterScene(scene.id, scene.phase);  // v0.4.0: 통계
     sfx('scene');                        // v0.4.3: Scene 시작 효과음
@@ -1195,13 +1205,19 @@
     });
   }
 
-  // PAGE 10-2 (v0.7.x) — 비포/애프터 비교 (일반 바디워시 vs 이슬로). 기존 shell 재사용.
-  //   본문 = 메인 문구(강조 span) + 좌(baby-sad)·VS·우(baby-happy) 비교 카드. 텍스트는 DOM 렌더.
+  // PAGE 12 (v0.10.15) — 선택형 퀴즈: 두 워시 중 정답(이슬로 생분해 워시) 선택 시에만 PAGE 13 이동.
+  //   오답(일반 바디워시) = 오답음 + 흔들림 + 붉은 경고, 페이지 유지·재선택 가능.
+  //   정답 = 정답음 + 파란 강조, 카드 잠금, animationend(+짧은 fallback) 후 1회만 자동 이동.
+  //   진입 시 quizLocked=true(renderScene) → 탭/다음/이전/점프 전부 차단, 처음으로만 허용.
+  //   (기존 비교 카드 디자인·이미지·라벨·레이아웃은 그대로 유지, 클릭 선택 로직만 추가.)
   function renderCompare(scene) {
+    var myIndex = index;                    // 정답 이동 대상 고정(재진입/늦은 콜백 방지)
+    var answered = false;                   // 정답 선택 완료 → 추가 입력 잠금
+    var moved = false;                      // PAGE 13 이동 1회 가드
     showScreen(function (el) {
       shell(el, scene, '', function (body) {
         var T = CFG.texts.scenes;
-        // 메인 문구: lead + 강조(생분해 계면활성제) + tail
+        // 메인 문구: lead + 강조(질문) + tail
         var title = div('card-title compare-title');
         title.appendChild(document.createTextNode(T.compareLead || ''));
         var em = document.createElement('span'); em.className = 'key-emph'; em.textContent = T.compareEmph || '';
@@ -1209,15 +1225,48 @@
         title.appendChild(document.createTextNode(T.compareTail || ''));
         body.appendChild(title);
 
-        // 비교 섹션 (접근성: role/aria-label)
+        // 선택 섹션 (접근성: role/aria-label)
         var row = div('compare-row');
         row.setAttribute('role', 'group');
-        row.setAttribute('aria-label', '일반 바디워시와 이슬로 베이비 비교');
+        row.setAttribute('aria-label', '두 워시 중 하나를 선택');
+
+        // 정답 이동: 여전히 PAGE 12일 때만, 잠금 해제 후 1회. (연속 터치·중복 콜백 방지)
+        function advanceOnce() {
+          if (moved) return; moved = true;
+          if (index !== myIndex) return;      // 이미 이탈/재진입 → 이동하지 않음(PAGE 14 스킵 방지)
+          quizLocked = false;                 // 정답 처리 시에만 잠금 해제
+          goNext();                           // 정확히 한 페이지(→ PAGE 13)
+        }
+
+        function onSelect(card, isCorrect) {
+          if (answered) return;               // 정답 처리 후 두 카드 클릭 잠금
+          if (index !== myIndex) return;      // 이탈 방지
+          if (isCorrect) {
+            answered = true;
+            row.classList.add('is-answered');  // CSS: 두 카드 pointer-events 잠금
+            try { if (window.SFX && window.SFX.playFeedback) window.SFX.playFeedback('correct'); } catch (_) {}
+            card.classList.remove('is-correct'); void card.offsetWidth;   // 재실행 대비 리셋
+            card.classList.add('is-correct');  // 파란 강조(1회)
+            var fin = (function () { var d = false; return function () { if (d) return; d = true; advanceOnce(); }; })();
+            card.addEventListener('animationend', function (e) { if (e.animationName === 'cardCorrect') fin(); });
+            setTimer(fin, 900);                // reduced-motion/animationend 미발생·오디오 무관 안전 fallback(짧음)
+          } else {
+            try { if (window.SFX && window.SFX.playFeedback) window.SFX.playFeedback('wrong'); } catch (_) {}
+            card.classList.remove('is-wrong-shake'); void card.offsetWidth;   // 연속 오답에도 흔들림 재실행
+            card.classList.add('is-wrong-shake');
+            card.classList.add('is-wrong');    // 붉은 경고(테두리·외곽광)
+            if (card._glowT) clearTimeout(card._glowT);
+            card._glowT = setTimer(function () { card.classList.remove('is-wrong'); }, 760);   // 잠시 후 원상 복귀
+          }
+        }
 
         // v0.9.1: 각 아이 오른쪽 엉덩이 부분에 제품 이미지를 얹는다(아이보다 조금 작게, 자연스럽게).
         //   일반 바디워시(baby-sad) = normal_wash / 이슬로(baby-happy) = eslo-bath.
-        function makeCard(cls, labelText, imgSrc, imgLabel, prodSrc, prodLabel, prodCls) {
+        function makeCard(cls, labelText, imgSrc, imgLabel, prodSrc, prodLabel, prodCls, isCorrect) {
           var card = div('compare-card ' + cls);
+          card.setAttribute('role', 'button');     // 카드 전체가 선택 버튼(이미지·라벨·배경 어디를 눌러도 선택)
+          card.setAttribute('tabindex', '0');
+          card.setAttribute('aria-label', (labelText || '').replace(/\n/g, ' ') + ' 선택');
           var lab = div('compare-label');
           lab.textContent = labelText;
           var figure = div('compare-figure');
@@ -1233,20 +1282,25 @@
           }
           card.appendChild(lab);
           card.appendChild(figure);
+          card.addEventListener('click', function () { onSelect(card, isCorrect); });
+          card.addEventListener('keydown', function (e) {
+            if (e.key === 'Enter' || e.key === ' ' || e.key === 'Spacebar') { e.preventDefault(); onSelect(card, isCorrect); }
+          });
           return card;
         }
+        // 오답 = 일반 계면활성제 바디워시(left), 정답 = 착한 계면활성제 이슬로 생분해 워시(right)
         var left  = makeCard('compare-bad',  T.compareBadLabel,  CFG.assets.childSad,   CFG.placeholders.childSad,
-                              CFG.assets.products.bodywash, CFG.placeholders.bodywash, 'compare-prod-wash');
+                              CFG.assets.products.bodywash, CFG.placeholders.bodywash, 'compare-prod-wash', false);
         var right = makeCard('compare-good', T.compareGoodLabel, CFG.assets.childHappy, CFG.placeholders.childHappy,
-                              CFG.assets.ending.bath, CFG.placeholders.endBath, 'compare-prod-eslo');
+                              CFG.assets.ending.bath, CFG.placeholders.endBath, 'compare-prod-eslo', true);
 
-        // v0.9.1: 가운데 'VS' 텍스트 삭제(요청). 두 카드만 나란히.
         row.appendChild(left);
         row.appendChild(right);
         body.appendChild(row);
-        body.appendChild(makeHint(CFG.texts.hints.tapNext));
+        body.appendChild(makeHint(CFG.texts.hints.quizSelect));   // v0.10.15: '두 워시 중 하나를 선택해주세요.'
       });
-      tapAdvance(el);    });
+      // v0.10.15: 퀴즈 페이지 — 화면/빈 공간 탭 이동 없음(tapAdvance 미호출). 카드 클릭·키보드로만 선택.
+    });
   }
 
   // 이슬로 소개 (제품 3종 히어로 + 키워드 — 설명 화면, STEP 배지 없음)
