@@ -11,6 +11,32 @@
 
 ---
 
+## [v0.10.8-beta] - 2026-07-21
+### PAGE 6·11 영상 자동재생 복원 (진입 즉시 autoplay · 실패 확정 시에만 터치 안내)
+페이지 흐름·문구·음성·드래그·완료 판정·PAGE6→7·11→12 자동 전환 정책 **불변**. 영상 재생을 다시 "진입 즉시 자동재생"으로 복원.
+
+### 원인 (클릭 재생처럼 보였던 이유)
+- v0.10.7의 `renderVideo`가 Tizen race 방지 목적으로 **`video.autoplay=false`** 로 두고 `autoplay` attribute 를 미설정 → 브라우저 자동 시작에 의존하지 않고 `canplay` 후 JS `play()` 에만 의존.
+- 동시에 **워치독①(`VIDEO_START_TIMEOUT`=5s)** 이 **단순 타임아웃**만으로 `showFallback()` 호출 → 삼성 사이니지에서 `canplay` 가 조금 늦거나 버퍼링만 되어도 5초 뒤 "화면을 터치하면 영상을 재생합니다" + ▶ 버튼이 떠서, **자동재생 실패가 아닌데도** 사용자가 눌러야 재생되는 것처럼 동작.
+
+### Changed
+- **자동재생 우선 복원**: `video.autoplay=true` + `setAttribute('autoplay','')`. `muted/defaultMuted/playsInline=true`, `webkit-playsinline`, `preload='auto'` 유지 → **autoplay attribute(브라우저 자동 시작) + JS `play()`(명시 호출) 병행**, muted 로 Tizen 자동재생 정책 통과.
+- **자동재생 지연 최소화**: `loadedmetadata` 에서도 `attemptPlay()` 호출(기존 `canplay`·1.4s 타임아웃에 더해 더 이른 시점에 재생 시도). `load()` 직후 조기 `play()` 는 여전히 미호출(Tizen race 방지).
+- **단순 타임아웃 터치 안내 제거**: 워치독①(5s `showFallback`) 삭제. 터치 안내(`showFallback`)는 **오직 `onSourceFail` 체인** — Primary `play()` reject(1회 재시도 포함) 또는 `MediaError` → Lo 소스 교체 → Lo 도 reject/`MediaError` — 즉 **Primary·Lo 자동재생이 실제로 모두 실패**한 경우에만 표시. `stalled`/`waiting`/버퍼링/`canplay` 지연만으로는 표시하지 않음.
+- **워치독(최종 안전망) 유지·축소**: HARD_TIMEOUT(12s)까지 재생 미시작이면 **gate 만 해제**(수동 다음 허용, 자동 이동 X → 영구 갇힘 방지). 터치 안내는 표시하지 않음. `VIDEO_START_TIMEOUT` 상수 제거.
+- **자동재생 성공 시** `playing`/`timeupdate(>0.1s)` → `markPlaying()` → `hideFallback()`. 재생 중에는 ▶ 버튼·안내문이 절대 표시되지 않으며, 영상 영역 클릭 폴백도 `!playbackStarted` 가드로 비활성.
+
+### 유지 (v0.10.7 호환성 기능 불변)
+- `prof-signage.mp4`/`prof-nongye-signage.mp4`(Primary) → `prof-signage-lo.mp4`/`prof-nongye-signage-lo.mp4`(Lo) 자동 교체 폴백 구조.
+- 서비스워커 `.mp4`·`Range` 요청 bypass, 영상 precache 제외, 캐시버스트 파일명, `sessionStorage['eslo_video_diag']` 진단 로그·`?debug=1` 패널·`MediaError` 기록.
+- PAGE 6·11 페이지 음성(muted 영상과 동시 재생) 및 영상 종료(`ended`) 후 PAGE 7/12 자동 전환. 영상 오류만으로는 자동 다음 이동 안 함. 재생 전 화면 탭으로 다음 이동 금지(gate).
+- `sw.js` `CACHE_NAME` `eslo-game-v0.10.8-beta`.
+
+### QA
+- PAGE 6·11 진입 시 클릭 없이 자동재생(`autoplay===true`, `muted===true`, `defaultMuted===true`, `playsInline` 적용, `play()` 자동 호출, `playing` 이벤트·`currentTime` 증가). 자동재생 성공 시 터치 안내 미표시. 영상 종료→PAGE 7/12 자동 전환. Primary·Lo 모두 실패한 경우에만 터치 안내 표시. 새 영상 4개 200·Range 206·구 파일명 요청 0·영상 SW 미캐시·음성 precache 유지·콘솔 오류 0·인게임 404 0.
+
+---
+
 ## [v0.10.7-beta] - 2026-07-20
 ### PAGE 6·11 영상 삼성 LH55WMBWBGCXKR(Tizen 사이니지) 다단계 재생 폴백
 페이지 흐름·문구·음성·드래그·완료 판정·PAGE6→7·11→12 자동 전환 정책 **불변**. 영상 재생 견고화만.

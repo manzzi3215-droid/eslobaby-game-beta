@@ -303,8 +303,8 @@
   //   - autoNextScheduled 로 장면당 1회 보장(중복 이벤트로 2페이지 이상 건너뜀 방지).
   //   - 발화 시 여전히 같은 장면인지 + busy/영상잠금 아님을 재확인(수동 이동과 경쟁 방지).
   var AUTO_NEXT_DELAY = 450;             // 완료 후 짧은 여운(ms)
-  // v0.10.5: 영상 재생 워치독 — ①미시작 시 터치 재생 유도, ②최종 안전망(잠금 해제, 갇힘 방지)
-  var VIDEO_START_TIMEOUT = 5000;
+  // v0.10.8: 영상 재생 워치독 — 최종 안전망(HARD_TIMEOUT 까지 미시작 시 gate 만 해제, 영구 갇힘 방지).
+  //   터치 안내(fallback)는 자동재생이 실제로 모두 실패(onSourceFail)한 경우에만 표시하며, 단순 타임아웃으로는 표시하지 않는다.
   var VIDEO_HARD_TIMEOUT = 12000;
   // v0.10.6: 페이지 음성 종료 후 울음/웃음 효과음까지의 간격(자연스러운 순차)
   var VOICE_SFX_GAP = 250;
@@ -921,11 +921,12 @@
           if (lo) sources.push(lo);
 
           var v = document.createElement('video');
-          // v0.10.7: HTML attribute + JS property 둘 다 명시(autoplay attribute 미의존). Tizen 호환.
+          // v0.10.8: 자동재생 우선 복원 — HTML attribute + JS property 둘 다 명시하고 autoplay 를 켠다.
+          //   autoplay attribute(브라우저 자동 시작) + JS play()(명시 호출)를 함께 사용. muted 유지로 Tizen 자동재생 정책 통과.
           v.muted = true; v.defaultMuted = true; v.playsInline = true;
-          v.autoplay = false; v.preload = 'auto'; v.loop = !mustWatch; v.controls = false;
+          v.autoplay = true; v.preload = 'auto'; v.loop = !mustWatch; v.controls = false;
           v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
-          v.setAttribute('preload', 'auto'); v.setAttribute('aria-hidden', 'true');
+          v.setAttribute('autoplay', ''); v.setAttribute('preload', 'auto'); v.setAttribute('aria-hidden', 'true');
           vwrap.appendChild(v);
 
           var playbackStarted = false, retriedSrc = false, canplaySeen = false, fallbackEl = null, srcIdx = -1;
@@ -939,8 +940,8 @@
           function markPlaying() { if (playbackStarted) return; playbackStarted = true; hideFallback(); diag('playing'); }
           v.addEventListener('playing', markPlaying);
           v.addEventListener('timeupdate', function () { if (v.currentTime > 0.1) markPlaying(); });
-          v.addEventListener('loadedmetadata', function () { diag('loadedmetadata'); });
-          v.addEventListener('canplay', function () { canplaySeen = true; diag('canplay'); attemptPlay(); });   // v0.10.7: canplay 후 재생(조기 play 방지)
+          v.addEventListener('loadedmetadata', function () { diag('loadedmetadata'); attemptPlay(); });   // v0.10.8: 메타데이터 확보 즉시 자동재생 시도(지연 최소화)
+          v.addEventListener('canplay', function () { canplaySeen = true; diag('canplay'); attemptPlay(); });   // v0.10.8: canplay 에서도 자동재생 시도(autoplay attribute 와 병행)
           ['stalled', 'waiting', 'suspend', 'abort', 'emptied'].forEach(function (ev) { v.addEventListener(ev, function () { diag(ev); }); });
 
           function attemptPlay() {
@@ -1011,13 +1012,13 @@
               if (!unlock()) return;
               if (scene.autoNext) scheduleAutoNext(myIndex);   // PAGE6→7 / PAGE11→12 자동 전환 유지
             });
-            // 워치독① 미시작 시 터치 재생 유도(잠금 유지 → 사용자가 재생하기 전까지 페이지 유지, 자동 이동 금지)
-            setTimer(function () { if (!playbackStarted) { diag('watchdog_no_start'); showFallback(); } }, VIDEO_START_TIMEOUT);
-            // 워치독②(최종 안전망) 그래도 재생 불가 시 gate 만 해제(수동 다음 허용, 자동 이동은 안 함 → 영구 갇힘 방지)
+            // v0.10.8: 단순 타임아웃만으로 터치 안내를 표시하지 않는다(버퍼링·canplay 지연을 실패로 오판 방지).
+            //   터치 안내(showFallback)는 오직 onSourceFail 체인(Primary·Lo 자동재생이 실제로 모두 실패)에서만 표시.
+            //   워치독(최종 안전망): HARD_TIMEOUT 까지 재생 미시작이면 gate 만 해제(수동 다음 허용, 자동 이동은 안 함 → 영구 갇힘 방지). 터치 안내는 표시하지 않음.
             setTimer(function () { if (!playbackStarted && videoGateLocked) { diag('watchdog_unlock'); unlock(); } }, VIDEO_HARD_TIMEOUT);
             updateCtrlButtons();
           } else {
-            setTimer(function () { if (!playbackStarted) showFallback(); }, VIDEO_START_TIMEOUT);
+            // v0.10.8: 비필수 영상도 단순 타임아웃 fallback 제거 — 자동재생이 실제로 모두 실패한 경우(onSourceFail)에만 터치 안내.
           }
 
           loadSource(0);   // v0.10.7: 1차 소스 로드 시작(canplay/타임아웃 → attemptPlay)

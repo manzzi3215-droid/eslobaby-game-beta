@@ -14,7 +14,13 @@
 
 ## 현재 버전
 
-**v0.10.7-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.10.8-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.10.8-beta(patch): **PAGE 6·11 영상 자동재생 복원**(진입 즉시 autoplay, 실패 확정 시에만 터치 안내). 페이지 흐름·문구·음성·드래그·PAGE6→7·11→12 자동 전환·다중 소스 폴백·SW bypass·캐시버스트·진단 로그 전부 유지.
+  - 원인: v0.10.7이 Tizen race 방지로 `video.autoplay=false`(autoplay attribute 미설정)+`canplay` 후 JS `play()`에만 의존한 상태에서, **워치독①(`VIDEO_START_TIMEOUT`=5s)이 단순 타임아웃만으로 `showFallback()`** 호출 → 사이니지에서 canplay 지연·버퍼링만 되어도 5초 뒤 ▶ 버튼·"화면을 터치하면…"이 떠서 클릭 재생처럼 동작.
+  - 복원: `video.autoplay=true`+`setAttribute('autoplay','')`(muted/defaultMuted/playsInline·webkit-playsinline·preload=auto 유지) → **autoplay attribute + JS `play()` 병행**. `loadedmetadata`에서도 `attemptPlay()`(canplay·1.4s 타임아웃에 더해 더 이른 재생). `load()` 직후 조기 play는 여전히 미호출(race 방지).
+  - 터치 안내 조건 강화: **워치독①(단순 타임아웃 showFallback) 삭제**. 터치 안내는 오직 `onSourceFail` 체인(Primary `play()` reject 1회 재시도/MediaError → Lo 교체 → Lo도 실패)에서만, 즉 **Primary·Lo 자동재생이 실제로 모두 실패**한 경우에만 표시. `stalled`/`waiting`/버퍼링/canplay 지연만으로는 미표시. 자동재생 성공 시 `playing`/`timeupdate`→`hideFallback()`로 ▶·안내문 미표시.
+  - 워치독(최종 안전망)은 HARD_TIMEOUT(12s)에 gate만 해제(수동 next 허용, 자동 이동 X, 영구 갇힘 방지)·터치 안내 미표시로 축소. `VIDEO_START_TIMEOUT` 상수 제거.
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.10.8-beta`.
 ※ v0.10.7-beta(minor): **PAGE 6·11 영상 삼성 LH55WMBWBGCXKR(Tizen 사이니지) 다단계 재생 폴백**. 페이지 흐름·문구·음성·드래그·PAGE6→7·11→12 자동 전환 유지.
   - 진단(ffprobe): 라이브 서버 Range 완전 지원(206), 영상 인코딩은 이미 최적(Constrained Baseline·B-frame 0·refs 1·CABAC 없음(Baseline=CAVLC)·yuv420p·~1s GOP·faststart) → **단순 재인코딩 반복 불필요**. 원인은 ①동일 파일명 HTTP 캐시(구 10Mbps 잔존) ②재생 시퀀스 race ③Tizen 자동재생 제한 ④SW의 영상/Range 개입 가능성.
   - 캐시버스트: `prof.mp4`→`prof-signage.mp4`, `prof_nongye.mp4`→`prof-nongye-signage.mp4`(git mv, config 경로 변경). 새 URL로 구 캐시 확실히 우회.
