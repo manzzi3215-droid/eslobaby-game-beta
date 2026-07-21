@@ -274,6 +274,19 @@
       var pageNum = div('page-num');
       pageNum.textContent = CFG.texts.page + ' ' + (index + 1) + ' / ' + SCENES.length;
       card.appendChild(pageNum);
+
+      // v0.10.11: 이전/다음 버튼을 카드뉴스 내부(카드 세로 중앙의 좌·우)로 이동.
+      //   콘텐츠(문구/영상)를 가리지 않도록 카드 좌·우 가장자리에 작은 원형 버튼으로 배치(CSS .card-nav).
+      //   전역 prevBtn/nextBtn 을 이 버튼으로 재지정 → updateCtrlButtons 가 활성/비활성 그대로 제어.
+      prevBtn = makeCtrlButton(CTRL_SVG.prev, '이전', goPrev);
+      nextBtn = makeCtrlButton(CTRL_SVG.next, '다음', goNext);
+      prevBtn.classList.add('card-nav', 'is-prev');
+      nextBtn.classList.add('card-nav', 'is-next');
+      card.appendChild(prevBtn);
+      card.appendChild(nextBtn);
+      updateCtrlButtons();   // 새 버튼의 disabled/활성 상태 즉시 반영(첫 페이지=이전 비활성 등)
+    } else {
+      prevBtn = null; nextBtn = null;   // 게이트: 카드 내 네비 버튼 없음
     }
 
     // v0.10.0: 로고를 카드 바로 위에 붙이기 위해 카드를 wrapper로 감싸고 로고를 wrapper 안으로 이동.
@@ -288,6 +301,7 @@
   function renderGate() {
     clearScene();
     if (window.Analytics) window.Analytics.endSession();   // v0.4.0: 진행 중 세션 종료
+    try { if (window.SFX && SFX.stopBGM) SFX.stopBGM(); } catch (_) {}   // v0.10.11: 게임 종료(게이트 복귀) 시 BGM 정지
     index = 0;
     state.irritation = 0;
     paused = false;            // 게이트 복귀 시 정지 상태 초기화
@@ -318,7 +332,8 @@
   /* ---------- 진행 제어 --------------------------------------------- */
   function startGame() {
     index = 0; state.irritation = 0; paused = false;
-    // v0.10.5: BGM 제거 — 시작 시 BGM 재생 로직 삭제(효과음은 유지).
+    // v0.10.11: 배경음(BGM) 시작 — 게임 시작 버튼(첫 사용자 제스처) 이후. 다시 시작 시 처음부터(startBGM이 currentTime 0).
+    try { if (window.SFX && SFX.startBGM) SFX.startBGM(); } catch (_) {}
     if (window.Analytics) window.Analytics.startSession();   // v0.4.0: 플레이 세션 시작
     renderScene();
   }
@@ -366,6 +381,9 @@
     var afterVoice = null;
     if (page === 5)  afterVoice = function () { setTimer(function () { if (index === myIndex && !paused) sfx('cry'); }, VOICE_SFX_GAP); };
     if (page === 10) afterVoice = function () { setTimer(function () { if (index === myIndex && !paused) sfx('laugh'); }, VOICE_SFX_GAP); };
+    // v0.10.11: PAGE 13 은 안내 음성이 끝난 뒤에만 PAGE 14 로 자동 전환(audio ended 기준, 타이머 미사용).
+    //   음성 종료 전에는 절대 넘어가지 않음. (renderBrandFinal 의 타이머 기반 자동 전환은 제거함)
+    if (page === 13) afterVoice = function () { if (index === myIndex && !paused && !busy && !videoGateLocked) goNext(); };
     var played = hasVoiceApi ? window.SFX.playVoiceForPage(page, afterVoice) : false;
     if (!played) {
       // 음원 없음(또는 API 없음) → 기존 정책: PAGE5 울음·PAGE10 웃음 즉시(정지 상태면 미재생)
@@ -396,8 +414,12 @@
       else { var p = v.play(); if (p && p.catch) p.catch(function () {}); }
     }
     // v0.10.6: 페이지 음성도 정지/재개 컨트롤과 연동(정지=pause, 재생=이어서)
+    // v0.10.11: 배경음(BGM)도 정지/재개 연동
     try {
-      if (window.SFX) { if (paused) { if (SFX.pauseVoice) SFX.pauseVoice(); } else { if (SFX.resumeVoice) SFX.resumeVoice(); } }
+      if (window.SFX) {
+        if (paused) { if (SFX.pauseVoice) SFX.pauseVoice(); if (SFX.pauseBGM) SFX.pauseBGM(); }
+        else { if (SFX.resumeVoice) SFX.resumeVoice(); if (SFX.resumeBGM) SFX.resumeBGM(); }
+      }
     } catch (_) {}
   }
   // ⏸ 정지 / ▶ 플레이: 현재 화면의 영상·CSS 애니메이션을 일시정지/재개(applyPauseState). BGM 제거 후에도 유효한 기능.
@@ -608,25 +630,11 @@
 
         // 순차 등장: 요소마다 등장 지연(step) 부여. CSS revealPop(both) 로 지연 중엔 숨김 유지.
         var STEP = 300;                     // v0.10.3: 요소 간 등장 간격(ms) — 제품 소개 느낌으로 조금 더 여유롭게
-        var REVEAL_DUR = 520;               // revealPop 지속(css와 일치)
         revealEls.forEach(function (elm, i) { elm.style.animationDelay = (i * STEP) + 'ms'; });
-        var hold = (CFG.timings && CFG.timings.rewardHold) || 2000;
 
-        // 1차: 마지막 요소(오른쪽 제품명)의 animationend = 전체 시퀀스 완료 시점 → rewardHold 후 PAGE 14 자동 전환.
-        //   (단순 추정 타이머 아님: 실제 애니메이션 종료 이벤트 기준. 정지 시 애니메이션도 멈춰 종료가 지연됨.)
-        var last = revealEls[revealEls.length - 1];
-        function armAutoNext() {
-          if (index !== myIndex) return;    // 이미 이탈했으면 무시
-          if (scene.autoNext) scheduleAutoNext(myIndex, hold);   // autoNextScheduled 가드로 1회만
-        }
-        last.addEventListener('animationend', function onSeqDone() {
-          last.removeEventListener('animationend', onSeqDone);
-          armAutoNext();
-        });
-        // 2차(안전망): 애니메이션이 진행되지 않는 환경(백그라운드 탭·스로틀·모션 차단)에서도
-        //   시퀀스 예상 소요시간 경과 후 자동 전환을 보장. clearScene 이 타이머를 정리(이탈 시 취소).
-        var seqTotal = (revealEls.length - 1) * STEP + REVEAL_DUR;
-        setTimer(armAutoNext, seqTotal + 300);
+        // v0.10.11: PAGE 14 자동 전환은 타이머가 아니라 "PAGE 13 안내 음성 종료(audio ended)" 시점에만 발생.
+        //   playPageVoice(page===13)의 onEnded 콜백에서 goNext() 호출 → 음성이 끝나기 전에는 절대 넘어가지 않음.
+        //   (기존 animationend + rewardHold 타이머 기반 자동 전환은 제거. 순차 등장 애니메이션은 그대로 유지.)
       });
       sfx('complete');                     // v0.4.3: 최종 완료 효과음
     });
@@ -1703,19 +1711,13 @@
   };
   function buildControlPanel() {
     controlPanel = div('control-panel');
-    // v0.8.x 순서: 처음으로 / 플레이 / 이전 / 정지 / 다음
+    // v0.10.11: 이전/다음은 카드 내부(카드 중앙 좌·우)로 이동(shell 에서 카드마다 생성). 좌측 패널은 처음으로/플레이/정지만.
     var homeB = makeCtrlButton(CTRL_SVG.home, CFG.texts.homeButton, goHome);   // v0.10.0: 맨 처음으로(상단 바+위 화살표)
     playBtn = makeCtrlButton(CTRL_SVG.play, '플레이', playGame);
-    prevBtn = makeCtrlButton(CTRL_SVG.prev, '이전', goPrev);   // v0.8.x — 이전 장면으로 이동
     pauseBtn = makeCtrlButton(CTRL_SVG.pause, '정지', pauseGame);
-    nextBtn = makeCtrlButton(CTRL_SVG.next, '다음', goNext);   // v0.2.7 — 다음 장면으로 즉시 이동
-    prevBtn.classList.add('is-prev');
-    nextBtn.classList.add('is-next');                // v0.2.8 — 파란 화살표 강조
     controlPanel.appendChild(homeB);
     controlPanel.appendChild(playBtn);
-    controlPanel.appendChild(prevBtn);
     controlPanel.appendChild(pauseBtn);
-    controlPanel.appendChild(nextBtn);
     controlPanel.style.display = 'none';
     updateCtrlButtons();
     app.appendChild(controlPanel);

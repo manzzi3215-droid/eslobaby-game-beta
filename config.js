@@ -19,7 +19,7 @@
 window.ESLO_CONFIG = {
   /* --- 프로젝트 메타 --------------------------------------------------- */
   meta: {
-    version: 'v0.10.10-beta',
+    version: 'v0.10.11-beta',
     title: '이슬로(eslo) 베이비 미니게임',
   },
 
@@ -254,7 +254,12 @@ window.ESLO_CONFIG = {
     enabled: true,
     volume: 0.32,           // 효과음(SFX) 마스터 볼륨(0~1) — PAGE5 울음·PAGE10 웃음·버튼음 등
     files: {},              // 비어있으면 합성음 사용
-    // v0.10.5: 배경음악(BGM) 설정 제거 — 반복 BGM 완전 삭제(효과음만 유지).
+    // v0.10.11: 배경음(BGM) — 오디오 전용 파일(mp4 아님, Flip Pro 불필요 영상 디코딩 방지).
+    //   loop 재생, 첫 사용자 제스처(게임 시작) 이후 시작, 게이트 복귀 시 정지. 페이지 음성 중 자동 duck.
+    bgm:           'assets/audio/bgm.m4a',
+    bgmVolume:     0.12,    // 기본 BGM 볼륨(항상 페이지 음성보다 작게)
+    bgmDuckVolume: 0.045,   // 페이지 음성 재생 중 낮춘 BGM 볼륨
+    bgmFadeMs:     400,     // duck/unduck 페이드 시간(ms, 300~500 권장)
   },
 
   /* --- 페이지별 AI 안내 음성 (v0.10.6-beta) ---------------------------

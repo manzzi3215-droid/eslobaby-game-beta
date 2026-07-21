@@ -11,6 +11,37 @@
 
 ---
 
+## [v0.10.11-beta] - 2026-07-21
+### 음성 타이밍 · 자동전환 · 네비게이션 UX · 배경음(BGM)+Ducking
+**영상 렌더링 수정(has-video+CSS)·PAGE 6·11 영상 재생·autoplay·fallback·must-watch·영상 파일은 변경 없음**(Flip Pro 검증본 유지).
+
+### 1. 모든 페이지 음성 1.2배속 (pitch 유지)
+- `assets/audio/voice/page01~14.m4a`를 **ffmpeg `atempo=1.2`**(피치 보존)로 재인코딩(AAC 160k, 파일명·경로 동일). 예: page01 4.41s→3.68s, page06 6.80s→5.67s, page11 5.85s→4.88s, page13 5.41s→4.52s. config `voice` 매핑 불변.
+
+### 2. PAGE 13 → PAGE 14 자동 전환을 "안내 음성 종료" 기준으로 변경 (타이머 미사용)
+- `renderBrandFinal`의 animationend + `rewardHold` 타이머 기반 자동 전환 **제거**(순차 등장 애니메이션은 유지).
+- `playPageVoice(page===13)`의 `onEnded`(audio `ended`) 콜백에서 `goNext()` 호출 → **음성이 끝나기 전에는 절대 넘어가지 않음**. 다른 페이지 전환 정책 불변.
+
+### 3. 이전/다음 버튼을 카드뉴스 내부로 이동
+- 좌측 컨트롤 패널에서 이전/다음 제거(처음으로/플레이/정지만 남김). `shell`이 게임 장면 카드마다 **카드 세로 중앙 좌·우**에 원형 네비 버튼(`.card-nav.is-prev/.is-next`) 생성, 전역 `prevBtn/nextBtn` 재지정 → `updateCtrlButtons`가 활성/비활성(첫/마지막·영상 잠금 시 숨김) 그대로 제어. 아이콘만 표시(라벨=aria-label). backdrop-filter 미사용(영상 페이지 Tizen 영향 방지). 텍스트·영상 미가림, 모바일 세로/가로·데스크톱·Flip Pro 대응.
+
+### 4. 모션 유도 문구(.hint) 가독성 개선 (모든 페이지)
+- `.hint`(예 "일반 바디워시를 아이 몸에 문질러 주세요") 크기 확대(clamp 15~21px)·굵기 800·딥 슬레이트(#17324a) 대비·흰 하이라이트 헤일로+부드러운 그림자(은은한 외곽선). 기존 pulse(0.5까지 하강) → hintPulseSoft(0.86~1)로 완화. reduced-motion 대응.
+
+### 5. 배경음(BGM) 추가 — 오디오 전용 파일
+- `배경음.mp4`(131s)에서 **오디오만 추출** → `assets/audio/bgm.m4a`(AAC 128k, ~2.1MB). **mp4 미사용**(Flip Pro 불필요 영상 디코딩 방지). `sfx.js`에 `startBGM/stopBGM/pauseBGM/resumeBGM` + 단일 fade 엔진. loop, 첫 사용자 제스처(게임 시작 버튼)에서 시작, 게이트 복귀 시 정지, 다시 시작 시 처음부터. 기본 볼륨 `config.sfx.bgmVolume`=0.12(항상 페이지 음성보다 작게). 정지/재생 버튼과 연동. 영상은 muted라 충돌 없음.
+
+### 6. 배경음 자동 Ducking
+- 페이지 음성 재생 중 BGM을 자동으로 낮춤(0.12→`bgmDuckVolume` 0.045), 음성 종료(ended)/실패/음원없음 시 복귀(→0.12). `bgmFadeMs`=400ms fade-in/out. `playVoiceForPage`가 duck, `onended`가 unduck 호출. 단일 fade 엔진이 진행 중 fade 취소 후 현재값→목표로 램프 → **페이지 연속 전환에도 볼륨 안정**. PAGE 6·11·13 포함 모든 페이지 동일.
+
+### 기타
+- `sw.js` PRECACHE에 `bgm.m4a` 추가, `CACHE_NAME` `eslo-game-v0.10.11-beta`. `config.sfx`에 `bgm/bgmVolume/bgmDuckVolume/bgmFadeMs` 추가.
+
+### QA (로컬 PC)
+- Flip Pro 영상 로직 불변·PAGE 6/11 자동재생·PAGE 13 음성 종료 후 PAGE 14 전환·음성 1.2배속·BGM loop·Ducking(음성 시작 감소/종료 복귀)·네비 버튼 위치·모션 문구 가독성·모바일/데스크톱 레이아웃·콘솔 오류 0·404 0.
+
+---
+
 ## [v0.10.10-beta] - 2026-07-21
 ### PAGE 6·11 영상 렌더링 개선 (Flip Pro/Tizen 합성 문제 대응 · 영상 장면 한정 CSS 최소 수정)
 삼성 Flip Pro(LH55WMBWBGCXKR, Tizen)에서 영상이 **디코딩·재생(readyState 4·buffered 전체·error none·currentTime 진행)은 되나 화면에 표시되지 않고 ~1.5초 뒤 자동 pause**되는 문제 대응. 진단(v0.10.9) 결과 조상의 `backdrop-filter`·`transform`·진입 애니메이션에 의한 합성/가시성 실패가 유력 → **가장 유력한 원인만 최소 수정**.

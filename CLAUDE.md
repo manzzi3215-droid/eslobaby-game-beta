@@ -14,7 +14,15 @@
 
 ## 현재 버전
 
-**v0.10.10-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.10.11-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.10.11-beta(minor): **음성 1.2배속 · PAGE13 음성종료 자동전환 · 이전/다음 카드 내부 이동 · 모션 문구 가독성 · BGM+Ducking**. **Flip Pro 영상 렌더링 수정(has-video+CSS)·PAGE 6·11 영상 재생·autoplay·fallback·must-watch·영상 파일은 변경 금지·불변.**
+  - 음성: `voice/page01~14.m4a`를 ffmpeg `atempo=1.2`(피치 보존)로 재인코딩(파일명·config 매핑 불변).
+  - PAGE13: `renderBrandFinal`의 타이머 자동전환 제거, `playPageVoice(13)` onEnded(audio `ended`)에서 `goNext()`(타이머 미사용, 음성 종료 전 이동 금지). 순차 등장 애니 유지.
+  - 이전/다음: 좌측 패널에서 제거→`shell`이 카드마다 `.card-nav.is-prev/.is-next`(카드 세로 중앙 좌·우) 생성, 전역 prevBtn/nextBtn 재지정(updateCtrlButtons가 활성/비활성 제어). backdrop-filter 미사용.
+  - 모션 문구: `.hint` 크기/굵기/대비(#17324a)+흰 헤일로 그림자, pulse 완화(hintPulseSoft). 모든 페이지.
+  - BGM: `배경음.mp4`→오디오만 추출 `assets/audio/bgm.m4a`(mp4 미사용). `sfx.js` start/stop/pause/resumeBGM + 단일 fade 엔진. loop, 게임시작(제스처) 시작·게이트 복귀 정지·재시작 처음부터. `config.sfx.bgm/bgmVolume(0.12)/bgmDuckVolume(0.045)/bgmFadeMs(400)`.
+  - Ducking: 페이지 음성 중 BGM 0.12→0.045, 종료/실패 시 복귀. `playVoiceForPage` duck·`onended` unduck. 단일 fade 엔진으로 연속 전환에도 안정. 정지/재생·게이트와 연동.
+  - `sw.js` PRECACHE에 bgm.m4a 추가, `CACHE_NAME`=`eslo-game-v0.10.11-beta`.
 ※ v0.10.10-beta(patch): **PAGE 6·11 영상 렌더링 개선**(삼성 Flip Pro LH55WMBWBGCXKR/Tizen 합성 문제 대응, 영상 장면 한정 CSS 최소 수정). **재생 로직 무변경** — autoplay·play()·fallback·must-watch·영상 파일·음성·진단 오버레이 불변.
   - 원인(진단 v0.10.9): 영상은 디코딩·재생되나(readyState4·buffered전체·error none·currentTime 진행) **픽셀 미표시 + ~1.5s 뒤 자동 pause**. 조상 `backdrop-filter`(`.scene-card`)·`transform`(`.screen`)·진입 애니메이션(cardIn)에 의한 Tizen 합성/가시성 실패 유력.
   - 수정: `renderVideo`의 `if(src)`에서 `.screen`에 **`has-video`** 클래스 부여(PAGE 6·11만). `css/game.css` 맨 끝에 스코프 레이어 — `.screen.has-video{transform:none}`(is-active/is-leaving 포함), `.screen.has-video .scene-card{backdrop-filter:none;-webkit-backdrop-filter:none;animation:none}`.

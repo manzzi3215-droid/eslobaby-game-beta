@@ -11,7 +11,7 @@
  * ========================================================================== */
 'use strict';
 
-var CACHE_NAME = 'eslo-game-v0.10.10-beta';
+var CACHE_NAME = 'eslo-game-v0.10.11-beta';
 
 // 미리 캐싱할 핵심 파일 (상대경로)
 var PRECACHE = [
@@ -76,6 +76,8 @@ var PRECACHE = [
   './assets/audio/voice/page12.m4a',
   './assets/audio/voice/page13.m4a',
   './assets/audio/voice/page14.m4a',
+  // v0.10.11: 배경음(BGM, 오디오 전용 m4a) — 오프라인 재생 지원
+  './assets/audio/bgm.m4a',
   // ※ 영상(prof-signage.mp4·prof-nongye-signage.mp4 및 -lo 폴백)은 precache 제외 + fetch 핸들러에서 명시적 bypass(아래) — 브라우저 네이티브 Range/스트리밍 처리.
   // ※ 효과음(PAGE5 울음·PAGE10 웃음 등)은 Web Audio 합성(js/sfx.js, 이미 precache)이라 별도 음원 파일/캐시 불필요. (v0.10.5: 반복 BGM 제거)
 ];

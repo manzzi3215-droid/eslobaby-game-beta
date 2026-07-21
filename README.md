@@ -1,7 +1,9 @@
 # 이슬로 베이비 미니게임 (프로토타입)
 
 베이비페어 현장 고객 참여용 플래시형 미니게임.
-현재 버전은 **v0.10.10-beta — PAGE 6·11 영상 렌더링 개선(Flip Pro/Tizen 합성 문제 대응, 영상 장면 한정 CSS 최소 수정)(총 14페이지)**입니다.
+현재 버전은 **v0.10.11-beta — 음성 1.2배속 · PAGE 13 음성 종료 후 자동전환 · 이전/다음 카드 내부 이동 · 모션 문구 가독성 · 배경음(BGM)+자동 Ducking(총 14페이지)**입니다.
+(전 페이지 안내 음성 1.2배속(pitch 유지) · PAGE 13은 안내 음성 ended 후에만 PAGE 14 자동 전환(타이머 미사용) · 이전/다음 버튼을 카드 세로 중앙 좌·우로 이동 · 모션 유도 문구(.hint) 크기·대비·외곽선 개선 · 오디오 전용 BGM(assets/audio/bgm.m4a) loop, 첫 제스처 후 시작, 페이지 음성 재생 중 자동 duck(12%→4.5%)/종료 시 복귀. **Flip Pro 영상 렌더링 수정(has-video+CSS)·PAGE 6·11 영상 재생은 변경하지 않음.**)
+(직전 v0.10.10-beta: PAGE 6·11 영상 렌더링 개선(Flip Pro/Tizen 합성 문제 대응, 영상 장면 한정 CSS))
 (삼성 Flip Pro(LH55WMBWBGCXKR, Tizen)에서 영상이 디코딩·재생은 되나 화면에 표시되지 않는 문제 대응. `renderVideo`가 영상 장면(PAGE 6·11)의 `.screen`에 `has-video` 클래스를 부여하고, 그 장면에만 **조상의 `backdrop-filter` 제거 · `.scene-card` 진입 애니메이션(cardIn) 제거 · `.screen` transform 제거**를 적용. 영상 조상의 합성 레이어 방해 요소를 없애 Tizen에서 영상 픽셀이 표시되도록 함. **autoplay·play()·fallback·must-watch·영상 파일·음성 로직·진단 오버레이는 변경하지 않음.** info-video/video의 border-radius·overflow는 이번엔 유지(미해결 시 다음 단계).)
 (직전 v0.10.9-beta: PAGE 6·11 영상 진단 빌드(?debug=1 실시간 오버레이·상태 스냅샷·이벤트·play() 로그))
 (영상 종료 시 자동 전환되므로 "화면을 탭하면…" 탭 유도 문구를 표시하지 않음 — 재생 중 "영상을 끝까지 보면…" 문구 유지, 깜빡임·레이아웃 흔들림 없음. 자동 전환·영상 게이트·error 안전장치·디자인 불변)

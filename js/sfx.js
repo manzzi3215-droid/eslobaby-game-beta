@@ -228,24 +228,76 @@
     } catch (e) {}
   }
   // 해당 페이지 음성 재생(1회). onEnded: 정상 종료 시 콜백(중첩 방지 위해 stop 시 해제). 없으면 false.
+  //   v0.10.11: 페이지 음성 재생 중 BGM 자동 duck(낮춤), 종료/실패/음원없음 시 unduck(복귀).
   function playVoiceForPage(page, onEnded) {
     stopVoice();                                  // 이전 음성 즉시 정지 + currentTime 0
     var url = voiceUrlForPage(page);
-    if (!url) return false;                        // 음원 없는 페이지 → 조용히 skip(게임 진행 무영향)
+    if (!url) { unduckBGM(); return false; }       // 음원 없는 페이지 → BGM 원래 볼륨 복귀, 조용히 skip(게임 진행 무영향)
     ensureVoiceEl();
-    voiceEl.onended = function () { voiceDiag('voice_end', url, { page: page }); voiceEl.onended = null; if (typeof onEnded === 'function') { try { onEnded(); } catch (e) {} } };
-    voiceEl.onerror = function () { voiceDiag('voice_error', url, { page: page, code: voiceEl && voiceEl.error && voiceEl.error.code }); try { console.warn('[eslo] voice load error:', url); } catch (e) {} };
+    voiceEl.onended = function () { voiceDiag('voice_end', url, { page: page }); unduckBGM(); voiceEl.onended = null; if (typeof onEnded === 'function') { try { onEnded(); } catch (e) {} } };
+    voiceEl.onerror = function () { voiceDiag('voice_error', url, { page: page, code: voiceEl && voiceEl.error && voiceEl.error.code }); unduckBGM(); try { console.warn('[eslo] voice load error:', url); } catch (e) {} };
     try { voiceEl.src = url; voiceEl.currentTime = 0; } catch (e) {}
     voiceActive = true;
+    duckBGM();                                       // v0.10.11: 페이지 음성 시작 → BGM 자동 낮춤(페이드)
     voiceDiag('voice_start', url, { page: page });   // [diag] 재생 시작 기록(동작 불변)
     var p = voiceEl.play();
-    if (p && p.then) p.then(function () { voiceDiag('voice_play_ok', url, { page: page }); }, function (e) { voiceDiag('voice_play_reject', url, { page: page, err: e && e.name }); });   // [diag] 관찰 전용(별도 promise 체인)
+    if (p && p.then) p.then(function () { voiceDiag('voice_play_ok', url, { page: page }); }, function (e) { voiceDiag('voice_play_reject', url, { page: page, err: e && e.name }); unduckBGM(); });   // 재생 차단 시 BGM 복귀
     if (p && p.catch) p.catch(function () { try { console.warn('[eslo] voice play blocked:', url); } catch (e) {} });   // 무한 재시도 X, 게임 무영향
     return true;
   }
   function pauseVoice() { if (voiceActive && voiceEl && !voiceEl.paused) { try { voiceEl.pause(); } catch (e) {} } }
   function resumeVoice() { if (voiceActive && voiceEl && voiceEl.paused) { var p = voiceEl.play(); if (p && p.catch) p.catch(function () {}); } }
   function stopAllAudio() { stopVoice(); killOneShot('cry'); killOneShot('laugh'); }
+
+  /* =============================================================================
+   * 배경음(BGM) + 자동 Ducking (v0.10.11)
+   * -----------------------------------------------------------------------------
+   * - 오디오 전용 파일(assets/audio/bgm.m4a, mp4 아님) loop 재생 → Flip Pro 불필요 영상 디코딩 없음.
+   * - 첫 사용자 제스처(게임 시작 버튼) 이후 startBGM. 게임 종료(게이트 복귀) 시 stopBGM. 다시 시작 시 처음부터.
+   * - 페이지 음성 재생 중 자동으로 볼륨을 낮춤(duck), 종료 시 복귀(unduck). 단일 fade 엔진(진행 중 fade
+   *   취소 후 현재값→목표로 램프)이라 페이지 연속 전환에도 볼륨이 꼬이지 않음.
+   * - 영상(PAGE 6·11)은 muted 라 BGM/음성과 오디오 충돌 없음. BGM은 항상 페이지 음성보다 작게.
+   * ========================================================================== */
+  var bgmEl = null, bgmFadeTimer = null, bgmActive = false;
+  var BGM_BASE = (CFG.sfx && CFG.sfx.bgmVolume != null) ? CFG.sfx.bgmVolume : 0.12;
+  var BGM_DUCK = (CFG.sfx && CFG.sfx.bgmDuckVolume != null) ? CFG.sfx.bgmDuckVolume : 0.045;
+  var BGM_FADE_MS = (CFG.sfx && CFG.sfx.bgmFadeMs != null) ? CFG.sfx.bgmFadeMs : 400;   // 300~500ms 권장
+  function bgmUrl() { return (CFG.sfx && CFG.sfx.bgm) || null; }
+  function ensureBgmEl() {
+    if (bgmEl) return bgmEl;
+    var url = bgmUrl(); if (!url) return null;
+    bgmEl = new Audio(url); bgmEl.loop = true; bgmEl.preload = 'auto';
+    try { bgmEl.volume = BGM_BASE; } catch (e) {}
+    return bgmEl;
+  }
+  function clearBgmFade() { if (bgmFadeTimer) { clearInterval(bgmFadeTimer); bgmFadeTimer = null; } }
+  function fadeBgmTo(target, ms) {
+    if (!bgmEl) return;
+    clearBgmFade();
+    target = Math.max(0, Math.min(1, target));
+    var start = bgmEl.volume, delta = target - start, t0 = Date.now();
+    if (Math.abs(delta) < 0.002 || ms <= 0) { try { bgmEl.volume = target; } catch (e) {} return; }
+    bgmFadeTimer = setInterval(function () {
+      var k = Math.min(1, (Date.now() - t0) / ms);
+      try { bgmEl.volume = Math.max(0, Math.min(1, start + delta * k)); } catch (e) {}
+      if (k >= 1) clearBgmFade();
+    }, 30);
+  }
+  function startBGM() {
+    var el = ensureBgmEl(); if (!el) return;
+    bgmActive = true; clearBgmFade();
+    try { el.currentTime = 0; el.volume = BGM_BASE; } catch (e) {}
+    var p = el.play(); if (p && p.catch) p.catch(function () {});   // 제스처 없으면 조용히 실패(게임 무영향)
+  }
+  function stopBGM() {
+    bgmActive = false; clearBgmFade();
+    if (!bgmEl) return;
+    try { bgmEl.pause(); bgmEl.currentTime = 0; bgmEl.volume = BGM_BASE; } catch (e) {}
+  }
+  function pauseBGM() { if (bgmEl && !bgmEl.paused) { try { bgmEl.pause(); } catch (e) {} } }
+  function resumeBGM() { if (bgmActive && bgmEl && bgmEl.paused) { var p = bgmEl.play(); if (p && p.catch) p.catch(function () {}); } }
+  function duckBGM() { if (bgmEl && bgmActive) fadeBgmTo(BGM_DUCK, BGM_FADE_MS); }     // 페이지 음성 중 낮춤
+  function unduckBGM() { if (bgmEl && bgmActive) fadeBgmTo(BGM_BASE, BGM_FADE_MS); }   // 음성 종료 시 복귀
 
   window.SFX = {
     play: play,
@@ -258,5 +310,10 @@
     pauseVoice: pauseVoice,
     resumeVoice: resumeVoice,
     stopAllAudio: stopAllAudio,
+    // v0.10.11: 배경음(BGM) 제어 (loop·ducking은 내부에서 페이지 음성과 연동)
+    startBGM: startBGM,
+    stopBGM: stopBGM,
+    pauseBGM: pauseBGM,
+    resumeBGM: resumeBGM,
   };
 })();
