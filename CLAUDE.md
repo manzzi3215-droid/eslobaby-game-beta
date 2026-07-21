@@ -14,7 +14,12 @@
 
 ## 현재 버전
 
-**v0.10.16-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.10.17-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.10.17-beta(patch): **PAGE 12 선택 안내 문구 강조·2줄화·카드 위 배치.** 상단 제목/질문·카드 라벨·퀴즈 로직·효과음·BGM 전부 불변(안내 문구 텍스트·스타일만).
+  - `config` `hints.quizSelect` → `두 제품 중 안심하고 사용할 수 있는\n워시를 선택해주세요.`(2줄). 상단 제목 `민감한 우리 아이 피부`/질문 `생분해 케어는 선택이 아니라 필수!`는 page12.m4a 음성 일치 위해 유지.
+  - `game.js renderCompare`: 안내 문구를 카드 **위**로 이동(제목→안내→카드) + `makeHint`에 `compare-quiz-hint` 클래스 부여(공통 `.hint` 불변). 정답/오답 로직·카드 이벤트 무변경.
+  - `css/game.css` `.compare-quiz-hint`(base `.hint` 뒤): `white-space:pre-line`(2줄), `clamp(17~25px)`·`font-weight:800`·`var(--key-deep)`·둥근 반투명 박스·`animation:none`. 360px 2줄 유지, 844×390 footprint 최소화.
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.10.17-beta`. 신규 자산 없음.
 ※ v0.10.16-beta(patch): **PAGE 12 화면 문구를 안내 음성(page12.m4a)과 일치하도록 원복.** 퀴즈 기능·연출·잠금·BGM 등 v0.10.15 로직 전부 불변(문구만).
   - v0.10.15에서 바꾼 `compareLead`/`compareEmph`가 음성과 어긋나, `config.js` `compareLead`=`민감한 우리 아이 피부`, `compareEmph`=`생분해 케어는 선택이 아니라 필수!`로 원복(page12.m4a 제작 커밋 `ddb0ce9`/v0.10.6 문구와 일치). 안내문 `두 워시 중 하나를 선택해주세요.`·퀴즈 카드·오답/정답 연출은 유지.
   - **음성 원본은 사용자 제공 TTS라 목소리 동일 복제 불가** → 음성 재생성 대신 텍스트 원복(사용자 선택). 이후 문구 변경 시 해당 page 음성도 함께 갱신 필요.

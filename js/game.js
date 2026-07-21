@@ -1294,10 +1294,15 @@
         var right = makeCard('compare-good', T.compareGoodLabel, CFG.assets.childHappy, CFG.placeholders.childHappy,
                               CFG.assets.ending.bath, CFG.placeholders.endBath, 'compare-prod-eslo', true);
 
+        // v0.10.17: 선택 안내 문구 — 카드 "위"에 배치(읽고 바로 두 카드 인식). PAGE 12 전용 클래스로 강조(공통 .hint 불변).
+        //   makeHint(div.hint) 재사용 + compare-quiz-hint 추가. 2줄(\n)은 CSS white-space:pre-line 로 표시.
+        var quizHint = makeHint(CFG.texts.hints.quizSelect);
+        quizHint.classList.add('compare-quiz-hint');
+        body.appendChild(quizHint);
+
         row.appendChild(left);
         row.appendChild(right);
         body.appendChild(row);
-        body.appendChild(makeHint(CFG.texts.hints.quizSelect));   // v0.10.15: '두 워시 중 하나를 선택해주세요.'
       });
       // v0.10.15: 퀴즈 페이지 — 화면/빈 공간 탭 이동 없음(tapAdvance 미호출). 카드 클릭·키보드로만 선택.
     });

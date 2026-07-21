@@ -2408,3 +2408,40 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
 }
 @keyframes hintPulseSoft { 0%, 100% { opacity: 0.86; } 50% { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .hint { animation: none; opacity: 1; } }
+
+/* =============================================================================
+ * v0.10.17 — PAGE 12 선택 안내 문구 전용 강조 (.compare-quiz-hint)
+ * -----------------------------------------------------------------------------
+ * "선택해야 하는 화면"임을 빠르게 이해하도록 공통 .hint 보다 크고 또렷하게.
+ * 공통 .hint 는 건드리지 않고 PAGE 12 에만 스코프. base .hint 뒤에 선언(우선 적용).
+ * 2줄(config \n) → white-space:pre-line. 둥근 소프트 박스 + 딥 블루, 반복 애니 없음.
+ * ========================================================================== */
+.compare-quiz-hint {
+  white-space: pre-line;                       /* config \n → 2줄 */
+  text-align: center;
+  font-size: clamp(17px, 2.5vw, 25px);         /* 공통 .hint(15~21) 대비 약 +18% */
+  font-weight: 800;
+  line-height: 1.38;
+  color: var(--key-deep);                      /* 딥 블루(브랜드 톤) */
+  letter-spacing: -0.2px;
+  max-width: min(94%, 30rem);                  /* 두 줄 안정 유지 */
+  margin: clamp(2px, 0.6vh, 8px) auto clamp(10px, 2vh, 18px);   /* 위=제목, 아래=카드와 자연 연결 */
+  padding: clamp(8px, 1.4vh, 12px) clamp(14px, 3.4vw, 24px);
+  background: rgba(255, 255, 255, 0.74);       /* 연한 반투명 흰 박스(배경과 대비 확보) */
+  border-radius: clamp(14px, 2.4vw, 20px);     /* 둥근 안내 박스 */
+  box-shadow: 0 4px 14px rgba(70, 120, 160, 0.14);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
+  animation: none;                             /* 정적(깜빡임/반복 애니 없음) */
+}
+/* 아주 좁은 화면(≤360px): 3줄 이상으로 깨지지 않도록 폰트/패딩 축소(줄바꿈은 \n 그대로 2줄) */
+@media (max-width: 360px) {
+  .compare-quiz-hint {
+    font-size: clamp(15px, 4.3vw, 18px);
+    padding: 7px 12px;
+    max-width: 96%;
+  }
+}
+/* 낮은 가로 화면(예: 844×390): 카드 세로 공간 확보 위해 세로 footprint 최소화(2줄 유지·겹침 없음) */
+@media (orientation: landscape) and (max-height: 480px) {
+  .compare-quiz-hint { font-size: clamp(14px, 3vw, 18px); line-height: 1.25; margin: 0 auto 5px; padding: 4px 14px; }
+}

@@ -11,7 +11,7 @@
  * ========================================================================== */
 'use strict';
 
-var CACHE_NAME = 'eslo-game-v0.10.16-beta';
+var CACHE_NAME = 'eslo-game-v0.10.17-beta';
 
 // 미리 캐싱할 핵심 파일 (상대경로)
 var PRECACHE = [
