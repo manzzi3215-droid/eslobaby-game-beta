@@ -59,7 +59,8 @@
       autoNext: true },   // v0.9.4: 거품 모두 제거(완료) 직후 Page5 자동 전환
 
     // 장면 ④ — 설명: 민감도 100% 경고 (STEP 배지·제목 없음, 게이지만 유지)
-    { id: 'warning', type: 'warning', phase: 1 },
+    //   v0.10.14: 경보 알람 → 안내 음성 → (음성 종료) PAGE 6 자동 전환. 다음 버튼 숨김·탭 차단.
+    { id: 'warning', type: 'warning', phase: 1, voiceNext: true },
 
     // 장면 ⑤ (PAGE 5-1) — 설명: 계면활성제 잔류 (v0.6.x: 피부 클로즈업 → prof.mp4 영상으로 교체)
     //   기존 skin/붉은원/계면이 제거. 문구는 residueVideoLead + 강조 residueVideoEmph.
@@ -71,7 +72,8 @@
       tail: T.scenes.residueVideoTail, emphClass: 'bad-emph' },   // v0.9.4: '나쁜 계면활성제' 붉은 강조
 
     // 장면 ⑥ — 설명: 이슬로 소개 (제품 + 키워드)
-    { id: 'esloIntro', type: 'brand', phase: 2,
+    //   v0.10.14: 안내 음성 종료 후 PAGE 8 자동 전환. 다음 버튼 숨김·탭 차단.
+    { id: 'esloIntro', type: 'brand', phase: 2, voiceNext: true,
       title: T.scenes.esloIntro, keywords: T.esloKeywords,
       single: 'bath', productName: T.scenes.esloProductName },   // v0.7.x: 단일 제품(eslo-bath) + 말풍선 키워드 + 제품명
 
@@ -97,7 +99,8 @@
       autoNext: true },   // v0.9.4: 거품·계면이 모두 제거(완료) 직후 Page10 자동 전환
 
     // 장면 ⑨ — MISSION 성공! (웃는 아이 + 반짝임, 제품 이미지 없음)
-    { id: 'missionSuccess', type: 'missionSuccess', phase: 4,
+    //   v0.10.14: 안내 음성 종료 후 PAGE 11 자동 전환. 다음 버튼 숨김·탭 차단.
+    { id: 'missionSuccess', type: 'missionSuccess', phase: 4, voiceNext: true,
       title: T.scenes.missionSuccess, emph: T.scenes.missionSuccessEmph },   // v0.7.x: '생분해' 강조
 
     // 장면 ⑨-2 (PAGE 10-1) — 생분해 설명 영상 (v0.9.3: prof_nongye.mp4, 필수 시청)

@@ -136,6 +136,40 @@
     }
   }
 
+  // v0.10.14: PAGE 5 경보 알람 — 짧고 선명한 2톤 사이렌(hi-lo-hi-lo). 외부 음원 없이 Web Audio 합성.
+  //   - onDone: 마지막 톤 종료(oscillator ended) 시 1회 호출 → 이어서 안내 음성 재생(겹침 없음).
+  //   - 오디오 컨텍스트 불가/실패 시에도 onDone 을 즉시 호출해 음성 흐름이 끊기지 않게 함(fallback).
+  //   - 알람 시작 시 BGM duck(낮춤) → 이어지는 음성도 duck 유지 → 사이에 볼륨이 튀지 않음.
+  //   - 고주파를 lowpass 로 억제(귀에 거슬리지 않게), 총 길이 ~0.9s(흐름 지연 최소).
+  function alarm(onDone) {
+    var done = false;
+    function fire() { if (done) return; done = true; if (typeof onDone === 'function') { try { onDone(); } catch (e) {} } }
+    if (!ensureCtx()) { fire(); return; }               // 오디오 불가 → 즉시 다음(음성) 진행
+    killOneShot('alarm');
+    try { duckBGM(); } catch (e) {}                      // 경보~음성 동안 BGM 낮춤(사이 복귀 없음)
+    var t0 = ctx.currentTime;
+    var seq = [880, 620, 880, 620];                     // hi-lo-hi-lo 사이렌(경보 느낌)
+    var beep = 0.16, gap = 0.05, last = null, lastEnd = t0;
+    for (var i = 0; i < seq.length; i++) {
+      var st = t0 + i * (beep + gap);
+      var osc = ctx.createOscillator(), g = ctx.createGain();
+      var lp = ctx.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 1600;   // 거슬리는 고주파 억제
+      osc.type = 'square';
+      osc.frequency.setValueAtTime(seq[i], st);
+      g.gain.setValueAtTime(0.0001, st);
+      g.gain.exponentialRampToValueAtTime(0.5, st + 0.012);
+      g.gain.setValueAtTime(0.5, st + beep - 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, st + beep);
+      osc.connect(g); g.connect(lp); lp.connect(masterGain);
+      osc.start(st); osc.stop(st + beep + 0.02);
+      regOneShot('alarm', osc);
+      last = osc; lastEnd = st + beep;
+    }
+    if (last) last.onended = fire;                       // 정확한 종료 기준(마지막 톤 ended)
+    setTimeout(fire, (lastEnd - t0) * 1000 + 140);       // 일부 환경 대비 안전 fallback(1회 가드)
+  }
+  function stopAlarm() { killOneShot('alarm'); }
+
   // 이름별 합성 효과음 (귀엽고 가벼운 톤)
   var SOUNDS = {
     click:    function () { tone(680, 'triangle', 0.09, { slideTo: 900, gain: 0.42 }); },
@@ -247,7 +281,7 @@
   }
   function pauseVoice() { if (voiceActive && voiceEl && !voiceEl.paused) { try { voiceEl.pause(); } catch (e) {} } }
   function resumeVoice() { if (voiceActive && voiceEl && voiceEl.paused) { var p = voiceEl.play(); if (p && p.catch) p.catch(function () {}); } }
-  function stopAllAudio() { stopVoice(); killOneShot('cry'); killOneShot('laugh'); }
+  function stopAllAudio() { stopVoice(); killOneShot('cry'); killOneShot('laugh'); killOneShot('alarm'); }
 
   /* =============================================================================
    * 배경음(BGM) + 자동 Ducking (v0.10.11)
@@ -331,6 +365,9 @@
     pauseVoice: pauseVoice,
     resumeVoice: resumeVoice,
     stopAllAudio: stopAllAudio,
+    // v0.10.14: PAGE 5 경보 알람(합성). onDone 은 알람 종료 시 1회 호출 → 이어서 안내 음성.
+    playAlarm: alarm,
+    stopAlarm: stopAlarm,
     // v0.10.11: 배경음(BGM) 제어 (loop·ducking은 내부에서 페이지 음성과 연동)
     startBGM: startBGM,
     stopBGM: stopBGM,

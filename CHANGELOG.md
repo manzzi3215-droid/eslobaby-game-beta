@@ -11,6 +11,38 @@
 
 ---
 
+## [v0.10.14-beta] - 2026-07-22
+### 음성 종료 자동 전환(PAGE 5·7·10) · PAGE 5 경보 알람 · 다음 버튼 표시 회귀 수정 · PAGE 7 문구 위치 재조정
+**PAGE 6·11 영상 자동재생·6→7·11→12 자동 이동·PAGE 13 음성 종료 자동 이동·PAGE 3·4·8·9 인터랙션 필수화·BGM·Flip Pro has-video CSS·모바일 레이아웃은 변경 없음.**
+
+### 1. PAGE 1·2·12 다음 버튼 표시 회귀 수정 (원인 규명)
+- 원인: v0.10.13에서 `updateCtrlButtons` 의 `lockNext` 에 `|| (curScene && curScene.hideNext)` 를 추가하면서, hideNext 가 없는 장면에서 `lockNext` 가 **`undefined`** 로 평가됨. `classList.toggle('is-disabled', undefined)` 는 force 인자를 무시하고 **토글(깜빡임)** 하므로, updateCtrlButtons 가 여러 번 호출되는 렌더 과정에서 PAGE 1·2·12 등 non-hideNext 페이지의 다음 버튼이 `is-disabled`(opacity:0) 상태로 남아 사라짐. (이전 버튼은 `atFirst` 가 boolean 이라 정상)
+- 수정: `js/game.js` `lockNext` 를 `!!(...)` 로 **boolean 강제**. → PAGE 1·2·12(및 그 외 수동 이동 페이지) 다음 버튼 정상 표시. 한 페이지씩만 이동(goNext busy 가드), 다음 버튼 탭 시 tapAdvance 는 `.ctrl-btn` 제외라 중복 이동 없음.
+
+### 2. PAGE 5·7·10 음성 종료 후 자동 전환 (다음 버튼 숨김·탭 차단)
+- `js/scenes.js`: warning(5)·esloIntro(7)·missionSuccess(10)에 `voiceNext: true`.
+- `js/game.js`: 전역 `voiceGateLocked`(videoGateLocked·interactionLocked 과 동일 패턴). `renderScene` 진입 시 초기화 후 `scene.voiceNext` 면 잠금 → `goNext`/`goToStep`/`updateCtrlButtons`(다음 버튼 숨김)에서 이동 차단. 이전 버튼은 유지(goPrev 는 잠금 미검사).
+- 자동 전환: `playPageVoice` 의 `autoAdvance`(음성 `ended` 콜백)에서 `index===myIndex` 확인 → `voiceGateLocked=false` → `goNext()`. **실제 음성 ended 기준(임의 타이머 아님), 1회만**(onended 는 재생 후 해제 + index 가드 + goNext busy 가드). 이전 진입의 늦은 ended 는 `index!==myIndex` 로 무시, `clearScene`(모든 네비 진입점)이 `stopVoice`(onended 해제)·`stopAlarm` 으로 정리.
+- 재진입: `renderScene` 이 항상 초기화 후 `voiceNext` 재적용 + `playPageVoice` 를 새 `myIndex` 로 호출 → 이전으로 나갔다 다시 오면 처음부터 재실행(PAGE 5는 경보음부터).
+- 안전 fallback: 음원/API 없음 → 잠금 해제(수동 이동 허용). 재생 실패로 ended 미도착 → `VOICE_HARD_TIMEOUT`(12s) 워치독이 잠금만 해제(자동 이동 X) → 영구 갇힘 방지.
+- 안내 문구 제거: `renderWarning`/`renderBrand`/`renderMissionSuccess` 의 `makeHint(tapNext)` 삭제(빈 여백 없음, 요소 자체 제거). PAGE 5·10 의 기존 울음(cry)·웃음(laugh) 순차 재생은 자동 전환으로 대체(미재생).
+
+### 3. PAGE 5 경보 알람 강화 (Web Audio 합성, 외부 음원 없음)
+- `js/sfx.js` `alarm(onDone)` 신설 + `SFX.playAlarm`/`stopAlarm` 노출. hi-lo-hi-lo 2톤 사이렌(square, lowpass 1.6kHz 로 고주파 억제), 총 ~0.9s. 기존 `sfx('warn')` 합성음 대체(renderWarning 의 `sfx('warn')` 제거).
+- 흐름: `playPageVoice(5)` 가 `playAlarm(startVoice5)` → 알람 마지막 톤 `onended`(+안전 setTimeout) 시 안내 음성 재생 → 음성 `ended` 시 PAGE 6 이동. 알람과 음성은 겹치지 않음.
+- 오디오 실패 대비: `ensureCtx()` 실패 시 `onDone` 즉시 호출 → 음성 정상 진행. Flip Pro 등에서도 Web Audio 로 재생(기존 합성 효과음과 동일 경로).
+- BGM: `alarm` 시작 시 `duckBGM()` → 이어지는 음성도 duck(단일 fade 엔진, 사이 복귀 없음) → 음성 `ended` 시 `unduckBGM()` 복귀. 경보~음성 동안 BGM 볼륨 튐 없음.
+- 신규 **음원 파일 없음**(합성) → `sw.js` PRECACHE 변경 없음.
+
+### 4. PAGE 7 문구 위치 재조정 (제품 과다 침범 완화)
+- `css/game.css` `.kw-2`(안심 베이비케어): `left:13% top:58%` → **`left:4% top:63%`**. 이전 버튼(카드 세로 중앙) 아래로 소폭 내려 겹침을 피하면서 왼쪽으로 이동 → 제품 침범 38px → **~11px(살짝 걸침)**. 폰트·크기·색상·애니메이션·문구 불변(좌표만).
+- 실기 검증(360×800/375×812/390×844/412×915/844×390/1024×768/1280×800): 이전 버튼·kw-1·kw-2 겹침 없음, kw-2 는 제품 가장자리에 3~12px 만 걸침.
+
+### 5. 버전·캐시
+- `config.js` `meta.version`=`v0.10.14-beta`, `sw.js` `CACHE_NAME`=`eslo-game-v0.10.14-beta`.
+
+---
+
 ## [v0.10.13-beta] - 2026-07-21
 ### 안내 문구 변경 · PAGE 2 터치 영역 확대 · PAGE 6·11·13 다음 버튼 숨김 · PAGE 7 문구 위치 조정
 **PAGE 6·11 영상 자동재생·6→7·11→12 자동 이동·PAGE 13 음성 종료 자동 이동·PAGE 3·4·8·9 인터랙션 필수화·BGM·Ducking·Flip Pro has-video CSS·모바일 레이아웃·기존 애니메이션은 변경 없음.**

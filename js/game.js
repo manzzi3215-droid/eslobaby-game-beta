@@ -24,6 +24,7 @@
   var paused = false;                    // 정지(⏸): v0.8.x — 현재 화면의 영상·CSS 애니메이션 일시정지 (페이지 이동과 무관)
   var videoGateLocked = false;           // v0.9.3: 필수 시청 영상(Page6·Page11)이 끝나기 전엔 다음 이동 잠금
   var interactionLocked = false;         // v0.10.12: PAGE3·4·8·9 — 문지르기/헹굼 인터랙션 완료 전엔 다음 이동 잠금(수동 이동 전면 차단)
+  var voiceGateLocked = false;           // v0.10.14: PAGE5·7·10 — 안내 음성이 끝나기 전엔 다음 이동 잠금(탭·다음 차단, 이전은 허용)
   var autoNextScheduled = false;         // v0.9.4: 완료 이벤트 기반 자동 전환 — 장면당 1회 가드
 
   // 장면 간 유지되는 게임 상태 (자극 게이지 값 등)
@@ -37,6 +38,8 @@
     cleanups.forEach(function (f) { try { f(); } catch (_) {} }); cleanups = [];
     // v0.10.6: 장면 이탈/이동 시 페이지 음성 즉시 정지(currentTime 0). 예약된 울음·웃음은 timers 정리로 취소.
     try { if (window.SFX && window.SFX.stopVoice) window.SFX.stopVoice(); } catch (_) {}
+    // v0.10.14: 장면 이탈 시 경보 알람도 정지(PAGE 5). 늦은 알람 종료 콜백은 playPageVoice 의 index 가드로 무시됨.
+    try { if (window.SFX && window.SFX.stopAlarm) window.SFX.stopAlarm(); } catch (_) {}
   }
   function clamp01(v) { return Math.max(0, Math.min(1, v)); }
   // v0.4.3: 효과음 재생 (SFX 모듈 없거나 실패해도 게임에 영향 없음)
@@ -348,6 +351,7 @@
     if (busy) return;
     if (videoGateLocked) return;                 // v0.9.3: 필수 시청 영상이 끝나기 전엔 이동 금지(탭·다음 공통)
     if (interactionLocked) return;               // v0.10.12: PAGE3·4·8·9 인터랙션 완료 전엔 이동 금지(탭·다음·수동 공통)
+    if (voiceGateLocked) return;                 // v0.10.14: PAGE5·7·10 안내 음성 종료 전엔 이동 금지(탭·다음 공통, 자동 전환은 음성 ended 콜백이 잠금 해제 후 호출)
     if (index >= SCENES.length - 1) return;      // 마지막 장면: 이동 없음
     clearScene();
     index++;
@@ -372,26 +376,57 @@
   // v0.10.8: 영상 재생 워치독 — 최종 안전망(HARD_TIMEOUT 까지 미시작 시 gate 만 해제, 영구 갇힘 방지).
   //   터치 안내(fallback)는 자동재생이 실제로 모두 실패(onSourceFail)한 경우에만 표시하며, 단순 타임아웃으로는 표시하지 않는다.
   var VIDEO_HARD_TIMEOUT = 12000;
+  // v0.10.14: 음성 종료 자동 전환(PAGE 5·7·10) 안전망 — 재생 실패 등으로 ended 가 오지 않을 때
+  //   이 시간 후 잠금만 해제(자동 이동 X, 수동 이동 허용)해 영구 갇힘 방지. 정상 음성(≤~8s)보다 충분히 김.
+  var VOICE_HARD_TIMEOUT = 12000;
   // v0.10.6: 페이지 음성 종료 후 울음/웃음 효과음까지의 간격(자연스러운 순차)
   var VOICE_SFX_GAP = 250;
 
-  // v0.10.6: 페이지 진입 시 해당 PAGE(=index+1) 음성 1회 재생.
-  //   PAGE5=음성 종료 후 울음, PAGE10=음성 종료 후 웃음(순차). 음원 없으면 기존 효과음 즉시 재생.
-  //   장면 이탈 시 clearScene 이 음성 정지 + 예약 타이머(울음/웃음) 취소.
+  // v0.10.6/0.10.14: 페이지 진입 시 해당 PAGE(=index+1) 음성 1회 재생.
+  //   PAGE 5 = 경보 알람 → (알람 종료) 안내 음성 → (음성 종료) PAGE 6 자동 이동.
+  //   PAGE 7·10 = 안내 음성 → (음성 종료) 다음 페이지 자동 이동. PAGE 13 = 기존 유지.
+  //   자동 전환은 오직 음성 ended(실제 이벤트) 기준(임의 타이머 아님). 중복 이동 방지 가드 포함.
+  //   장면 이탈 시 clearScene 이 음성·알람 정지 + 예약 타이머 취소 → 늦은 콜백은 index 가드로 무시.
   function playPageVoice(page) {
     var myIndex = index;
     var hasVoiceApi = window.SFX && window.SFX.playVoiceForPage;
+
+    // v0.10.14: 음성 종료 시 다음 페이지 자동 이동(PAGE 5·7·10). 잠금 해제 후 이동, 늦은 ended/중복 이동 차단.
+    var autoAdvance = function () {
+      if (index !== myIndex) return;         // 이미 이탈/재진입 → 이전 진입의 늦은 ended 무시
+      voiceGateLocked = false;               // 이 페이지 잠금 해제 후 이동(goNext 통과)
+      if (!paused && !busy) goNext();         // goNext 자체 가드로 중복 이동 방지(한 페이지만)
+    };
+    // 오디오 실패(재생 거부·로드 실패 등)로 음성 ended 가 오지 않을 때의 안전망:
+    //   일정 시간 후에도 잠금이 남아 있으면 잠금만 해제(자동 이동은 안 함) → 영구 갇힘 방지, 수동 이동 허용.
+    function armVoiceWatchdog() {
+      setTimer(function () {
+        if (index === myIndex && voiceGateLocked) { voiceGateLocked = false; updateCtrlButtons(); }
+      }, VOICE_HARD_TIMEOUT);
+    }
+
+    if (page === 5) {
+      // 경보 알람 먼저 → 종료되면 안내 음성 → 음성 종료 시 PAGE 6 자동 이동.
+      var startVoice5 = function () {
+        if (index !== myIndex) return;       // 알람 중 이탈 시 음성 미재생
+        var ok = hasVoiceApi ? window.SFX.playVoiceForPage(5, autoAdvance) : false;
+        if (!ok) { voiceGateLocked = false; updateCtrlButtons(); }   // 음원/API 없음 → 갇힘 방지(수동 이동 허용)
+      };
+      if (window.SFX && window.SFX.playAlarm) window.SFX.playAlarm(startVoice5);
+      else startVoice5();                    // 알람 API 없으면 바로 음성
+      armVoiceWatchdog();
+      return;
+    }
+
     var afterVoice = null;
-    if (page === 5)  afterVoice = function () { setTimer(function () { if (index === myIndex && !paused) sfx('cry'); }, VOICE_SFX_GAP); };
-    if (page === 10) afterVoice = function () { setTimer(function () { if (index === myIndex && !paused) sfx('laugh'); }, VOICE_SFX_GAP); };
+    if (page === 7 || page === 10) afterVoice = autoAdvance;   // v0.10.14: 음성 종료 → 다음 자동 이동
     // v0.10.11: PAGE 13 은 안내 음성이 끝난 뒤에만 PAGE 14 로 자동 전환(audio ended 기준, 타이머 미사용).
-    //   음성 종료 전에는 절대 넘어가지 않음. (renderBrandFinal 의 타이머 기반 자동 전환은 제거함)
     if (page === 13) afterVoice = function () { if (index === myIndex && !paused && !busy && !videoGateLocked) goNext(); };
+
     var played = hasVoiceApi ? window.SFX.playVoiceForPage(page, afterVoice) : false;
-    if (!played) {
-      // 음원 없음(또는 API 없음) → 기존 정책: PAGE5 울음·PAGE10 웃음 즉시(정지 상태면 미재생)
-      if (page === 5 && !paused) sfx('cry');
-      if (page === 10 && !paused) sfx('laugh');
+    if (page === 7 || page === 10) {
+      if (!played) { voiceGateLocked = false; updateCtrlButtons(); }   // 음원 없음 → 갇힘 방지(수동 이동 허용)
+      else armVoiceWatchdog();
     }
   }
   //   delay 미지정 시 기본 여운(드래그/영상). v0.10.2: PAGE 13은 rewardHold(약 2초) 유지 후 전환.
@@ -441,11 +476,13 @@
     }
     if (nextBtn) {
       // v0.9.3: 마지막 장면 또는 필수 시청 영상 재생 중이면 다음 버튼 비활성
-      // v0.10.13: PAGE 6·11(영상 종료 자동 이동)·PAGE 13(음성 종료 자동 이동)은 scene.hideNext 로 다음 버튼 항상 숨김
-      //   (자동 전환이 이동을 담당 → 수동 다음 버튼 불필요). 이전 버튼은 그대로 유지.
+      // v0.10.13: PAGE 6·11(영상 종료 자동 이동)·PAGE 13(음성 종료 자동 이동)은 scene.hideNext 로 다음 버튼 항상 숨김.
+      // v0.10.14: PAGE 5·7·10(음성 종료 자동 이동)은 voiceGateLocked 로 숨김.
+      //   ★ 반드시 boolean 으로 강제(!!): (curScene && curScene.hideNext) 는 hideNext 없으면 undefined 이고,
+      //     classList.toggle(cls, undefined) 는 force 무시 → 토글(깜빡임)되어 PAGE 1·2·12 다음 버튼이 사라지는 회귀 발생.
       var curScene = SCENES[index];
-      var lockNext = (index >= SCENES.length - 1) || videoGateLocked || interactionLocked
-        || (curScene && curScene.hideNext);
+      var lockNext = !!((index >= SCENES.length - 1) || videoGateLocked || interactionLocked || voiceGateLocked
+        || (curScene && curScene.hideNext));
       nextBtn.disabled = lockNext;
       nextBtn.classList.toggle('is-disabled', lockNext);
       nextBtn.setAttribute('aria-disabled', lockNext ? 'true' : 'false');
@@ -470,6 +507,7 @@
   function goToStep(step) {
     if (videoGateLocked) return;         // v0.9.3: 필수 시청 영상 재생 중엔 페이지점 점프도 금지(끝까지 시청 강제)
     if (interactionLocked) return;       // v0.10.12: 인터랙션 완료 전엔 페이지점 점프도 금지(강제 완료)
+    if (voiceGateLocked) return;         // v0.10.14: PAGE5·7·10 음성 종료 전엔 페이지점 점프도 금지
     clearScene();
     if (step <= 1) { renderGate(); return; }
     index = Math.min(step - 2, SCENES.length - 1);
@@ -482,8 +520,10 @@
     toggleChrome(true);
     videoGateLocked = false;             // v0.9.3: 장면 진입 시 영상 잠금 초기화(영상 렌더러가 필요 시 다시 잠금)
     interactionLocked = false;           // v0.10.12: 장면 진입 시 인터랙션 잠금 초기화(드래그 렌더러가 필요 시 다시 잠금) → 재진입 시 반드시 다시 완료
+    voiceGateLocked = false;             // v0.10.14: 진입 시 음성 잠금 초기화 → scene.voiceNext 면 아래서 다시 잠금(재진입 시 음성 다시 듣고 이동)
     autoNextScheduled = false;           // v0.9.4: 자동 전환 예약 초기화(이전 장면 타이머는 clearScene 이 이미 정리)
     var scene = SCENES[index];
+    if (scene && scene.voiceNext) voiceGateLocked = true;   // v0.10.14: PAGE 5·7·10 — 음성 종료 전 이동 잠금(shell 의 updateCtrlButtons 가 다음 버튼 숨김)
     updateCtrlButtons();                 // 다음 버튼 활성/비활성 갱신
     if (window.Analytics) window.Analytics.enterScene(scene.id, scene.phase);  // v0.4.0: 통계
     sfx('scene');                        // v0.4.3: Scene 시작 효과음
@@ -599,10 +639,10 @@
         body.appendChild(title);
         body.appendChild(desc);
         body.appendChild(stage);
-        body.appendChild(makeHint(CFG.texts.hints.tapNext));
+        // v0.10.14: 안내 문구(탭/다음) 제거 — PAGE 10은 음성 종료 후 자동 전환(탭·다음 차단).
       });
       sfx('success');                      // v0.4.3: 성공 효과음(진입 스팅어)
-      // v0.10.6: 아이 웃음(laugh)은 페이지 음성 종료 후 순차 재생 → renderScene 의 playPageVoice 가 처리.
+      // v0.10.14: 안내 음성 종료 시 PAGE 11 자동 전환 → renderScene 의 playPageVoice(10) 가 처리(웃음 효과음은 미재생).
       tapAdvance(el);    });
   }
 
@@ -770,10 +810,10 @@
 
         body.appendChild(sub);
         body.appendChild(stage);
-        body.appendChild(makeHint(CFG.texts.hints.tapNext));
+        // v0.10.14: 안내 문구(탭/다음) 제거 — PAGE 5는 음성 종료 후 자동 전환(탭·다음 차단).
       }, 'warn');
-      sfx('warn');                         // v0.4.3: 경고/실패 효과음(진입 스팅어)
-      // v0.10.6: 아이 울음(cry)은 페이지 음성 종료 후 순차 재생 → renderScene 의 playPageVoice 가 처리.
+      // v0.10.14: 진입 경고음(sfx('warn'))은 강화된 경보 알람으로 대체 → playPageVoice(5) 가 알람→음성 순으로 재생.
+      // v0.10.14: tapAdvance 는 남겨두되 voiceGateLocked 로 차단됨(오디오 실패로 잠금 해제 시엔 탭 이동 fallback 로 동작).
       tapAdvance(el);    });
   }
 
@@ -1246,7 +1286,7 @@
           body.appendChild(hero);
           body.appendChild(list);
         }
-        body.appendChild(makeHint(CFG.texts.hints.tapNext));
+        // v0.10.14: 안내 문구(탭/다음) 제거 — PAGE 7은 음성 종료 후 자동 전환(탭·다음 차단).
       });
       tapAdvance(el);    });
   }

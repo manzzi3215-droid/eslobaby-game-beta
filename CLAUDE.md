@@ -14,7 +14,13 @@
 
 ## 현재 버전
 
-**v0.10.13-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.10.14-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.10.14-beta(minor): **음성 종료 자동 전환(PAGE 5·7·10) · PAGE 5 경보 알람(Web Audio) · 다음 버튼 표시 회귀 수정(PAGE 1·2·12) · PAGE 7 문구 위치 재조정.** **PAGE 6·11 영상 자동재생·6→7·11→12 자동 이동·PAGE 13 음성 종료 자동 이동·PAGE 3·4·8·9 인터랙션 필수화·BGM·Flip Pro has-video CSS 전부 불변.**
+  - 다음 버튼 회귀 수정: v0.10.13에서 `updateCtrlButtons` `lockNext` 가 `(curScene && curScene.hideNext)`로 인해 hideNext 없는 페이지에서 `undefined`가 되고 `classList.toggle(cls, undefined)`가 토글되어 PAGE 1·2·12 다음 버튼이 사라짐 → `lockNext = !!(...)` boolean 강제로 수정.
+  - 음성 자동 전환: `scenes.js` warning(5)·esloIntro(7)·missionSuccess(10)에 `voiceNext:true`. `game.js` 전역 `voiceGateLocked`(renderScene 진입 초기화 후 voiceNext 면 잠금 → goNext/goToStep/updateCtrlButtons 차단, 이전 버튼 유지). `playPageVoice` 의 `autoAdvance`(음성 ended 콜백, index 가드+goNext busy 가드)로 1회만 이동. PAGE 5는 `playAlarm(startVoice5)` → 알람 종료 후 음성 → 음성 종료 후 이동. **임의 타이머 아님(음성 ended 기준)**, 재진입 재실행, 오디오 실패 시 `VOICE_HARD_TIMEOUT`(12s) 워치독이 잠금만 해제(영구 갇힘 방지). `renderWarning`/`renderBrand`/`renderMissionSuccess`의 안내 문구(makeHint) 제거, `sfx('warn')` 제거(알람으로 대체), PAGE 5·10 울음/웃음 미재생.
+  - 경보 알람: `sfx.js` `alarm(onDone)`(hi-lo 2톤 사이렌·square·lowpass 1.6kHz·~0.9s) + `playAlarm`/`stopAlarm` 노출. **외부 음원 없음(합성) → sw PRECACHE 변경 없음.** `alarm` 시작 시 `duckBGM` → 음성까지 duck 유지 → 음성 ended 시 unduck(BGM 튐 없음). ctx 실패 시 onDone 즉시 호출(음성 정상). `clearScene` 이 `stopAlarm` 정리.
+  - PAGE 7: `css/game.css` `.kw-2` `left:13% top:58%`→`left:4% top:63%`(제품 침범 38px→~11px, 이전 버튼 겹침 없음). 폰트·크기·애니메이션·문구 불변.
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.10.14-beta`.
 ※ v0.10.13-beta(patch): **안내 문구 변경 · PAGE 2 터치 영역 확대 · PAGE 6·11·13 다음 버튼 숨김 · PAGE 7 문구 위치 조정.** **PAGE 6·11 영상 자동재생·6→7·11→12 자동 이동·PAGE 13 음성 종료 자동 이동·PAGE 3·4·8·9 인터랙션 필수화·BGM·Ducking·Flip Pro has-video CSS·모바일 레이아웃·기존 애니메이션 전부 불변.**
   - 안내 문구: `config.texts.hints.tapNext`를 `'화면을 탭하거나 다음 버튼을 눌러주세요'`로 변경(중앙 관리 → 다음 버튼 있는 모든 페이지 일괄). PAGE 6·11은 `videoWatch`(영상 문구), PAGE 13은 무문구라 미영향.
   - PAGE 2 터치: `game.js isInteractiveTarget`의 탭 차단 선택자에서 `.info-product` 제거 → 제품 전체 탭으로 이동(터치 판정 확대). `.info-product`는 PAGE 2에만 존재(다른 페이지 무영향), UI 불변.
