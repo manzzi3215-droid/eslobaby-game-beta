@@ -2288,3 +2288,24 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
   letter-spacing: -0.2px;
   word-break: keep-all;
 }
+
+/* =============================================================================
+ * ★ v0.10.10 — 영상 장면(PAGE 6·11) 한정 Tizen 영상 합성 대응 (CSS 전용 · 최소 수정)
+ *   삼성 Flip Pro(LH55WMBWBGCXKR)에서 영상이 디코딩·재생은 되나 화면에 표시되지 않는
+ *   문제(조상 backdrop-filter / transform / 진입 애니메이션으로 인한 합성 실패) 대응.
+ *   - has-video(=renderVideo가 .screen 에 부여)인 PAGE 6·11 에만 적용 → 다른 페이지 카드 디자인 불변.
+ *   - 자동재생/play()/fallback/must-watch/음성/문구/버튼/레이아웃은 변경하지 않음.
+ *   - info-video·video 의 border-radius/overflow(라운드 클립)는 이번엔 유지(다음 단계 대상).
+ *   - 파일 맨 끝에 배치해 .screen.is-active(transform) 및 .scene-card(backdrop-filter) 선언보다
+ *     소스 순서상 우선 적용. (has-video 선택자 특이도도 동등/우위)
+ * ========================================================================== */
+.screen.has-video,
+.screen.has-video.is-active,
+.screen.has-video.is-leaving {
+  transform: none;                         /* 영상 조상에서 transform 레이어 제거(오버레이 부착 방해 해소) */
+}
+.screen.has-video .scene-card {
+  -webkit-backdrop-filter: none;           /* backdrop-filter 컨텍스트 제거(Tizen video 미표시 주 원인) */
+  backdrop-filter: none;
+  animation: none;                         /* 진입 애니메이션(cardIn) 제거 — video 생성 중 transform/opacity 애니 방지 */
+}

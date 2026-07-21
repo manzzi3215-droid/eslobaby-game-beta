@@ -14,7 +14,12 @@
 
 ## 현재 버전
 
-**v0.10.9-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.10.10-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.10.10-beta(patch): **PAGE 6·11 영상 렌더링 개선**(삼성 Flip Pro LH55WMBWBGCXKR/Tizen 합성 문제 대응, 영상 장면 한정 CSS 최소 수정). **재생 로직 무변경** — autoplay·play()·fallback·must-watch·영상 파일·음성·진단 오버레이 불변.
+  - 원인(진단 v0.10.9): 영상은 디코딩·재생되나(readyState4·buffered전체·error none·currentTime 진행) **픽셀 미표시 + ~1.5s 뒤 자동 pause**. 조상 `backdrop-filter`(`.scene-card`)·`transform`(`.screen`)·진입 애니메이션(cardIn)에 의한 Tizen 합성/가시성 실패 유력.
+  - 수정: `renderVideo`의 `if(src)`에서 `.screen`에 **`has-video`** 클래스 부여(PAGE 6·11만). `css/game.css` 맨 끝에 스코프 레이어 — `.screen.has-video{transform:none}`(is-active/is-leaving 포함), `.screen.has-video .scene-card{backdrop-filter:none;-webkit-backdrop-filter:none;animation:none}`.
+  - 유지: `.info-video`·`video`의 border-radius/overflow(라운드 클립)는 이번엔 그대로(미해결 시 다음 단계). 다른 페이지 카드 디자인·문구·버튼·레이아웃 불변.
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.10.10-beta`.
 ※ v0.10.9-beta(patch): **PAGE 6·11 영상 진단 빌드**(삼성 Flip Pro LH55WMBWBGCXKR/Tizen 간헐 미재생 원인 확인용). **재생 로직 무변경 — 관측 기능만 추가.** autoplay·play()·fallback·gate·preload·영상 파일 불변.
   - 영상 상태 스냅샷(`renderVideo` `snap()`): 이벤트마다 page·srcType(Primary/Lo)·file·currentSrc·readyState·networkState·duration·currentTime·paused·ended·muted·defaultMuted·playsInline·autoplay·videoWidth·videoHeight·buffered·MediaError 기록(읽기 전용).
   - 이벤트 확대: 기존 + `loadstart·loadeddata·canplaythrough·play·pause·seeking·seeked`, 스로틀(400ms) `progress·timeupdate`(로깅만).

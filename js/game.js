@@ -960,6 +960,9 @@
         var hint = makeHint(CFG.texts.hints.tapNext);   // 기본(비필수시청 영상=탭 이동). 필수시청이면 아래서 "영상을 끝까지…"로 설정, 종료 후에도 유지
         var src = scene.video ? (CFG.assets[scene.video] || scene.video) : null;
         if (src) {
+          // v0.10.10: 영상 장면(PAGE 6·11) 표시 — 삼성 Flip Pro(Tizen) 영상 합성 문제 대응 CSS를 이 장면에만 스코프.
+          //   재생/autoplay/fallback/gate 로직과 무관한 시각(합성) 전용 마킹.
+          el.classList.add('has-video');
           // v0.9.3: requireEnd 영상은 반드시 끝까지 재생(loop 없이 1회) → 종료 전엔 이동 잠금
           var mustWatch = !!scene.requireEnd;
           var page = myIndex + 1;

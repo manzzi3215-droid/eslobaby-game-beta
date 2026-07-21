@@ -11,6 +11,27 @@
 
 ---
 
+## [v0.10.10-beta] - 2026-07-21
+### PAGE 6·11 영상 렌더링 개선 (Flip Pro/Tizen 합성 문제 대응 · 영상 장면 한정 CSS 최소 수정)
+삼성 Flip Pro(LH55WMBWBGCXKR, Tizen)에서 영상이 **디코딩·재생(readyState 4·buffered 전체·error none·currentTime 진행)은 되나 화면에 표시되지 않고 ~1.5초 뒤 자동 pause**되는 문제 대응. 진단(v0.10.9) 결과 조상의 `backdrop-filter`·`transform`·진입 애니메이션에 의한 합성/가시성 실패가 유력 → **가장 유력한 원인만 최소 수정**.
+
+### 원칙 (재생 로직 무변경)
+- `attemptPlay`/`play()`/fallback/must-watch gate/watchdog/`autoplay`/preload/영상 파일·경로·페이지 음성·진단 오버레이 **변경 없음**. 자동재생·자동 전환(6→7, 11→12)·Primary→Lo 폴백·SW bypass 그대로.
+
+### Changed (영상 장면 한정 CSS)
+- **영상 장면 마킹**: `js/game.js` `renderVideo`의 `if (src)` 분기에서 `.screen`에 **`has-video` 클래스 1개** 부여(실제 영상 장면=PAGE 6·11에만, placeholder 장면 제외). 시각(합성) 전용 — 재생 로직과 무관.
+- **`css/game.css` 맨 끝 신규 레이어**(has-video 스코프, 소스 순서상 우선):
+  - `.screen.has-video, .screen.has-video.is-active, .screen.has-video.is-leaving { transform: none; }` — 영상 조상에서 transform 레이어 제거(하드웨어 오버레이 부착 방해 해소).
+  - `.screen.has-video .scene-card { backdrop-filter: none; -webkit-backdrop-filter: none; animation: none; }` — Tizen video 미표시 주 원인인 `backdrop-filter` 컨텍스트 제거 + 진입 애니메이션(cardIn) 제거(video 생성 중 transform/opacity 애니 방지).
+- **유지(이번 미변경)**: `.info-video`·`video`의 `border-radius`/`overflow`(라운드 클립)는 그대로. 이번 수정으로 미해결 시 다음 단계에서 별도 검증.
+- **영향 범위**: PAGE 6·11 카드만 진입 pop 애니메이션·유리 블러가 빠짐(다른 페이지 카드 디자인·배경·문구·버튼·레이아웃 불변). 진단 오버레이(`?debug=1`)·로그 그대로.
+- `sw.js` `CACHE_NAME` `eslo-game-v0.10.10-beta`.
+
+### QA (로컬 PC)
+- PAGE 6·11 영상 자동재생·종료 후 PAGE 7/12 자동 전환·페이지 음성·pause/next/gate 정상. 다른 페이지 UI 변화 없음. `?debug=1` 오버레이 정상. 콘솔 오류 0.
+
+---
+
 ## [v0.10.9-beta] - 2026-07-21
 ### PAGE 6·11 영상 진단 빌드 (Flip Pro 원인 확인용 · 재생 로직 무변경)
 삼성 Flip Pro(LH55WMBWBGCXKR, Tizen)에서 PAGE 6/11 영상이 **간헐적으로 재생되지 않는 원인**을 실기기에서 정확히 확인하기 위한 **진단 전용** 빌드. 원인 미확정 상태이므로 추측 수정 없이 **관측 기능만 추가**.

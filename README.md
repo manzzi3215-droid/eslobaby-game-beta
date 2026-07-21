@@ -1,9 +1,9 @@
 # 이슬로 베이비 미니게임 (프로토타입)
 
 베이비페어 현장 고객 참여용 플래시형 미니게임.
-현재 버전은 **v0.10.9-beta — PAGE 6·11 영상 진단 빌드(Flip Pro 원인 확인용 진단 로그·?debug=1 실시간 오버레이 추가, 재생 로직 무변경)(총 14페이지)**입니다.
-(삼성 Flip Pro(LH55WMBWBGCXKR, Tizen)에서 간헐적으로 영상이 안 나오는 원인을 실기기에서 확인하기 위한 **진단 전용** 빌드. `renderVideo`에 전체 상태 스냅샷(readyState·networkState·duration·currentTime·paused·ended·muted·defaultMuted·playsInline·autoplay·videoWidth·videoHeight·buffered·MediaError)·모든 media 이벤트·play() 호출/resolve/reject·Primary/Lo 추적·페이지 음성 시작/종료/오류 로그를 추가하고, `?debug=1`이면 우측 하단 실시간 오버레이 표시. **autoplay·play()·fallback·gate·preload·영상 파일은 일절 변경하지 않음.**)
-(직전 v0.10.8-beta: PAGE 6·11 영상 자동재생 복원(진입 즉시 autoplay, 실패 확정 시에만 터치 안내))
+현재 버전은 **v0.10.10-beta — PAGE 6·11 영상 렌더링 개선(Flip Pro/Tizen 합성 문제 대응, 영상 장면 한정 CSS 최소 수정)(총 14페이지)**입니다.
+(삼성 Flip Pro(LH55WMBWBGCXKR, Tizen)에서 영상이 디코딩·재생은 되나 화면에 표시되지 않는 문제 대응. `renderVideo`가 영상 장면(PAGE 6·11)의 `.screen`에 `has-video` 클래스를 부여하고, 그 장면에만 **조상의 `backdrop-filter` 제거 · `.scene-card` 진입 애니메이션(cardIn) 제거 · `.screen` transform 제거**를 적용. 영상 조상의 합성 레이어 방해 요소를 없애 Tizen에서 영상 픽셀이 표시되도록 함. **autoplay·play()·fallback·must-watch·영상 파일·음성 로직·진단 오버레이는 변경하지 않음.** info-video/video의 border-radius·overflow는 이번엔 유지(미해결 시 다음 단계).)
+(직전 v0.10.9-beta: PAGE 6·11 영상 진단 빌드(?debug=1 실시간 오버레이·상태 스냅샷·이벤트·play() 로그))
 (영상 종료 시 자동 전환되므로 "화면을 탭하면…" 탭 유도 문구를 표시하지 않음 — 재생 중 "영상을 끝까지 보면…" 문구 유지, 깜빡임·레이아웃 흔들림 없음. 자동 전환·영상 게이트·error 안전장치·디자인 불변)
 (직전 v0.9.4-beta: 완료 이벤트 기반 자동 전환(6개 장면)+Page6/12 문구 / v0.9.3-beta: Page1 "?"·STEP 정정·필수 시청 영상 / v0.8.0-beta: 총 13페이지)
 브랜드 표기는 `eslo`(영문) / `이슬로`(한글)로 통일합니다.
