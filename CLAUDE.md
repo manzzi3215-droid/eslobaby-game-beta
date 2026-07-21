@@ -14,7 +14,14 @@
 
 ## 현재 버전
 
-**v0.10.8-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.10.9-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.10.9-beta(patch): **PAGE 6·11 영상 진단 빌드**(삼성 Flip Pro LH55WMBWBGCXKR/Tizen 간헐 미재생 원인 확인용). **재생 로직 무변경 — 관측 기능만 추가.** autoplay·play()·fallback·gate·preload·영상 파일 불변.
+  - 영상 상태 스냅샷(`renderVideo` `snap()`): 이벤트마다 page·srcType(Primary/Lo)·file·currentSrc·readyState·networkState·duration·currentTime·paused·ended·muted·defaultMuted·playsInline·autoplay·videoWidth·videoHeight·buffered·MediaError 기록(읽기 전용).
+  - 이벤트 확대: 기존 + `loadstart·loadeddata·canplaythrough·play·pause·seeking·seeked`, 스로틀(400ms) `progress·timeupdate`(로깅만).
+  - play() 진단 래퍼: `v.play` 투명 프록시(실제 play 동일 인자·순서 호출·반환) → `play_call`/`play_resolve`/`play_reject_obs`(Primary/Lo·retry·dt). 기존 `.catch` 체인 불변.
+  - 페이지 음성 진단(`sfx.js` `voiceDiag`): voice_start/play_ok/play_reject/end/error/stop + 재생 여부. 전역 훅 `window.__esloVideoDiag`로 라우팅(음성 재생 동작 무변경).
+  - `?debug=1` 실시간 오버레이(우측 하단, pointer-events:none) + 좌측 히스토리 패널. `?debug=1` 아니면 미표시(일반 사용자 무영향), 진단은 `sessionStorage['eslo_video_diag']`(버퍼 400)에만 기록.
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.10.9-beta`(구 SW 캐시가 진단 코드를 덮지 않도록 버전 상향).
 ※ v0.10.8-beta(patch): **PAGE 6·11 영상 자동재생 복원**(진입 즉시 autoplay, 실패 확정 시에만 터치 안내). 페이지 흐름·문구·음성·드래그·PAGE6→7·11→12 자동 전환·다중 소스 폴백·SW bypass·캐시버스트·진단 로그 전부 유지.
   - 원인: v0.10.7이 Tizen race 방지로 `video.autoplay=false`(autoplay attribute 미설정)+`canplay` 후 JS `play()`에만 의존한 상태에서, **워치독①(`VIDEO_START_TIMEOUT`=5s)이 단순 타임아웃만으로 `showFallback()`** 호출 → 사이니지에서 canplay 지연·버퍼링만 되어도 5초 뒤 ▶ 버튼·"화면을 터치하면…"이 떠서 클릭 재생처럼 동작.
   - 복원: `video.autoplay=true`+`setAttribute('autoplay','')`(muted/defaultMuted/playsInline·webkit-playsinline·preload=auto 유지) → **autoplay attribute + JS `play()` 병행**. `loadedmetadata`에서도 `attemptPlay()`(canplay·1.4s 타임아웃에 더해 더 이른 재생). `load()` 직후 조기 play는 여전히 미호출(race 방지).

@@ -52,25 +52,73 @@
       var arr = [];
       try { arr = JSON.parse(sessionStorage.getItem(VIDEO_DIAG_KEY) || '[]'); } catch (_) {}
       arr.push(rec);
-      if (arr.length > 200) arr = arr.slice(-200);
+      if (arr.length > 400) arr = arr.slice(-400);   // [diag] 이벤트 다수 → 버퍼 확대(초기 이벤트 보존)
       sessionStorage.setItem(VIDEO_DIAG_KEY, JSON.stringify(arr));
-      if (videoDebugOn()) renderVideoDebugPanel(arr);
+      if (videoDebugOn()) { renderVideoDebugPanel(arr); renderVideoLiveOverlay(); }
     } catch (_) {}
   }
+  // [diag] sfx.js(페이지 음성)가 영상 진단 스토어로 이벤트를 라우팅하기 위한 전역 훅.
+  window.__esloVideoDiag = pushVideoDiag;
+
+  // 하단-좌: 시간순 이벤트 히스토리(?debug=1). 영상(P..) / 음성(♪) 레코드 모두 표시.
   function renderVideoDebugPanel(arr) {
     try {
       var el = document.getElementById('video-diag-panel');
       if (!el) {
         el = document.createElement('pre'); el.id = 'video-diag-panel';
-        el.style.cssText = 'position:fixed;left:6px;bottom:6px;max-width:96vw;max-height:40vh;overflow:auto;z-index:99999;'
+        el.style.cssText = 'position:fixed;left:6px;bottom:6px;max-width:56vw;max-height:46vh;overflow:auto;z-index:99999;'
           + 'background:rgba(0,0,0,0.82);color:#8f8;font:10px/1.35 monospace;padding:6px 8px;border-radius:8px;white-space:pre-wrap;pointer-events:none;';
         (document.body || document.documentElement).appendChild(el);
       }
-      el.textContent = arr.slice(-16).map(function (r) {
-        return (r.page != null ? 'P' + r.page + ' ' : '') + (r.ev || '') + (r.srcIdx != null ? ' s' + r.srcIdx : '')
-          + (r.code != null ? ' err' + r.code : '') + (r.rs != null ? ' rs' + r.rs : '') + (r.ns != null ? ' ns' + r.ns : '')
-          + (r.err ? ' ' + r.err : '') + (r.url ? ' ' + String(r.url).split('/').pop() : '');
+      el.textContent = arr.slice(-22).map(function (r) {
+        if (r.src === 'voice') {
+          return '   ♪ ' + (r.ev || '') + ' ' + (r.voicePlaying ? '▶' : '·')
+            + (r.voiceUrl ? (' ' + String(r.voiceUrl).split('/').pop()) : '');
+        }
+        return (r.dt != null ? '+' + r.dt + ' ' : '') + 'P' + (r.page != null ? r.page : '?') + ' ' + (r.ev || '')
+          + (r.srcType ? (' ' + r.srcType) : '') + ' rs' + (r.rs != null ? r.rs : '-') + ' ns' + (r.ns != null ? r.ns : '-')
+          + ' t' + (r.ct != null ? r.ct : '-') + (r.merr != null ? (' MEDIAERR' + r.merr) : '')
+          + (r.retry ? ' (retry)' : '') + (r.err ? (' ' + r.err) : '')
+          + (r.file ? (' ' + String(r.file).split('/').pop()) : '');
       }).join('\n');
+    } catch (_) {}
+  }
+  // 하단-우: 실시간 상태 오버레이(?debug=1). 현재 영상/음성 상태를 매 이벤트·주기(300ms)마다 갱신.
+  //   provider(window.__esloVideoLive)는 renderVideo 가 활성 영상일 때만 등록(씬 이탈 시 해제).
+  function renderVideoLiveOverlay() {
+    if (!videoDebugOn()) return;
+    try {
+      var el = document.getElementById('eslo-video-overlay');
+      if (!el) {
+        el = document.createElement('pre'); el.id = 'eslo-video-overlay';
+        el.style.cssText = 'position:fixed;right:6px;bottom:6px;max-width:60vw;z-index:100000;'
+          + 'background:rgba(10,16,26,0.9);color:#7fe0c8;font:11px/1.45 monospace;padding:8px 10px;border-radius:8px;'
+          + 'white-space:pre;pointer-events:none;box-shadow:0 2px 12px rgba(0,0,0,.45);';
+        (document.body || document.documentElement).appendChild(el);
+      }
+      var s = (typeof window.__esloVideoLive === 'function') ? window.__esloVideoLive() : null;
+      var vs = window.__esloVoiceState || null;
+      var lastEv = window.__esloLastEvent || '-';
+      var RS = ['0·NOTHING', '1·METADATA', '2·CURRENT', '3·FUTURE', '4·ENOUGH'];
+      var NS = ['0·EMPTY', '1·IDLE', '2·LOADING', '3·NO_SOURCE'];
+      var ERR = { 1: 'ABORTED', 2: 'NETWORK', 3: 'DECODE', 4: 'SRC_NOT_SUPPORTED' };
+      var L = ['◆ ESLO VIDEO DEBUG'];
+      if (s) {
+        L.push('page  : ' + s.page + '  [' + s.srcType + '] ' + (s.file || '-'));
+        L.push('src   : ' + (s.currentSrc || '-'));
+        L.push('state : ' + (!s.paused && s.ct > 0 ? 'PLAYING' : (s.paused ? 'PAUSED/idle' : 'idle')) + '  t=' + s.ct + '/' + s.dur);
+        L.push('ready : ' + (RS[s.rs] || s.rs) + '   net=' + (NS[s.ns] || s.ns));
+        L.push('frame : ' + s.vw + 'x' + s.vh + '   buffered=' + s.buf);
+        L.push('flags : mute=' + (s.muted ? 1 : 0) + ' dmute=' + (s.defaultMuted ? 1 : 0)
+          + ' inline=' + (s.playsInline ? 1 : 0) + ' auto=' + (s.autoplay ? 1 : 0) + ' ended=' + (s.ended ? 1 : 0));
+        L.push('error : ' + (s.merr ? (s.merr + ' MEDIA_ERR_' + (ERR[s.merr] || '?')) : 'none'));
+      } else {
+        L.push('page  : (활성 영상 없음)');
+      }
+      L.push('event : ' + lastEv);
+      L.push('voice : ' + (vs ? ((vs.playing ? '▶ PLAYING' : '· ' + (vs.ev || 'stop'))
+        + (vs.url ? (' ' + String(vs.url).split('/').pop()) : '') + ' t=' + (vs.ct != null ? vs.ct : '-')) : 'none'));
+      el.textContent = L.join('\n');
     } catch (_) {}
   }
 
@@ -930,10 +978,26 @@
           vwrap.appendChild(v);
 
           var playbackStarted = false, retriedSrc = false, canplaySeen = false, fallbackEl = null, srcIdx = -1;
+          var t0 = Date.now();   // [diag] 렌더 시작 기준 상대시각(dt) 계산용
+          // [diag] 현재 영상 상태 스냅샷(모든 진단 필드). 로그/오버레이 공용. 읽기 전용 → 재생 동작에 영향 없음.
+          function snap() {
+            var bl = 0; try { bl = (v.buffered && v.buffered.length) ? +(v.buffered.end(v.buffered.length - 1)).toFixed(2) : 0; } catch (_) {}
+            return {
+              page: page, srcIdx: srcIdx, srcType: (srcIdx <= 0 ? 'Primary' : 'Lo'),
+              file: (srcIdx >= 0 && sources[srcIdx]) ? String(sources[srcIdx]).split('/').pop() : null,
+              currentSrc: v.currentSrc ? String(v.currentSrc).split('/').pop() : '',
+              rs: v.readyState, ns: v.networkState,
+              dur: +(v.duration || 0).toFixed(2), ct: +(v.currentTime || 0).toFixed(2),
+              paused: v.paused, ended: v.ended,
+              muted: v.muted, defaultMuted: v.defaultMuted, playsInline: v.playsInline, autoplay: v.autoplay,
+              vw: v.videoWidth, vh: v.videoHeight, buf: bl,
+              merr: (v.error && v.error.code) || null
+            };
+          }
           function diag(ev, extra) {
-            var r = { page: page, ev: ev, srcIdx: srcIdx, rs: v.readyState, ns: v.networkState,
-              ct: +(v.currentTime || 0).toFixed(2), code: (v.error && v.error.code) || null, url: sources[srcIdx] };
+            var r = snap(); r.ev = ev; r.dt = Date.now() - t0;
             if (extra) for (var k in extra) r[k] = extra[k];
+            window.__esloLastEvent = ev;
             pushVideoDiag(r);
           }
           function hideFallback() { if (fallbackEl) { try { fallbackEl.remove(); } catch (_) {} fallbackEl = null; } vwrap.classList.remove('is-fallback'); }
@@ -943,6 +1007,27 @@
           v.addEventListener('loadedmetadata', function () { diag('loadedmetadata'); attemptPlay(); });   // v0.10.8: 메타데이터 확보 즉시 자동재생 시도(지연 최소화)
           v.addEventListener('canplay', function () { canplaySeen = true; diag('canplay'); attemptPlay(); });   // v0.10.8: canplay 에서도 자동재생 시도(autoplay attribute 와 병행)
           ['stalled', 'waiting', 'suspend', 'abort', 'emptied'].forEach(function (ev) { v.addEventListener(ev, function () { diag(ev); }); });
+          // [diag] play() 호출/결과 진단 래퍼 — 실제 play 를 그대로 호출·반환(호출 순서·동작 불변). 로깅만 추가.
+          //   attemptPlay/userPlay/재시도의 v.play() 를 모두 관찰(Primary/Lo·retry·resolve/reject·소요시간).
+          (function () {
+            var realPlay = v.play;
+            v.play = function () {
+              var st = (srcIdx <= 0 ? 'Primary' : 'Lo'), rt = retriedSrc, t = Date.now(), pr;
+              try { pr = realPlay.apply(v, arguments); } catch (e) { diag('play_throw', { srcType: st, err: (e && e.name) }); throw e; }
+              diag('play_call', { srcType: st, retry: rt });
+              if (pr && pr.then) pr.then(
+                function () { diag('play_resolve', { srcType: st, retry: rt, dt: Date.now() - t }); },
+                function (e) { diag('play_reject_obs', { srcType: st, retry: rt, err: (e && e.name) + ':' + String((e && e.message) || '').slice(0, 60) }); }
+              );
+              return pr;
+            };
+          })();
+          // [diag] 추가 이벤트 리스너(관찰 전용 — 재생 로직과 무관). 고빈도(progress/timeupdate)는 400ms 스로틀.
+          ['loadstart', 'loadeddata', 'canplaythrough', 'play', 'pause', 'seeking', 'seeked'].forEach(function (ev) { v.addEventListener(ev, function () { diag(ev); }); });
+          var _hiLast = 0;
+          function diagHi(ev) { var n = Date.now(); if (n - _hiLast < 400) { if (videoDebugOn()) renderVideoLiveOverlay(); return; } _hiLast = n; diag(ev); }
+          v.addEventListener('progress', function () { diagHi('progress'); });
+          v.addEventListener('timeupdate', function () { diagHi('timeupdate'); });   // 관찰 전용(기존 markPlaying 리스너와 별개)
 
           function attemptPlay() {
             if (playbackStarted) return;
@@ -1021,6 +1106,13 @@
             // v0.10.8: 비필수 영상도 단순 타임아웃 fallback 제거 — 자동재생이 실제로 모두 실패한 경우(onSourceFail)에만 터치 안내.
           }
 
+          // [diag] ?debug=1 실시간 오버레이 — 현재 영상 상태 provider 등록 + 주기 갱신(관찰 전용). 씬 이탈 시 해제.
+          if (videoDebugOn()) {
+            window.__esloVideoLive = snap;
+            renderVideoLiveOverlay();
+            var _ovTick = setInterval(renderVideoLiveOverlay, 300);
+            cleanups.push(function () { try { clearInterval(_ovTick); } catch (_) {} window.__esloVideoLive = null; });
+          }
           loadSource(0);   // v0.10.7: 1차 소스 로드 시작(canplay/타임아웃 → attemptPlay)
           // 씬 이탈 시 영상 정지·해제 (재진입 시 새 요소로 처음부터 재생)
           cleanups.push(function () { try { v.pause(); v.removeAttribute('src'); v.load(); } catch (_) {} });

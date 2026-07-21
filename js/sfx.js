@@ -203,23 +203,43 @@
     try { voiceEl.onended = null; voiceEl.onerror = null; } catch (e) {}
     try { voiceEl.pause(); } catch (e) {}
     try { voiceEl.currentTime = 0; } catch (e) {}
+    try { voiceDiag('voice_stop'); } catch (e) {}   // [diag] 정지 기록(동작 불변)
   }
   function voiceUrlForPage(page) {
     var V = (CFG.voice || {});
     return V[page] || V[String(page)] || null;
   }
   function hasVoiceForPage(page) { return !!voiceUrlForPage(page); }
+  // [diag] 페이지 음성 진단 훅 — 재생 동작은 일절 변경하지 않고, 상태만 전역(window.__esloVoiceState)에
+  //   기록하고 영상 진단 스토어(window.__esloVideoDiag, game.js)로 라우팅한다. 훅이 없으면 조용히 no-op.
+  function voiceDiag(ev, url, extra) {
+    try {
+      var st = { ev: ev, url: url || (voiceEl && voiceEl.currentSrc) || null,
+        playing: !!(voiceEl && !voiceEl.paused && !voiceEl.ended && voiceEl.currentTime > 0),
+        ct: +((voiceEl && voiceEl.currentTime) || 0).toFixed(2),
+        dur: +((voiceEl && voiceEl.duration) || 0).toFixed(2),
+        paused: voiceEl ? voiceEl.paused : null, ts: Date.now() };
+      if (extra) for (var k in extra) st[k] = extra[k];
+      window.__esloVoiceState = st;
+      if (typeof window.__esloVideoDiag === 'function') {
+        window.__esloVideoDiag({ src: 'voice', ev: ev, page: (st.page != null ? st.page : null),
+          voiceUrl: st.url, voicePlaying: st.playing, voiceCt: st.ct, merr: (st.code != null ? st.code : null) });
+      }
+    } catch (e) {}
+  }
   // 해당 페이지 음성 재생(1회). onEnded: 정상 종료 시 콜백(중첩 방지 위해 stop 시 해제). 없으면 false.
   function playVoiceForPage(page, onEnded) {
     stopVoice();                                  // 이전 음성 즉시 정지 + currentTime 0
     var url = voiceUrlForPage(page);
     if (!url) return false;                        // 음원 없는 페이지 → 조용히 skip(게임 진행 무영향)
     ensureVoiceEl();
-    voiceEl.onended = function () { voiceEl.onended = null; if (typeof onEnded === 'function') { try { onEnded(); } catch (e) {} } };
-    voiceEl.onerror = function () { try { console.warn('[eslo] voice load error:', url); } catch (e) {} };
+    voiceEl.onended = function () { voiceDiag('voice_end', url, { page: page }); voiceEl.onended = null; if (typeof onEnded === 'function') { try { onEnded(); } catch (e) {} } };
+    voiceEl.onerror = function () { voiceDiag('voice_error', url, { page: page, code: voiceEl && voiceEl.error && voiceEl.error.code }); try { console.warn('[eslo] voice load error:', url); } catch (e) {} };
     try { voiceEl.src = url; voiceEl.currentTime = 0; } catch (e) {}
     voiceActive = true;
+    voiceDiag('voice_start', url, { page: page });   // [diag] 재생 시작 기록(동작 불변)
     var p = voiceEl.play();
+    if (p && p.then) p.then(function () { voiceDiag('voice_play_ok', url, { page: page }); }, function (e) { voiceDiag('voice_play_reject', url, { page: page, err: e && e.name }); });   // [diag] 관찰 전용(별도 promise 체인)
     if (p && p.catch) p.catch(function () { try { console.warn('[eslo] voice play blocked:', url); } catch (e) {} });   // 무한 재시도 X, 게임 무영향
     return true;
   }

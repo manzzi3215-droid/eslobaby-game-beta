@@ -11,6 +11,27 @@
 
 ---
 
+## [v0.10.9-beta] - 2026-07-21
+### PAGE 6·11 영상 진단 빌드 (Flip Pro 원인 확인용 · 재생 로직 무변경)
+삼성 Flip Pro(LH55WMBWBGCXKR, Tizen)에서 PAGE 6/11 영상이 **간헐적으로 재생되지 않는 원인**을 실기기에서 정확히 확인하기 위한 **진단 전용** 빌드. 원인 미확정 상태이므로 추측 수정 없이 **관측 기능만 추가**.
+
+### 원칙 (재생 로직 절대 무변경)
+- `attemptPlay`/`loadSource`/`onSourceFail`/`userPlay`/`showFallback`/must-watch gate/watchdog·`autoplay`/`preload`/영상 파일·경로 **한 줄도 변경하지 않음**. 자동재생·자동 전환(6→7, 11→12)·Primary→Lo 폴백·SW MP4 bypass·캐시버스트 그대로.
+
+### Added (진단 전용)
+- **영상 상태 스냅샷**(`js/game.js` `renderVideo`의 `snap()`): 매 이벤트마다 page·srcType(Primary/Lo)·file·currentSrc·readyState·networkState·duration·currentTime·paused·ended·muted·defaultMuted·playsInline·autoplay·videoWidth·videoHeight·buffered·MediaError code 기록. 읽기 전용 → 재생 동작 무영향.
+- **이벤트 로그 확대**: 기존(loadedmetadata/canplay/playing/stalled/waiting/suspend/abort/emptied/error/ended)에 더해 `loadstart·loadeddata·canplaythrough·play·pause·seeking·seeked`와 스로틀(400ms) `progress·timeupdate` 관찰 리스너 추가(모두 로깅만).
+- **play() 진단 래퍼**: `v.play`를 투명 프록시로 감싸 모든 호출을 `play_call`(Primary/Lo·retry·시각)/`play_resolve`(소요 dt)/`play_reject_obs`(name:message)로 기록. 실제 play를 동일 인자·순서로 호출·반환하므로 **동작·호출 순서 불변**(기존 `.catch` 체인 그대로).
+- **MediaError 라벨**: 코드(1~4)를 MEDIA_ERR_ABORTED/NETWORK/DECODE/SRC_NOT_SUPPORTED로 사람이 읽기 쉽게 오버레이 출력.
+- **페이지 음성 진단**(`js/sfx.js`): `voiceDiag()` 추가 — `voice_start`/`voice_play_ok`/`voice_play_reject`/`voice_end`/`voice_error`/`voice_stop` + 현재 재생 여부(`playing`) 기록. 재생 동작 무변경, 전역 훅(`window.__esloVideoDiag`)으로 영상 진단 스토어에 라우팅.
+- **`?debug=1` 실시간 오버레이**(우측 하단, `id=eslo-video-overlay`, pointer-events:none): 현재 페이지·영상 파일명·Primary/Lo·currentSrc·readyState·networkState·재생상태·currentTime·frame·buffered·flags·MediaError·현재 이벤트·voice 상태를 300ms 주기+이벤트마다 갱신. 좌측 하단 히스토리 패널과 병행. **`?debug=1`이 아니면 오버레이·패널 미표시(일반 사용자 무영향)**, 진단은 `sessionStorage['eslo_video_diag']`(버퍼 400)에만 조용히 기록.
+- `sw.js` `CACHE_NAME` `eslo-game-v0.10.9-beta`(구 SW 캐시가 진단 코드를 덮지 않도록 버전 상향 — 이번 배포의 핵심).
+
+### QA (로컬)
+- `?debug=1`에서 PAGE 6/11 전체 필드·이벤트 순서·play() 생명주기·음성(start/play_ok/end)·MediaError 라벨·실시간 오버레이 정상. **진단 추가 후에도 autoplay·자동 전환 그대로**(PAGE6 playing→ended→PAGE7). `?debug=1` 없을 때 오버레이·패널 미표시, 진단은 sessionStorage에만 기록. 콘솔 오류 0.
+
+---
+
 ## [v0.10.8-beta] - 2026-07-21
 ### PAGE 6·11 영상 자동재생 복원 (진입 즉시 autoplay · 실패 확정 시에만 터치 안내)
 페이지 흐름·문구·음성·드래그·완료 판정·PAGE6→7·11→12 자동 전환 정책 **불변**. 영상 재생을 다시 "진입 즉시 자동재생"으로 복원.
