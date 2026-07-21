@@ -1294,15 +1294,24 @@
         var right = makeCard('compare-good', T.compareGoodLabel, CFG.assets.childHappy, CFG.placeholders.childHappy,
                               CFG.assets.ending.bath, CFG.placeholders.endBath, 'compare-prod-eslo', true);
 
-        // v0.10.17: 선택 안내 문구 — 카드 "위"에 배치(읽고 바로 두 카드 인식). PAGE 12 전용 클래스로 강조(공통 .hint 불변).
-        //   makeHint(div.hint) 재사용 + compare-quiz-hint 추가. 2줄(\n)은 CSS white-space:pre-line 로 표시.
-        var quizHint = makeHint(CFG.texts.hints.quizSelect);
-        quizHint.classList.add('compare-quiz-hint');
-        body.appendChild(quizHint);
-
         row.appendChild(left);
         row.appendChild(right);
         body.appendChild(row);
+
+        // v0.10.18: 선택 안내 문구 — 두 카드 "아래"에 배치(제품 확인 후 선택 행동 안내). PAGE 12 전용(공통 .hint 불변).
+        //   2줄을 별도 요소로 분리: 1줄=보조(sub), 2줄=행동 강조(action, 더 굵고 선명한 키 블루). \n 기준 분리.
+        //   makeHint 는 손대지 않고, .hint 베이스 클래스만 재사용(div('hint compare-quiz-hint')).
+        var quizHint = div('hint compare-quiz-hint');
+        var qsLines = String(CFG.texts.hints.quizSelect || '').split('\n');
+        var qSub = document.createElement('span');
+        qSub.className = 'compare-quiz-hint-sub';
+        qSub.textContent = qsLines[0] || '';
+        var qAction = document.createElement('strong');
+        qAction.className = 'compare-quiz-hint-action';
+        qAction.textContent = qsLines.slice(1).join(' ') || '';
+        quizHint.appendChild(qSub);
+        quizHint.appendChild(qAction);
+        body.appendChild(quizHint);
       });
       // v0.10.15: 퀴즈 페이지 — 화면/빈 공간 탭 이동 없음(tapAdvance 미호출). 카드 클릭·키보드로만 선택.
     });

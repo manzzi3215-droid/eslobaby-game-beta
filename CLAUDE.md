@@ -14,7 +14,12 @@
 
 ## 현재 버전
 
-**v0.10.17-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.10.18-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.10.18-beta(patch): **PAGE 12 선택 안내 문구 변경·카드 아래 배치·2번째 줄 행동 강조.** 상단 제목/질문·카드 라벨·퀴즈 로직·효과음·자동 전환·BGM 전부 불변(안내 문구 텍스트·DOM·스타일만).
+  - `config` `hints.quizSelect` → `우리 아이에게 꼭 필요한\n안심 워시를 선택해주세요.`(2줄). 상단 제목 `민감한 우리 아이 피부`/질문 `생분해 케어는 선택이 아니라 필수!`는 page12.m4a 음성 일치 위해 유지.
+  - `game.js renderCompare`: 안내 문구를 카드 **아래**로 이동(제목→카드→안내). 2줄을 별도 요소로 분리 — `div('hint compare-quiz-hint')` + `<span .compare-quiz-hint-sub>`(1줄) + `<strong .compare-quiz-hint-action>`(2줄). `\n` 기준 split. `makeHint` 미변경(공통 구조 보존). 카드 이벤트/정답·오답 로직 무변경.
+  - `css/game.css`: `.compare-quiz-hint`(카드 아래 여백·박스 유지), `-sub`(중간 블루·700), `-action`(더 크고 900·`var(--key-deep)` 선명한 딥 키 블루·대비↑·정적, 글로우 아님). 360/844×390 미디어쿼리로 각 줄 1줄·footprint 최소화.
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.10.18-beta`. 신규 자산 없음.
 ※ v0.10.17-beta(patch): **PAGE 12 선택 안내 문구 강조·2줄화·카드 위 배치.** 상단 제목/질문·카드 라벨·퀴즈 로직·효과음·BGM 전부 불변(안내 문구 텍스트·스타일만).
   - `config` `hints.quizSelect` → `두 제품 중 안심하고 사용할 수 있는\n워시를 선택해주세요.`(2줄). 상단 제목 `민감한 우리 아이 피부`/질문 `생분해 케어는 선택이 아니라 필수!`는 page12.m4a 음성 일치 위해 유지.
   - `game.js renderCompare`: 안내 문구를 카드 **위**로 이동(제목→안내→카드) + `makeHint`에 `compare-quiz-hint` 클래스 부여(공통 `.hint` 불변). 정답/오답 로직·카드 이벤트 무변경.

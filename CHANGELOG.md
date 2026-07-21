@@ -11,6 +11,30 @@
 
 ---
 
+## [v0.10.18-beta] - 2026-07-22
+### PAGE 12 선택 안내 문구 변경 · 카드 아래 배치 · 2번째 줄 행동 강조
+**상단 제목·질문·카드 라벨·퀴즈 정답/오답 로직·효과음·자동 전환·BGM은 변경 없음(안내 문구 텍스트·DOM·스타일만).**
+
+### 1. 텍스트
+- `config.js` `hints.quizSelect`: `두 제품 중 안심하고 사용할 수 있는\n워시를 선택해주세요.` → **`우리 아이에게 꼭 필요한\n안심 워시를 선택해주세요.`**(2줄).
+- 상단 제목 `민감한 우리 아이 피부` / 질문 `생분해 케어는 선택이 아니라 필수!`는 **page12.m4a 음성 일치 위해 유지**(변경 금지 준수).
+
+### 2. 위치·DOM 구조
+- `js/game.js` `renderCompare`: 선택 안내 문구를 두 카드 **아래**로 이동 → DOM 순서 **제목 → 카드(`.compare-row`) → 안내**. `.screen-body`(flex-column·center)의 자연 흐름 안에 배치(절대 위치 아님), 두 카드 전체 중앙 정렬.
+- 2줄을 **별도 요소로 분리**: `div('hint compare-quiz-hint')` 안에 `<span class="compare-quiz-hint-sub">`(1줄) + `<strong class="compare-quiz-hint-action">`(2줄). config `\n` 기준 분리. `makeHint`는 미변경(공통 구조 보존), `.hint` 베이스 클래스만 재사용. 스크린리더는 두 요소를 자연스럽게 이어 읽음. 카드 클릭/키보드 이벤트와 무관.
+
+### 3. 스타일 (`css/game.css`, PAGE 12 스코프)
+- `.compare-quiz-hint`: 둥근 반투명 흰 박스 유지, `margin: clamp(4px,1vh,10px) auto 0`(카드 아래 소폭 간격, `.screen-body` gap 에 더함), `animation:none`.
+- `.compare-quiz-hint-sub`(1줄 보조): `font-size: clamp(14px,2.1vw,20px)`, `font-weight:700`, `color:#5f7fae`(중간 톤 블루).
+- `.compare-quiz-hint-action`(2줄 강조): `font-size: clamp(17px,2.6vw,26px)`(더 큼), `font-weight:900`(더 굵음), `color:var(--key-deep)`(#4E86EC, 선명한 딥 키 블루·대비↑), 은은한 text-shadow(정답 카드 파란 글로우보다 약함). 밑줄/버튼형 아님, 깜빡임 없음.
+- 360px·844×390 미디어쿼리로 각 줄 1줄 유지·footprint 최소화.
+
+### 4. QA
+- 텍스트/2줄(각 1줄)/카드 아래 배치·중앙 정렬·음성 유지 확인. 반응형 360/375/390/412/844×390/1024/1280 전부 각 줄 1줄·겹침 없음(360은 카드 세로 스택 후 2번째 카드 아래, 844×390은 카드 100% 노출로 선택 용이). 2줄째가 1줄째보다 크고 굵고 선명(대비↑). 공통 `.hint` 15px 유지. 퀴즈 정답→PAGE 13·오답 유지·재진입 초기화·키보드·버튼 숨김·빈 공간 탭 차단 유지.
+- `config.js` `meta.version`=`v0.10.18-beta`, `sw.js` `CACHE_NAME`=`eslo-game-v0.10.18-beta`. **신규 오디오/이미지 없음(텍스트·DOM·CSS만).**
+
+---
+
 ## [v0.10.17-beta] - 2026-07-22
 ### PAGE 12 선택 안내 문구 강조·2줄화·카드 위 배치
 **상단 제목·질문·카드 라벨·퀴즈 정답/오답 로직·효과음·BGM·자동 전환은 변경 없음(안내 문구 텍스트·스타일만).**
