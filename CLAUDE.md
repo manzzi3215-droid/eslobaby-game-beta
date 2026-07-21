@@ -14,7 +14,11 @@
 
 ## 현재 버전
 
-**v0.10.15-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.10.16-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.10.16-beta(patch): **PAGE 12 화면 문구를 안내 음성(page12.m4a)과 일치하도록 원복.** 퀴즈 기능·연출·잠금·BGM 등 v0.10.15 로직 전부 불변(문구만).
+  - v0.10.15에서 바꾼 `compareLead`/`compareEmph`가 음성과 어긋나, `config.js` `compareLead`=`민감한 우리 아이 피부`, `compareEmph`=`생분해 케어는 선택이 아니라 필수!`로 원복(page12.m4a 제작 커밋 `ddb0ce9`/v0.10.6 문구와 일치). 안내문 `두 워시 중 하나를 선택해주세요.`·퀴즈 카드·오답/정답 연출은 유지.
+  - **음성 원본은 사용자 제공 TTS라 목소리 동일 복제 불가** → 음성 재생성 대신 텍스트 원복(사용자 선택). 이후 문구 변경 시 해당 page 음성도 함께 갱신 필요.
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.10.16-beta`.
 ※ v0.10.15-beta(minor): **PAGE 12 선택형 퀴즈(정답 선택 시에만 진행) · 오답/정답 연출 · 문구 수정.** **PAGE 5 경보음→음성→PAGE6·PAGE 6·11 영상·PAGE 7·10·13 음성 자동 전환·PAGE 3·4·8·9 인터랙션·BGM 엔진·Flip Pro has-video CSS 전부 불변.**
   - 문구: `config` `compareLead`=`소중한 우리 아이 피부`, `compareEmph`=`어떤 선택으로 지켜주시겠어요?`, 신규 `hints.quizSelect`=`두 워시 중 하나를 선택해주세요.`. 카드 라벨/폰트/컬러/레이아웃 유지.
   - 퀴즈: `scenes.js` beforeAfterCompare 에 `quizRequired:true`. `game.js` 전역 `quizLocked`(renderScene 진입 초기화 후 quizRequired 면 잠금 → goNext/goPrev/goToStep 전부 차단, updateCtrlButtons 가 다음·이전 모두 숨김, `!!` boolean). `renderGate` 에서 `quizLocked=false`(처음으로 잔류 방지). `renderCompare` 는 tapAdvance 미호출.

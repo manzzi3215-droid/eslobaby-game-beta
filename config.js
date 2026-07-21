@@ -19,7 +19,7 @@
 window.ESLO_CONFIG = {
   /* --- 프로젝트 메타 --------------------------------------------------- */
   meta: {
-    version: 'v0.10.15-beta',
+    version: 'v0.10.16-beta',
     title: '이슬로(eslo) 베이비 미니게임',
   },
 
@@ -150,8 +150,8 @@ window.ESLO_CONFIG = {
       bioLead: '이슬로의 착한 계면활성제는\n물에 쉽게 씻겨 내려가\n',   // 앞 2줄(본문)
       bioEmph: '피부에 남지 않아요!',                                       // 마지막 줄 강조(키컬러)
       videoPlaceholder: '영상 준비 중',                                     // 영상 미첨부 시 안내
-      compareLead: '소중한 우리 아이 피부\n',                  // v0.10.15: 퀴즈 리드
-      compareEmph: '어떤 선택으로 지켜주시겠어요?',            // v0.10.15: 질문 문구(badge)
+      compareLead: '민감한 우리 아이 피부\n',                  // v0.10.16: 안내 음성(page12.m4a)과 일치하도록 원복
+      compareEmph: '생분해 케어는 선택이 아니라 필수!',          // v0.10.16: 안내 음성과 일치(퀴즈 기능·카드·안내문은 유지)
       compareTail: '',
       compareBadLabel: '일반 계면활성제\n바디워시',           // v0.9.4: 2줄
       compareGoodLabel: '착한 계면활성제\n이슬로 생분해 워시',   // v0.10.1: 우측 라벨 문구 변경(2줄)
