@@ -30,6 +30,12 @@
 ### QA (로컬 PC)
 - PAGE 6·11 영상 자동재생·종료 후 PAGE 7/12 자동 전환·페이지 음성·pause/next/gate 정상. 다른 페이지 UI 변화 없음. `?debug=1` 오버레이 정상. 콘솔 오류 0.
 
+### 실기기 검증 — 삼성 Flip Pro LH55WMBWBGCXKR (Tizen) ✅ 해결 확인 (2026-07-21)
+- **PAGE 6·11 영상이 화면에 정상 표시되고 자동재생 성공** (v0.10.9까지 미표시 + ~1.5초 뒤 자동 pause → v0.10.10에서 해소). 영상 종료 후 PAGE 7/12 자동 전환도 정상.
+- **원인(확정)**: `<video>` 조상 요소의 `backdrop-filter`(`.scene-card`) · `transform`(`.screen`) · 진입 애니메이션(`cardIn`)이 Tizen 브라우저에서 영상 합성(compositing)/가시성 판정을 방해 → 디코딩·재생은 되나 픽셀 미표시 + 네이티브 occlusion 자동 pause.
+- **해결**: 영상 장면(PAGE 6·11)에만 `has-video` 클래스를 부여하고, 해당 장면에서만 위 합성 CSS(backdrop-filter·transform·cardIn)를 비활성화. 코덱·영상 파일·autoplay·재생 로직은 변경하지 않음.
+- **다른 페이지 디자인 영향 없음**: 비영상 페이지의 유리카드(backdrop-filter blur16·transform·cardIn)는 그대로 유지 확인.
+
 ---
 
 ## [v0.10.9-beta] - 2026-07-21

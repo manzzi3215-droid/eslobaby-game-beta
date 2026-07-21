@@ -19,6 +19,7 @@
   - 원인(진단 v0.10.9): 영상은 디코딩·재생되나(readyState4·buffered전체·error none·currentTime 진행) **픽셀 미표시 + ~1.5s 뒤 자동 pause**. 조상 `backdrop-filter`(`.scene-card`)·`transform`(`.screen`)·진입 애니메이션(cardIn)에 의한 Tizen 합성/가시성 실패 유력.
   - 수정: `renderVideo`의 `if(src)`에서 `.screen`에 **`has-video`** 클래스 부여(PAGE 6·11만). `css/game.css` 맨 끝에 스코프 레이어 — `.screen.has-video{transform:none}`(is-active/is-leaving 포함), `.screen.has-video .scene-card{backdrop-filter:none;-webkit-backdrop-filter:none;animation:none}`.
   - 유지: `.info-video`·`video`의 border-radius/overflow(라운드 클립)는 이번엔 그대로(미해결 시 다음 단계). 다른 페이지 카드 디자인·문구·버튼·레이아웃 불변.
+  - **실기기 검증(2026-07-21)**: 삼성 Flip Pro LH55WMBWBGCXKR(Tizen)에서 **PAGE 6·11 영상 정상 표시 + 자동재생 + 6→7·11→12 자동 전환 성공**. 원인=video 조상의 backdrop-filter/transform/진입 animation에 의한 Tizen 합성 문제, 해결=영상 장면에만 has-video 적용 후 해당 합성 CSS 비활성화. 다른 페이지 디자인 영향 없음. → **이 영상 렌더링 수정(has-video + 스코프 CSS)은 변경 금지.**
   - `sw.js` `CACHE_NAME`=`eslo-game-v0.10.10-beta`.
 ※ v0.10.9-beta(patch): **PAGE 6·11 영상 진단 빌드**(삼성 Flip Pro LH55WMBWBGCXKR/Tizen 간헐 미재생 원인 확인용). **재생 로직 무변경 — 관측 기능만 추가.** autoplay·play()·fallback·gate·preload·영상 파일 불변.
   - 영상 상태 스냅샷(`renderVideo` `snap()`): 이벤트마다 page·srcType(Primary/Lo)·file·currentSrc·readyState·networkState·duration·currentTime·paused·ended·muted·defaultMuted·playsInline·autoplay·videoWidth·videoHeight·buffered·MediaError 기록(읽기 전용).
