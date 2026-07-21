@@ -14,7 +14,13 @@
 
 ## 현재 버전
 
-**v0.10.12-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.10.13-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.10.13-beta(patch): **안내 문구 변경 · PAGE 2 터치 영역 확대 · PAGE 6·11·13 다음 버튼 숨김 · PAGE 7 문구 위치 조정.** **PAGE 6·11 영상 자동재생·6→7·11→12 자동 이동·PAGE 13 음성 종료 자동 이동·PAGE 3·4·8·9 인터랙션 필수화·BGM·Ducking·Flip Pro has-video CSS·모바일 레이아웃·기존 애니메이션 전부 불변.**
+  - 안내 문구: `config.texts.hints.tapNext`를 `'화면을 탭하거나 다음 버튼을 눌러주세요'`로 변경(중앙 관리 → 다음 버튼 있는 모든 페이지 일괄). PAGE 6·11은 `videoWatch`(영상 문구), PAGE 13은 무문구라 미영향.
+  - PAGE 2 터치: `game.js isInteractiveTarget`의 탭 차단 선택자에서 `.info-product` 제거 → 제품 전체 탭으로 이동(터치 판정 확대). `.info-product`는 PAGE 2에만 존재(다른 페이지 무영향), UI 불변.
+  - PAGE 6·11·13 다음 버튼: `scenes.js` residue(6)·biodegradeInfo(11)·brandFinal(13)에 `hideNext: true`. `game.js updateCtrlButtons` `lockNext`에 `|| (curScene && curScene.hideNext)` 추가(다음 버튼 disabled→`.card-nav:disabled{opacity:0}` 숨김). 이전 버튼·자동 전환 유지.
+  - PAGE 7: `css/game.css` `.kw-2`(안심 베이비케어) `left:0%`→`13%`(이전 버튼 겹침 해소), `.kw-1`(생분해) `left:4%/3%`→`10%/9%`(제품 쪽으로). 폰트·크기·애니메이션·문구 불변, 좌표만.
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.10.13-beta`.
 ※ v0.10.12-beta(minor): **PAGE 3·4·8·9 인터랙션 필수화(다음 버튼·탭 이동 차단) · 첫 화면부터 BGM 지속 재생(위치 유지)**. **PAGE 6·11 영상 재생·autoplay·must-watch·has-video CSS·음성 1.2배속·BGM Ducking·카드 내부 이전/다음 구조 불변.**
   - 인터랙션 필수: scenes.js PAGE3·4·8·9에 `requireInteraction:true`. game.js 전역 `interactionLocked`(videoGateLocked과 동일 패턴) → `goNext`/`goToStep`/`scheduleAutoNext`/`updateCtrlButtons`에 조건 추가(다음 버튼 disabled→숨김, 탭·점프 차단). `renderDrag` buildBody에서 잠금 설정, `onComplete`에서 해제 후 기존 `scheduleAutoNext`(완료 이벤트 기준, 새 타이머 없음). `renderScene` 진입 시 리셋(재진입 재완료). 이전 버튼 유지.
   - 첫 화면 BGM: sfx.js `startBGM`에서 `currentTime=0` 제거(위치 유지), 자동재생 차단 대응 제스처 언락(bind/unbindBgmUnlock, 재생되면 즉시 해제, 콘솔 미출력). game.js `renderGate`의 `stopBGM`→`startBGM`(정지·재시작 안 함), `startGame`의 startBGM 제거. 싱글턴 `bgmEl` 유지. loop·Ducking·정지/재생 유지.

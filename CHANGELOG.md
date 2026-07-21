@@ -11,6 +11,33 @@
 
 ---
 
+## [v0.10.13-beta] - 2026-07-21
+### 안내 문구 변경 · PAGE 2 터치 영역 확대 · PAGE 6·11·13 다음 버튼 숨김 · PAGE 7 문구 위치 조정
+**PAGE 6·11 영상 자동재생·6→7·11→12 자동 이동·PAGE 13 음성 종료 자동 이동·PAGE 3·4·8·9 인터랙션 필수화·BGM·Ducking·Flip Pro has-video CSS·모바일 레이아웃·기존 애니메이션은 변경 없음.**
+
+### 1. 안내 문구 변경 (다음 버튼이 있는 페이지 전체)
+- `config.js` `texts.hints.tapNext`: `'화면을 탭하면 다음으로 넘어가요'` → **`'화면을 탭하거나 다음 버튼을 눌러주세요'`**.
+- `tapNext`는 중앙 관리(config)라 다음 버튼이 표시되는 모든 페이지에 일괄 적용. **PAGE 6·11은 영상 문구(`videoWatch` "영상을 끝까지 보면 다음으로 넘어가요")를 그대로 사용, PAGE 13은 안내 문구가 없으므로 영향 없음** — 요구대로 "다음 버튼이 없는 페이지"는 기존 문구 유지.
+
+### 2. PAGE 2 터치 영역 확대 (일반 바디워시 제품 전체 탭 → 이동)
+- `js/game.js` `isInteractiveTarget`의 탭 차단 선택자에서 **`.info-product` 제거**. 기존에는 제품 이미지가 차단 대상이라 제품을 탭해도 이동하지 않고 제품 바깥(주로 하단 빈 영역)만 이동됐음.
+- 제거 후 제품 이미지 어디를 탭해도 `tapAdvance`가 다음으로 이동 → 훨씬 누르기 쉬움. **`.info-product`는 PAGE 2(유일한 `info` 타입 장면)에만 존재하므로 다른 페이지 영향 없음.** UI/디자인·레이아웃은 변경하지 않고 터치 판정 범위만 확대.
+
+### 3. PAGE 6·11·13 카드 내부 다음 버튼 숨김 (이전 버튼·자동 전환은 유지)
+- `js/scenes.js`: residue(PAGE 6)·biodegradeInfo(PAGE 11)·brandFinal(PAGE 13)에 **`hideNext: true`** 추가.
+- `js/game.js` `updateCtrlButtons`: `lockNext` 계산에 `|| (curScene && curScene.hideNext)` 추가 → 해당 장면에서 다음 버튼 `disabled`+`.is-disabled`(CSS `.card-nav:disabled{opacity:0;pointer-events:none}`로 숨김). **이전 버튼(`.card-nav.is-prev`)은 그대로 유지.**
+- PAGE 6·11은 영상 종료(`ended`)→`scheduleAutoNext`로 6→7·11→12 자동 이동, PAGE 13은 안내 음성 종료(`ended`)→`goNext`로 PAGE 14 자동 이동 — **자동 전환이 이동을 담당하므로 수동 다음 버튼 불필요.** 자동 전환·`videoGateLocked`·autoplay·must-watch 로직은 변경하지 않음.
+
+### 4. PAGE 7 문구 위치 조정 (겹침 해소 · 위치만)
+- `css/game.css` `.kw-2`(안심 베이비케어): `left: 0%` → **`left: 13%`** — 카드 좌측 세로 중앙의 이전 버튼(`.card-nav.is-prev`)과 겹치던 것을 오른쪽으로 이동해 간격 확보.
+- `css/game.css` `.kw-1`(생분해): `left: 4%`(가로)/`3%`(세로) → **`left: 10%`/`9%`** — 제품 이미지 쪽으로 소폭 이동.
+- **폰트·크기·애니메이션(kw pulse 등)·문구는 변경하지 않고 좌표(left)만 조정.** 실기 검증: 이전 버튼(l21–r63)과 kw-1(l60,t256)·kw-2(l72,t404) 겹침 없음, kw-2는 kw-3와 동일하게 제품에 인접.
+
+### 5. 버전·캐시
+- `config.js` `meta.version` = `v0.10.13-beta`, `sw.js` `CACHE_NAME` = `eslo-game-v0.10.13-beta`.
+
+---
+
 ## [v0.10.12-beta] - 2026-07-21
 ### PAGE 3·4·8·9 인터랙션 필수화 · 첫 화면부터 BGM 지속 재생
 **PAGE 6·11 영상 재생·autoplay·must-watch·영상 종료 후 자동 전환·has-video CSS·음성 1.2배속·BGM Ducking·카드 내부 이전/다음 구조는 변경 없음.**

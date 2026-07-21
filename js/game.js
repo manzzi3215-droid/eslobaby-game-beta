@@ -441,7 +441,11 @@
     }
     if (nextBtn) {
       // v0.9.3: 마지막 장면 또는 필수 시청 영상 재생 중이면 다음 버튼 비활성
-      var lockNext = (index >= SCENES.length - 1) || videoGateLocked || interactionLocked;
+      // v0.10.13: PAGE 6·11(영상 종료 자동 이동)·PAGE 13(음성 종료 자동 이동)은 scene.hideNext 로 다음 버튼 항상 숨김
+      //   (자동 전환이 이동을 담당 → 수동 다음 버튼 불필요). 이전 버튼은 그대로 유지.
+      var curScene = SCENES[index];
+      var lockNext = (index >= SCENES.length - 1) || videoGateLocked || interactionLocked
+        || (curScene && curScene.hideNext);
       nextBtn.disabled = lockNext;
       nextBtn.classList.toggle('is-disabled', lockNext);
       nextBtn.setAttribute('aria-disabled', lockNext ? 'true' : 'false');
@@ -1398,8 +1402,10 @@
     // v0.9.1: 설명 영상(.info-video/video)은 제외 목록에서 빼서, 다른 페이지들과 동일하게
     //   영상 영역을 탭해도 다음으로 넘어가도록 한다(PAGE 6→7 전환 실패 수정).
     //   영상 재생/정지는 좌측 컨트롤의 ▶/⏸ 버튼으로 유지된다.
+    // v0.10.13: '.info-product'(PAGE 2 일반 바디워시) 제거 → 제품 전체를 탭해도 다음으로 넘어가도록
+    //   터치 판정 범위 확대(제품 이미지 위 어디를 눌러도 이동). UI/디자인 변경 없음, PAGE 2에만 영향.
     return !!(t && t.closest && t.closest(
-      '.ctrl-btn, button, a, .drag-tool, .drag-hint, .eslo-hero-single, .info-product'));
+      '.ctrl-btn, button, a, .drag-tool, .drag-hint, .eslo-hero-single'));
   }
   function tapAdvance(el) {
     if (!CFG.options.tapToAdvance) return;

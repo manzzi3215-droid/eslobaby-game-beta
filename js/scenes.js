@@ -66,6 +66,7 @@
     { id: 'residue', type: 'video', phase: 1,
       video: 'profVideo', videoFallback: 'profVideoLo',   // v0.10.7: 1차 실패 시 2차 보수 소스로 교체
       requireEnd: true, autoNext: true,   // v0.9.3 잠금 + v0.9.4 종료 후 Page7 자동 전환
+      hideNext: true,   // v0.10.13: 영상 종료 자동 이동 → 카드 내부 다음 버튼 숨김(이전 버튼은 유지)
       lead: T.scenes.residueVideoLead, emph: T.scenes.residueVideoEmph,
       tail: T.scenes.residueVideoTail, emphClass: 'bad-emph' },   // v0.9.4: '나쁜 계면활성제' 붉은 강조
 
@@ -104,6 +105,7 @@
     { id: 'biodegradeInfo', type: 'video', phase: 4,
       video: 'bioVideo', videoFallback: 'bioVideoLo',   // v0.10.7: 1차 실패 시 2차 보수 소스로 교체
       requireEnd: true, autoNext: true,   // v0.9.3 잠금 + v0.9.4 종료 후 Page12 자동 전환
+      hideNext: true,   // v0.10.13: 영상 종료 자동 이동 → 카드 내부 다음 버튼 숨김(이전 버튼은 유지)
       lead: T.scenes.bioLead, emph: T.scenes.bioEmph, emphClass: 'key-emph' },
 
     // 장면 ⑨-3 (PAGE 10-2) — 비포/애프터 비교 (일반 바디워시 vs 이슬로)
@@ -113,7 +115,8 @@
     //   v0.10.2: 다시하기 버튼 제거. 제품 이미지·제품명 순차 등장 완료 후 약 2초 유지 → PAGE 14 자동 전환.
     { id: 'brandFinal', type: 'brandFinal', phase: 4,
       title: T.scenes.brandFinalTitle, desc: T.scenes.brandFinalDesc,
-      names: T.scenes.finalProductNames, autoNext: true },
+      names: T.scenes.finalProductNames, autoNext: true,
+      hideNext: true },   // v0.10.13: 음성 종료 자동 이동(→PAGE 14) → 카드 내부 다음 버튼 숨김(이전 버튼은 유지)
 
     // 장면 ⑪ (PAGE 14) — 미션 완료 / 증정 안내 (최종 페이지, 자동 전환 없음)
     //   v0.10.2 신규: 완료 강조 문구 + 여행용 바스앤샴푸 이미지 + 2줄 안내. 다시하기 버튼 없음.
