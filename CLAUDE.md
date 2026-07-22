@@ -14,7 +14,15 @@
 
 ## 현재 버전
 
-**v0.10.20-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.10.21-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.10.21-beta(minor): **관리자 대시보드 개편(기본 비번 `0000`·비번 변경·간소화·한국시간 날짜별 통계·일 마감/CSV 다운로드) + PAGE 12 `선택` 딥블루화·손가락 확대.** 게임 진행/자동전환/영상/음성/PAGE12 정답·오답 로직·PAGE13 이동 전부 불변.
+  - 비밀번호: `config.admin.password` 기본 `'0000'`. 변경분은 LocalStorage `eslo_admin_pw_v1`(통계와 별도 키)에만 저장 → 통계 초기화·일 마감과 무관하게 유지. `admin.js` `effectivePassword()`(저장분 우선, 없으면 config), 4자리 숫자 규칙, 대시보드 접이식 `설정`에서 현재/새/확인 검증 후 변경. **서버 인증 아님(클라이언트 접근 방지용).**
+  - 통계 v2(`analytics.js`): 단일 전역 카운터 → `byDate[YYYY-MM-DD]{plays,completes,completeTimeMs,correct,wrong,errors,closed,closedAt,closedAtMs,updatedAt}` + `totals`(전체 누적) + `legacy`(v1 날짜미상 완료 보존). 날짜키=**Asia/Seoul**(Intl `en-CA`, UTC 오차 방지). **완료는 시작일 기준**(자정 넘김 대응). v1→v2 **1회 마이그레이션**(playsByDate→byDate 이관, 미상 완료는 legacy, 오늘에 합산 안 함). 손상 데이터 방어(`try/catch`→defaults).
+  - 대시보드(`admin.js`/`admin.css`): 퍼널·체류시간·기기분포 **렌더+수집 제거**. 날짜 선택(`‹ input[date] ›`, 기본 오늘)+핵심4(플레이/완료/완료율/평균시간)+전체누적2+접이식 오류로그(없으면 한 줄). `[날짜] 마감`(주 실행, 확인창→스냅샷·마감표시·CSV 다운로드, 재마감/재다운로드 안전·중복합산 없음, `마감 후 추가 데이터` 감지)·`통계 초기화`(위험, 분리·강한 확인). 360px 가로스크롤 방지.
+  - 다운로드: **CSV(UTF-8 BOM)** 채택(XLSX 라이브러리 없음·SheetJS는 오프라인/SW캐시 부담) → `eslobaby_game_stats_YYYY-MM-DD.csv`, `[일일 요약]`+`[전체 누적]` 블록. Blob+`a[download]` 순수 클라이언트(서버/CDN 없음).
+  - `game.js`: `renderCompare onSelect` 에 `Analytics.recordAnswer(isCorrect)` 훅(try/catch, 게임 로직 무영향).
+  - PAGE 12(`css/game.css`): `.quiz-pick-emph` 남색칩·패딩·라운드·그림자 제거 → 선명한 딥블루 `#1E56B0` 텍스트(연노랑 대비 AA)+`font-size:1.06em`, **pickBob 속도·범위 불변**. `.compare-quiz-finger` 확대 `clamp(24px,5.2vw,36px)`(≤360 `22~26`, 가로저높이 `22~28`), 위치·`fingerTap` 불변. OR·노란박스·카드·문구(2줄) 불변.
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.10.21-beta`. 신규 자산 없음(JS/CSS/이모지만).
 ※ v0.10.20-beta(minor): **PAGE 12 선택형 퀴즈 디자인 개선 — 카드 사이 `OR` · 노란 선택 CTA 박스 · `선택` 강조 모션 · 클릭 손가락.** 퀴즈 로직·정답/오답·카드 클릭/터치·`quizLocked`·음성(page12.m4a)·자동 진행·컨트롤·다른 페이지 전부 불변(PAGE 12 표시/스타일만).
   - `OR`: `game.js renderCompare` 가 `left`↔`right` 사이 `div('compare-or')`(`aria-hidden`) 삽입. `.compare-row`(`position:relative`, gap `clamp(40px,8vw,60px)`/세로 `clamp(34px,9vw,48px)`) gap 정중앙 절대배치(흰 원형 배지·키 블루 텍스트). `pointer-events:none`·`z-index:3` 로 카드 클릭 비간섭. ≤360px 세로 스택은 `position:static` 전환(두 카드 사이 흐름).
   - `선택` 강조: 2줄째에서 `선택`만 `<span.quiz-pick-emph>` 분리 → 딥네이비 칩(`#1E3A5F`) 위 밝은 로고-옐로우(`#FFD24A`) 글씨 + `pickBob`(1.9s, 커졌다 돌아옴). reduced-motion 정지.

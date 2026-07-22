@@ -19,7 +19,7 @@
 window.ESLO_CONFIG = {
   /* --- 프로젝트 메타 --------------------------------------------------- */
   meta: {
-    version: 'v0.10.20-beta',
+    version: 'v0.10.21-beta',
     title: '이슬로(eslo) 베이비 미니게임',
   },
 
@@ -292,7 +292,9 @@ window.ESLO_CONFIG = {
    *   firebase : 추후 Firebase 연동 설정 자리 (null 이면 LocalStorage 사용)
    * ------------------------------------------------------------------- */
   admin: {
-    password: 'eslo2024',
+    // v0.10.21: 기본 비밀번호 0000 (최초/미설정 시). 변경분은 LocalStorage 'eslo_admin_pw_v1' 에만 저장되며
+    //   통계 초기화·일 마감과 무관하게 유지됨. ※ 이는 서버 인증이 아닌 클라이언트측 간단 접근 방지 장치일 뿐임.
+    password: '0000',
     gearEnabled: true,
     firebase: null,
     title: '관리자 대시보드',

@@ -188,35 +188,6 @@
 .admin-section { display: flex; flex-direction: column; gap: 10px; }
 .admin-section-title { font-size: clamp(14px, 2.2vw, 16px); font-weight: 800; color: var(--color-text); }
 
-/* 막대(퍼널/기기) */
-.admin-bar-row { display: flex; flex-direction: column; gap: 5px; }
-.admin-bar-head { display: flex; justify-content: space-between; align-items: baseline; }
-.admin-bar-label { font-size: clamp(12px, 1.8vw, 14px); font-weight: 700; color: var(--color-text); }
-.admin-bar-count { font-size: clamp(11px, 1.6vw, 13px); font-weight: 800; color: var(--color-blue-deep); }
-.admin-bar-track {
-  width: 100%; height: 12px;
-  background: #e4eef6;
-  border-radius: 999px;
-  overflow: hidden;
-}
-.admin-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--color-mint-deep), var(--color-blue-deep));
-  border-radius: 999px;
-  transition: width var(--t-base) ease;
-}
-
-/* 키-값 (체류시간) */
-.admin-kv {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 8px 12px;
-  background: #fff;
-  border: 1px solid rgba(160, 205, 235, 0.35);
-  border-radius: 12px;
-}
-.admin-kv-key { font-size: clamp(12px, 1.8vw, 14px); font-weight: 700; color: var(--color-text); }
-.admin-kv-val { font-size: clamp(12px, 1.7vw, 14px); font-weight: 800; color: var(--color-blue-deep); }
-
 /* 오류 로그 */
 .admin-err {
   padding: 10px 12px;
@@ -230,19 +201,115 @@
 
 .admin-empty { font-size: var(--fs-hint); color: var(--color-text-soft); text-align: center; padding: 10px 0; }
 
-/* 푸터 */
+/* 푸터 (v0.10.21: 마감=주 실행 / 초기화=위험, 시각·간격 분리) */
 .admin-footer {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 10px;
   padding: clamp(12px, 2.4vw, 18px) clamp(16px, 3vw, 24px);
   border-top: 1px solid rgba(150, 195, 230, 0.35);
 }
-.admin-foot-info { flex: 1; min-width: 120px; font-size: 11px; color: var(--color-text-soft); }
-.admin-footer .admin-btn { min-height: 40px; font-size: 13px; padding: 0 14px; }
+.admin-foot-info { font-size: 11px; color: var(--color-text-soft); }
+.admin-foot-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.admin-foot-actions .admin-btn { flex: 1 1 auto; min-width: 120px; }
+.admin-foot-danger {
+  display: flex; justify-content: flex-end;
+  margin-top: 2px; padding-top: 8px;
+  border-top: 1px dashed rgba(200, 120, 110, 0.4);   /* 위험 영역 구분선 */
+}
+.admin-btn-sm { min-height: 40px; font-size: 13px; padding: 0 14px; }
 
-/* 아주 좁은 화면: 통계 3→2열 */
-@media (max-width: 380px) {
-  .admin-stats-grid { grid-template-columns: repeat(2, 1fr); }
+/* ===== v0.10.21 추가 컴포넌트 ===== */
+/* 저장 실패 경고 */
+.admin-warn {
+  font-size: 12px; font-weight: 700; color: #a23c33;
+  background: #fff2f0; border: 1px solid #ffd2cc; border-radius: 12px;
+  padding: 8px 12px;
+}
+
+/* 날짜 선택 */
+.admin-datenav { display: flex; align-items: center; gap: 8px; }
+.admin-date-btn {
+  flex: 0 0 auto; width: 40px; height: 42px;
+  font-size: 20px; font-weight: 900; line-height: 1;
+  color: var(--color-blue-deep);
+  background: rgba(255, 255, 255, 0.85);
+  border: 1.5px solid var(--ph-border); border-radius: 12px;
+  cursor: pointer;
+}
+.admin-date-btn:active { transform: scale(0.94); }
+.admin-date-input {
+  flex: 1 1 auto; min-width: 0; box-sizing: border-box;
+  font-family: inherit; font-size: 16px; font-weight: 800; text-align: center;
+  height: 42px; padding: 0 10px;
+  color: var(--color-text); background: #fff;
+  border: 1.5px solid var(--ph-border); border-radius: 12px;
+}
+
+/* 상태 배지 */
+.admin-badges { display: flex; flex-wrap: wrap; gap: 6px; }
+.admin-badge {
+  font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 999px;
+}
+.admin-badge-today { color: var(--color-blue-deep); background: #e7f0ff; border: 1px solid #c9ddff; }
+.admin-badge-done  { color: #2f7d4f; background: #e8f7ee; border: 1px solid #c5e9d3; }
+.admin-badge-warn  { color: #a86a12; background: #fff4dd; border: 1px solid #ffe1a8; }
+
+/* 핵심 통계 4종: 2열 */
+.admin-stats-core { grid-template-columns: repeat(2, 1fr); }
+
+/* 전체 누적 (작게) */
+.admin-totals { display: flex; flex-wrap: wrap; gap: 8px; }
+.admin-totals-item {
+  flex: 1 1 40%; min-width: 120px;
+  font-size: 13px; font-weight: 800; color: var(--color-text-soft);
+  background: #fff; border: 1px dashed rgba(160, 205, 235, 0.6);
+  border-radius: 12px; padding: 8px 12px; text-align: center;
+}
+.admin-legacy { font-size: 11px; color: var(--color-text-soft); text-align: center; }
+
+/* 오류 없음 한 줄 상태 */
+.admin-errstatus { font-size: 12px; font-weight: 700; color: #2f7d4f; text-align: center; padding: 2px 0; }
+
+/* 접이식 섹션 */
+.admin-collapse {
+  border: 1px solid rgba(160, 205, 235, 0.4); border-radius: 14px;
+  background: rgba(255, 255, 255, 0.6); overflow: hidden;
+}
+.admin-collapse-head {
+  width: 100%; display: flex; align-items: center; justify-content: space-between;
+  font-family: inherit; font-size: 13px; font-weight: 800; color: var(--color-text);
+  background: transparent; border: 0; cursor: pointer;
+  padding: 12px 14px;
+}
+.admin-collapse-caret { transition: transform var(--t-fast); color: var(--color-text-soft); }
+.admin-collapse.is-open .admin-collapse-caret { transform: rotate(180deg); }
+.admin-collapse-body { display: none; padding: 0 14px 14px; flex-direction: column; gap: 8px; }
+.admin-collapse.is-open .admin-collapse-body { display: flex; }
+
+/* 비밀번호 변경 폼 */
+.admin-pwform { display: flex; flex-direction: column; gap: 8px; }
+.admin-input-sm { font-size: 16px; padding: 10px 12px; }
+.admin-pwmsg { font-size: 12px; font-weight: 700; min-height: 1.1em; }
+.admin-pwmsg.is-err { color: var(--color-warn); }
+.admin-pwmsg.is-ok { color: #2f7d4f; }
+.admin-pwnote { font-size: 11px; color: var(--color-text-soft); line-height: 1.4; }
+
+/* 토스트 안내 */
+.admin-toast {
+  position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%);
+  max-width: 88vw; z-index: 5;
+  font-size: 13px; font-weight: 800; color: #fff;
+  background: rgba(40, 70, 95, 0.94);
+  padding: 10px 18px; border-radius: 999px;
+  box-shadow: 0 8px 22px rgba(30, 60, 90, 0.32);
+  animation: adminToast 220ms ease both;
+}
+.admin-toast-danger { background: rgba(150, 55, 48, 0.96); }
+@keyframes adminToast { from { opacity: 0; transform: translateX(-50%) translateY(8px); } to { opacity: 1; transform: translateX(-50%); } }
+
+/* 아주 좁은 화면 방어(가로 스크롤 방지) */
+@media (max-width: 360px) {
+  .admin-stats-core { grid-template-columns: repeat(2, 1fr); }
+  .admin-foot-actions .admin-btn { flex-basis: 100%; }
 }

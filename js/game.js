@@ -1241,6 +1241,8 @@
         function onSelect(card, isCorrect) {
           if (answered) return;               // 정답 처리 후 두 카드 클릭 잠금
           if (index !== myIndex) return;      // 이탈 방지
+          // v0.10.21: PAGE 12 정답/오답 통계(향후 분석용). 게임 로직과 독립·실패해도 무영향.
+          try { if (window.Analytics && window.Analytics.recordAnswer) window.Analytics.recordAnswer(isCorrect); } catch (_) {}
           if (isCorrect) {
             answered = true;
             row.classList.add('is-answered');  // CSS: 두 카드 pointer-events 잠금
