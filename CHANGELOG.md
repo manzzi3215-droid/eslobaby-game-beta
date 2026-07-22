@@ -11,6 +11,36 @@
 
 ---
 
+## [v0.10.20-beta] - 2026-07-22
+### PAGE 12 선택형 퀴즈 디자인 개선 — 카드 사이 `OR` · 노란 선택 CTA 박스 · `선택` 강조 모션 · 클릭 손가락
+**퀴즈 로직·정답/오답 처리·카드 클릭/터치 영역·`quizLocked`(정답 전 이동 차단)·안내 음성(page12.m4a)·자동 진행·컨트롤·다른 페이지 전부 변경 없음(PAGE 12 표시/스타일만).**
+
+### 1. 두 선택 카드 사이 `OR` 구분 표시 (장식·비클릭)
+- `js/game.js renderCompare`: `left`/`right` 카드 사이에 `div('compare-or')`(텍스트 `OR`, `aria-hidden`) 삽입.
+- `css/game.css` `.compare-or`: 기본/세로 2열에서는 `.compare-row`(신규 `position:relative`)의 gap 정중앙에 **절대배치**(`left/top:50%` + `translate(-50%,-50%)`) → 좌우 어느 카드에도 치우치지 않음. 흰 원형 배지 + 키 블루(`--key-deep`) 텍스트·`--key-soft` 테두리(기존 파란 UI 톤). `pointer-events:none`·`z-index:3` 로 **카드 클릭 비간섭**.
+- 카드 겹침 방지: `.compare-row` gap 을 `clamp(40px,8vw,60px)`(세로 `clamp(34px,9vw,48px)`)로 넓혀 배지 공간 확보.
+- ≤360px 세로 스택에서는 `.compare-or`를 `position:static`(정상 흐름)으로 전환 → 두 카드 사이에 자연스럽게 배치. 가로/작은 화면 반응형 유지.
+
+### 2. `선택` 단어 강조 + 부드러운 모션
+- `renderCompare`: 2줄째(`안심 워시를 선택해주세요.`)에서 `선택`만 `<span.quiz-pick-emph>`로 분리(나머지는 DOM 텍스트).
+- `.quiz-pick-emph`: 딥네이비 칩(`#1E3A5F`) 위 밝은 로고-'베이비' 옐로우(`#FFD24A`) 글씨 → 밝은 노랑 + 한눈에 + 노란 박스 위 AA 대비 동시 충족. `선택`에만 `pickBob`(커졌다 돌아오는 1.9s ease, translateY -2px + scale 1.06) 적용. 과하지 않고 정적에 가까운 절제된 모션.
+
+### 3. 하단 안내 문구 → 밝은 노란 라운드 박스
+- `.compare-quiz-hint`: 반투명 흰 박스 → **연노랑 그라데이션**(`#FFF7D1→#FFEEA6`, 탁하지 않게) + 웜 소프트 그림자 + 둥근 모서리. 문구는 기존 2줄 구조(`quizSelect` = `우리 아이에게 꼭 필요한` / `안심 워시를 선택해주세요.`) 그대로 재사용(중복 표시 없음).
+- 텍스트: 노란 배경 대비 위해 검정 대신 **딥네이비/딥블루**(1줄 `#1d3b5c`, 2줄 `#14324f`). 2줄이 1줄보다 크고 굵게(기존 크기 유지). 카드 압박 방지 위해 패딩/높이 기존 수준 유지.
+
+### 4. 클릭 유도 손가락 아이콘
+- `.compare-quiz-finger`(`☝️`, `aria-hidden`·`pointer-events:none`): 노란 박스(`position:relative`) **우측 상단 바깥**으로 살짝 걸치게 절대배치(`top:-16~-10px`, `right:-8~-3px`). 문구/카드 비가림. ≤360px·가로 저높이에서 크기·오프셋 축소해 화면 밖 잘림 방지. 아주 약한 탭 모션(`fingerTap` 2.6s, `선택` 모션과 리듬 분리).
+
+### 접근성/모션
+- `OR`·손가락은 장식(`aria-hidden`, 비클릭). `prefers-reduced-motion: reduce` 에서 `.quiz-pick-emph`·`.compare-quiz-finger` 애니메이션 제거(정적 표시 유지).
+
+### 기타
+- `sw.js` `CACHE_NAME` = `eslo-game-v0.10.20-beta`(신규 자산 없음 — 이모지/CSS/DOM 만).
+- `config.js` `meta.version` = `v0.10.20-beta`, README/CLAUDE 버전 표기 일치.
+
+---
+
 ## [v0.10.19-beta] - 2026-07-22
 ### PAGE 5 경고 문구 위치·간격 정리 · PAGE 12 선택 CTA 골드 강조
 **두 페이지 모두 텍스트/폰트/애니메이션/음성/효과음/퀴즈 로직·카드·자동 진행은 변경 없음(위치·간격 / 색상만).**

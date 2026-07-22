@@ -14,7 +14,13 @@
 
 ## 현재 버전
 
-**v0.10.19-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.10.20-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.10.20-beta(minor): **PAGE 12 선택형 퀴즈 디자인 개선 — 카드 사이 `OR` · 노란 선택 CTA 박스 · `선택` 강조 모션 · 클릭 손가락.** 퀴즈 로직·정답/오답·카드 클릭/터치·`quizLocked`·음성(page12.m4a)·자동 진행·컨트롤·다른 페이지 전부 불변(PAGE 12 표시/스타일만).
+  - `OR`: `game.js renderCompare` 가 `left`↔`right` 사이 `div('compare-or')`(`aria-hidden`) 삽입. `.compare-row`(`position:relative`, gap `clamp(40px,8vw,60px)`/세로 `clamp(34px,9vw,48px)`) gap 정중앙 절대배치(흰 원형 배지·키 블루 텍스트). `pointer-events:none`·`z-index:3` 로 카드 클릭 비간섭. ≤360px 세로 스택은 `position:static` 전환(두 카드 사이 흐름).
+  - `선택` 강조: 2줄째에서 `선택`만 `<span.quiz-pick-emph>` 분리 → 딥네이비 칩(`#1E3A5F`) 위 밝은 로고-옐로우(`#FFD24A`) 글씨 + `pickBob`(1.9s, 커졌다 돌아옴). reduced-motion 정지.
+  - 노란 CTA 박스: `.compare-quiz-hint` 배경 연노랑 그라데이션(`#FFF7D1→#FFEEA6`)+웜 그림자. 텍스트 딥네이비(1줄 `#1d3b5c`/2줄 `#14324f`, 검정 대신). 문구(`quizSelect` 2줄) 재사용(중복 없음).
+  - 손가락 `☝️`: `.compare-quiz-finger`(`aria-hidden`·`pointer-events:none`) 박스 우측 상단 바깥 절대배치(`top:-16~-10px`/`right:-8~-3px`), `fingerTap`(2.6s, `선택` 모션과 리듬 분리). ≤360px·가로 저높이 크기·오프셋 축소(잘림 방지).
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.10.20-beta`. 신규 자산 없음(이모지/CSS/DOM 만).
 ※ v0.10.19-beta(patch): **PAGE 5 경고 문구 위치·간격 정리 · PAGE 12 선택 CTA 골드 강조.** 텍스트/폰트/애니메이션/음성/효과음/퀴즈 로직·카드·자동 진행 전부 불변(CSS 위치·간격/색상만).
   - PAGE 5(`css/game.css` `.warning-scene` 스코프): `.card-title` `margin-top: clamp(6px,1.5vh,16px)`(상단에서 살짝 내림)+`margin-bottom: clamp(6px,1.2vh,12px)`, `.screen-body { justify-content: flex-start }`(제목↔설명 큰 화면에서 벌어짐 방지 — center 는 데스크톱 82px까지 벌어짐), `.stage { margin: auto 0 }`(아기 무대 남은 공간 세로 중앙). 제목↔설명 간격 전 해상도 16~21px 통일. 공통 `.card-title`/`.screen-body`/`.stage` 무영향.
   - PAGE 12(`.compare-quiz-hint-action`): **색상만** `var(--key-deep)`→`#C8820A`(따뜻한 앰버-골드)+그림자 웜 다크 tint. 크기/굵기/박스/위치 불변. 노란/골드 채택(블루 일색에서 즉시 눈에·정답 파란 글로우와 구분·정적·형광 아님·대비 AA 라지 통과). Glow 미채택(블루 위 블루라 차별화 약·정답 글로우와 혼동 위험).

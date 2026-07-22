@@ -1295,6 +1295,12 @@
                               CFG.assets.ending.bath, CFG.placeholders.endBath, 'compare-prod-eslo', true);
 
         row.appendChild(left);
+        // v0.10.20: 두 카드 사이 "OR" 구분 표시(장식·비클릭). 기본/세로 2열에서는 gap 중앙에 절대배치,
+        //   ≤360px 세로 스택에서는 두 카드 사이에 자연스럽게 흐르도록(CSS). pointer-events:none 로 카드 클릭 비간섭.
+        var orMark = div('compare-or');
+        orMark.textContent = 'OR';
+        orMark.setAttribute('aria-hidden', 'true');
+        row.appendChild(orMark);
         row.appendChild(right);
         body.appendChild(row);
 
@@ -1308,9 +1314,27 @@
         qSub.textContent = qsLines[0] || '';
         var qAction = document.createElement('strong');
         qAction.className = 'compare-quiz-hint-action';
-        qAction.textContent = qsLines.slice(1).join(' ') || '';
+        // v0.10.20: 2줄째 "…선택해주세요" 중 '선택'만 강조 span(색상+부드러운 모션). 나머지는 DOM 텍스트.
+        var actionText = qsLines.slice(1).join(' ') || '';
+        var pickWord = '선택';
+        var pIdx = actionText.indexOf(pickWord);
+        if (pIdx >= 0) {
+          qAction.appendChild(document.createTextNode(actionText.slice(0, pIdx)));
+          var pick = document.createElement('span');
+          pick.className = 'quiz-pick-emph';
+          pick.textContent = pickWord;
+          qAction.appendChild(pick);
+          qAction.appendChild(document.createTextNode(actionText.slice(pIdx + pickWord.length)));
+        } else {
+          qAction.textContent = actionText;
+        }
         quizHint.appendChild(qSub);
         quizHint.appendChild(qAction);
+        // v0.10.20: 노란 박스 우측 상단 바깥으로 살짝 걸치는 클릭 유도 손가락(장식·비클릭·스크린리더 무시).
+        var finger = div('compare-quiz-finger');
+        finger.textContent = '☝️';
+        finger.setAttribute('aria-hidden', 'true');
+        quizHint.appendChild(finger);
         body.appendChild(quizHint);
       });
       // v0.10.15: 퀴즈 페이지 — 화면/빈 공간 탭 이동 없음(tapAdvance 미호출). 카드 클릭·키보드로만 선택.

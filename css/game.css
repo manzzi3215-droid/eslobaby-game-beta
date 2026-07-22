@@ -1909,10 +1909,11 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
   }
 }
 .compare-row {
+  position: relative;                       /* v0.10.20: 카드 사이 OR 절대배치 기준 */
   display: flex;
   align-items: stretch;
   justify-content: center;
-  gap: clamp(6px, 1.6vw, 16px);
+  gap: clamp(40px, 8vw, 60px);              /* v0.10.20: 두 카드 사이 OR 배지가 겹치지 않게 gap 확보 */
   width: 100%;
 }
 .compare-card {
@@ -1972,14 +1973,46 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
 @media (orientation: portrait) {
   .compare-img { width: clamp(72px, 22vw, 118px); }
   .compare-label { font-size: clamp(11px, 3vw, 15px); }
-  .compare-row { gap: clamp(4px, 2vw, 10px); }
+  .compare-row { gap: clamp(34px, 9vw, 48px); }   /* v0.10.20: 세로에서도 OR 여백 유지(카드 겹침 방지) */
 }
-/* 아주 좁은 화면(≤360px): 2열이 좁으면 세로 스택(일반→VS→이슬로) */
+/* v0.10.20: 두 카드 사이 "OR" 구분 배지 — 장식(비클릭). 기본/세로 2열은 gap 정중앙 절대배치.
+   파란색 톤(연한 흰 배지 + 키 블루 텍스트·테두리), 카드 클릭 비간섭(pointer-events:none).
+   ※ ≤360px 세로 스택 오버라이드가 뒤에 오도록 이 base 를 먼저 선언(source-order 로 미디어쿼리 우선). */
+.compare-or {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: clamp(28px, 6.6vw, 38px);
+  height: clamp(28px, 6.6vw, 38px);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.94);
+  border: 2px solid var(--key-soft);
+  color: var(--key-deep);
+  font-weight: 900;
+  font-size: clamp(12px, 2.4vw, 16px);
+  letter-spacing: 0.6px;
+  box-shadow: 0 4px 12px rgba(78, 134, 236, 0.28);
+}
+/* 아주 좁은 화면(≤360px): 2열이 좁으면 세로 스택(일반→OR→이슬로) */
 @media (max-width: 360px) {
-  .compare-row { flex-direction: column; align-items: stretch; }
+  .compare-row { flex-direction: column; align-items: stretch; gap: clamp(6px, 2vw, 12px); }
   .compare-card { flex-direction: row; justify-content: center; gap: 12px; }
   .compare-label { min-height: 0; }
   .compare-img { width: clamp(70px, 26vw, 96px); }
+  /* 세로 스택에서는 OR 을 두 카드 사이에 자연스럽게 흐르도록(절대배치 해제) */
+  .compare-or {
+    position: static;
+    transform: none;
+    margin: 2px auto;
+    width: clamp(26px, 8vw, 32px);
+    height: clamp(26px, 8vw, 32px);
+  }
 }
 
 /* v0.10.15: PAGE 12 선택형 퀴즈 — 카드 전체 클릭 가능 + 오답(붉은 경고·흔들림)·정답(파란 강조) 피드백 */
@@ -2417,26 +2450,29 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
  * 둥근 소프트 박스 유지, 반복 애니 없음. 2줄째만 더 굵고 선명한 키 블루로 강조(정적).
  * ========================================================================== */
 .compare-quiz-hint {
+  position: relative;                          /* v0.10.20: 우측 상단 손가락 아이콘 절대배치 기준 */
   text-align: center;
   letter-spacing: -0.2px;
   max-width: min(94%, 30rem);
   margin: clamp(4px, 1vh, 10px) auto 0;        /* 카드 아래: 소폭 위 간격(screen-body gap 에 더함), 아래 0 */
   padding: clamp(8px, 1.4vh, 12px) clamp(14px, 3.4vw, 24px);
-  background: rgba(255, 255, 255, 0.74);       /* 연한 반투명 흰 박스(배경과 대비 확보) */
+  /* v0.10.20: 밝고 부드러운 연노랑 라운드 박스(로고 '베이비' 옐로우 계열, 탁하지 않게). 은은한 웜 그림자. */
+  background: linear-gradient(170deg, #FFF7D1, #FFEEA6);
+  border: 1.5px solid rgba(240, 205, 90, 0.55);
   border-radius: clamp(14px, 2.4vw, 20px);     /* 둥근 안내 박스 */
-  box-shadow: 0 4px 14px rgba(70, 120, 160, 0.14);
+  box-shadow: 0 6px 18px rgba(214, 176, 56, 0.24);
   animation: none;                             /* 정적(깜빡임/반복 애니 없음) */
 }
-/* 1줄: 보조 설명 톤(중간 블루, 약간 작게) */
+/* 1줄: 보조 설명 톤 — 노란 박스 대비 위해 딥네이비(검정 대신), 약간 작게 */
 .compare-quiz-hint-sub {
   display: block;
   font-size: clamp(14px, 2.1vw, 20px);
   font-weight: 700;
   line-height: 1.35;
-  color: #5f7fae;                              /* 중간 톤 블루(보조) */
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9);
+  color: #1d3b5c;                              /* v0.10.20: 딥네이비(노란 배경 대비·가독성) */
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
 }
-/* 2줄: 선택 행동 강조 — 크기/굵기/박스/위치 그대로, v0.10.19 에서 색상만 따뜻한 골드로 변경(가독성·차별화↑) */
+/* 2줄: 선택 행동 강조 — 1줄보다 크고 굵게, 딥블루 텍스트(노란 박스 대비). '선택'만 별도 강조 span. */
 .compare-quiz-hint-action {
   display: block;
   margin-top: clamp(1px, 0.4vh, 4px);
@@ -2444,20 +2480,66 @@ button.pdot.is-clickable:active { transform: scale(0.9); }
   font-weight: 900;
   line-height: 1.3;
   letter-spacing: -0.3px;
-  color: #C8820A;                              /* v0.10.19: 따뜻한 앰버-골드(블루 일색에서 즉시 눈에·정답 파란 글로우와 구분·형광 아님·정적) */
-  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.9), 0 1px 3px rgba(120, 80, 0, 0.30);   /* 흰 하이라이트 + 웜 다크 그림자(흰 배경 대비↑) */
+  color: #14324f;                              /* v0.10.20: 진한 딥블루/네이비(노란 박스 위 강한 대비) */
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+/* v0.10.20: '선택' 단어 강조 — 딥네이비 칩 위 밝은 로고-옐로우 글씨(밝은 노랑 + 한눈에 + AA 대비).
+   부드러운 커졌다-돌아오는 모션(선택 단어에만). reduced-motion 에서 정지. */
+.quiz-pick-emph {
+  display: inline-block;
+  padding: 0.02em 0.36em;
+  margin: 0 0.05em;
+  border-radius: 0.42em;
+  background: #1E3A5F;                          /* 딥네이비 칩 */
+  color: #FFD24A;                              /* 로고 '베이비' 밝은 옐로우 */
+  font-weight: 900;
+  box-shadow: 0 2px 6px rgba(20, 45, 80, 0.26);
+  animation: pickBob 1.9s ease-in-out infinite;
+  will-change: transform;
+}
+@keyframes pickBob {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%      { transform: translateY(-2px) scale(1.06); }
+}
+/* v0.10.20: 노란 박스 우측 상단 바깥으로 살짝 걸치는 클릭 유도 손가락(장식·비클릭).
+   아주 약한 탭 모션('선택' 모션과 리듬을 다르게 해 동시에 튀지 않게). */
+.compare-quiz-finger {
+  position: absolute;
+  top: clamp(-16px, -2.4vw, -10px);
+  right: clamp(-8px, -1.6vw, -3px);
+  z-index: 2;
+  pointer-events: none;
+  font-size: clamp(20px, 4.4vw, 30px);
+  line-height: 1;
+  transform-origin: 70% 95%;
+  filter: drop-shadow(0 2px 3px rgba(150, 110, 0, 0.32));
+  animation: fingerTap 2.6s ease-in-out infinite;
+}
+@keyframes fingerTap {
+  0%, 12%, 100% { transform: translateY(0) rotate(0deg); }
+  6%            { transform: translateY(-3px) rotate(-7deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .quiz-pick-emph, .compare-quiz-finger { animation: none; }
 }
 /* 아주 좁은 화면(≤360px): 각 줄 1줄 유지되게 폰트/패딩 축소(2줄째가 더 큼) */
 @media (max-width: 360px) {
   .compare-quiz-hint { padding: 7px 12px; max-width: 96%; }
   .compare-quiz-hint-sub { font-size: clamp(13px, 3.7vw, 15px); }
   .compare-quiz-hint-action { font-size: clamp(15px, 4.4vw, 18px); }
+  .compare-quiz-finger { font-size: clamp(18px, 6vw, 22px); top: -12px; right: -3px; }   /* v0.10.20: 화면 밖 잘림 방지 */
 }
 /* 낮은 가로 화면(예: 844×390): 세로 footprint 최소화(카드 아래·겹침 없음) */
 @media (orientation: landscape) and (max-height: 480px) {
+  /* v0.10.20: 짧은 세로높이에서 제목 배지·카드 이미지를 vh 기준으로 축소해 제목+카드+노란 박스가 카드 안에 다 들어오게(박스 하단 잘림 방지). */
+  .compare-title { margin-bottom: clamp(3px, 1vh, 8px); }
+  .compare-title .key-emph { font-size: clamp(13px, 4.2vh, 20px); margin-top: clamp(2px, 0.8vh, 6px); padding: clamp(2px, 0.8vh, 5px) clamp(9px, 2vw, 16px); }
+  .compare-img { width: clamp(56px, 20vh, 88px); }        /* 짧은 화면에서 vh 로 축소(세로 공간 확보) */
+  .compare-card { gap: clamp(3px, 1vh, 7px); padding: clamp(5px, 1.4vh, 10px); }
   .compare-quiz-hint { margin: clamp(4px, 1.4vh, 10px) auto 0; padding: 4px 14px; }
   .compare-quiz-hint-sub { font-size: clamp(13px, 2.4vw, 17px); line-height: 1.25; }
   .compare-quiz-hint-action { font-size: clamp(15px, 2.8vw, 19px); line-height: 1.2; }
+  .compare-quiz-finger { font-size: clamp(18px, 2.6vw, 24px); top: -11px; right: -3px; }
 }
 
 /* =============================================================================
