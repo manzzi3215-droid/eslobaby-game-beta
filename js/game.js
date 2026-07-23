@@ -341,8 +341,13 @@
   /* ---------- 진행 제어 --------------------------------------------- */
   function startGame() {
     index = 0; state.irritation = 0; paused = false;
-    // v0.10.12: BGM은 게이트(첫 화면)에서 이미 시작·유지되므로 여기서 재시작하지 않음(위치 유지).
-    //   게이트 시작 버튼 클릭 자체가 제스처이므로, 자동재생이 차단됐더라도 이 클릭에서 BGM이 재생됨(sfx.js 제스처 언락).
+    // v0.10.12: BGM은 게이트(첫 화면)에서 이미 시작·유지됨(위치 유지). 게이트/문서 전역 pointerdown·touchstart
+    //   언락(sfx.js)으로 재생 시도되지만, v0.10.24: 삼성 Flip Pro 등 일부 기기는 그 언락 제스처를 미디어 재생
+    //   허용 제스처로 인정하지 않아 BGM만 안 걸릴 수 있다(안내 음성은 이 시작 버튼 click 안에서 재생돼 정상).
+    //   → 안내 음성과 동일한 "실제 click" 안에서 BGM 재생을 한 번 더 시도(startBGM→bgmTryPlay 재사용).
+    //   bgmTryPlay 는 이미 재생 중이면 재시작하지 않고(currentTime 유지·중복/끊김 없음), reject 되어도 조용히
+    //   대기하며 기존 pointerdown 언락 fallback 을 그대로 유지 → BGM 실패가 게임 시작을 막지 않는다.
+    try { if (window.SFX && SFX.startBGM) SFX.startBGM(); } catch (_) {}
     if (window.Analytics) window.Analytics.startSession();   // v0.4.0: 플레이 세션 시작
     renderScene();
   }

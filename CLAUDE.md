@@ -14,7 +14,11 @@
 
 ## 현재 버전
 
-**v0.10.23-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.10.24-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.10.24-beta(patch): **BGM Flip Pro 재생 보강 — 시작 버튼 click 안에서 `SFX.startBGM()` 1회 호출(최소 추가).** 삼성 Flip Pro에서 음성·효과음·영상은 정상인데 BGM만 안 들리는 현상 대응. **기존 BGM 구조(startBGM·pointerdown/touchstart 언락·loop·duck/unduck)·안내 음성·영상(autoplay·must-watch·watchdog·배속)·PAGE 7→8 자동전환·PAGE 12 퀴즈·디자인·문구·진행 순서·BGM 파일·볼륨(0.12)·AudioContext 효과음 전부 불변.**
+  - 원인: BGM은 로드 시 무제스처 `startBGM`(대개 차단) + document 전역 pointerdown/touchstart 언락으로만 재생 시도. 안내 음성은 시작 버튼 실제 `click` 안에서 재생돼 정상. Flip Pro가 pointerdown/touchstart 언락을 미디어 재생 제스처로 불인정 시 BGM만 차단됨.
+  - 변경: `game.js startGame()`(시작 버튼 click 핸들러)에 `try{ if(window.SFX&&SFX.startBGM) SFX.startBGM(); }catch(_){}` 1줄 추가. `startBGM→bgmTryPlay` 재사용. `bgmTryPlay`는 이미 재생 중이면 재시작 안 함(currentTime 유지→중복/끊김 없음), reject돼도 조용히 대기+기존 언락 fallback 유지→게임 시작에 영향 없음. **볼륨 미변경(0.12).**
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.10.24-beta`. 신규 자산 없음. **Flip Pro 실기기 검증 전(커밋/push 보류).**
 ※ v0.10.23-beta(patch): **속도감 추가 — 안내 음성 1.42배속 + PAGE 6·11 영상 배속(playbackRate) + PAGE 7→8 간헐 멈춤(음성 자동전환 공통 구조) 수정.** **게임 흐름·페이지 순서·문구·디자인·PAGE 12 퀴즈 로직 불변. 영상 안정화 코드(autoplay·muted·must-watch·ended·watchdog·has-video·backdrop-filter·6→7/11→12 자동전환) 리팩터링 안 함.**
   - 음성: PAGE 1~14 `voice/page01~14.m4a`를 **원본(git `ddb0ce9` 1.0배속) 기준 1.42배속**으로 재인코딩(v0.10.22의 1.4배속 대체, `atempo=1.42` 피치 보존, 원본에서 1회 → 이중 열화 없음). 파일명·`config.voice`·`sfx.js` 재생 불변. 예: page01 4.41→3.11s, page06 6.80→4.79s, page11 5.85→4.12s.
   - 영상 배속: `scenes.js` residue(PAGE6) `videoRate:1.35`·biodegradeInfo(PAGE11) `videoRate:1.4`. `game.js renderVideo` 가 재생 시작 시점(loadedmetadata·play·playing)에만 `v.playbackRate` 적용하는 **추가 리스너**로만 구현(기존 재생 경로 불변). **재인코딩 미채택**(사이니지 인코딩 파손 위험). playbackRate 는 Tizen 이 무시해도 1.0 재생(graceful degradation)이라 재생 실패로 안 이어짐. **문제 재발 시 videoRate=1.0 으로 즉시 원복.** 검증: PAGE6 재생 중 rate=1.35, PAGE11 rate=1.4, must-watch·ended 자동전환 유지. (실기기 최종 검증 권장.)

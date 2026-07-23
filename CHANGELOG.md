@@ -11,6 +11,26 @@
 
 ---
 
+## [v0.10.24-beta] - 2026-07-24
+### BGM Flip Pro 재생 보강 — 시작 버튼 click 안에서 BGM 재생 1회 시도(최소 추가)
+**삼성 Flip Pro(LH55WMBWBGCXKR)에서 안내 음성·효과음·영상은 정상인데 BGM만 안 들리는 현상 대응. 기존 BGM 구조는 유지·리팩터링 없이 "click 경로 하나"만 추가.** 영상(autoplay·must-watch·watchdog·배속)·안내 음성(1.42배속·재생 구조)·PAGE 7→8 자동전환·PAGE 12 퀴즈·디자인·문구·진행 순서·BGM 파일·AudioContext 효과음 전부 불변.
+
+### 원인(조사)
+- BGM은 페이지 로드 시 `startBGM()`(무제스처, 대개 차단) + document 전역 `pointerdown`/`touchstart`/`mousedown`/`keydown` 언락으로만 재생 시도. 반면 안내 음성은 **시작 버튼의 실제 `click`** 안에서 재생돼 정상. Flip Pro가 pointerdown/touchstart 언락을 미디어 재생 제스처로 인정하지 않으면 BGM만 계속 차단돼 안 들릴 수 있음.
+
+### 변경(최소)
+- `game.js startGame()`(=시작 버튼 click 핸들러) 안에 **`SFX.startBGM()` 호출 1줄 추가** → 안내 음성과 동일한 실제 click 제스처 안에서 BGM 재생을 한 번 더 시도. 기존 `startBGM→bgmTryPlay` 재사용(신규 로직 없음).
+- **중복/끊김 방지**: `bgmTryPlay`는 이미 재생 중이면 재시작하지 않고 `currentTime`도 초기화하지 않음(위치 유지). `reject`되어도 조용히 대기하고 기존 pointerdown 언락 fallback을 그대로 유지 → BGM 실패가 게임 시작/음성/버튼/페이지 전환을 막지 않음.
+- **BGM 볼륨(0.12)은 이번엔 변경하지 않음**(Flip Pro 실기기 확인 후 필요 시 별도 조정).
+
+### 캐시
+- `sw.js` `CACHE_NAME` = `eslo-game-v0.10.24-beta`(변경된 game.js 새로 캐싱). 신규 자산 없음.
+
+### 남은 검증
+- 삼성 Flip Pro 실기기에서 BGM 실제 재생 여부 최종 확인 필요(코드/일반 브라우저 회귀 테스트는 완료).
+
+---
+
 ## [v0.10.23-beta] - 2026-07-23
 ### 속도감 추가 개선 — 안내 음성 1.42배속 + PAGE 6·11 영상 배속 + PAGE 7→8 간헐 멈춤(공통 음성 자동전환) 수정
 **행사 대기 시간 추가 단축. 게임 흐름·페이지 순서·문구·디자인·PAGE 12 퀴즈 로직은 불변. 영상 재생 안정성(autoplay·muted·must-watch·ended·watchdog·has-video·backdrop-filter·자동전환) 코드는 리팩터링하지 않음.**
