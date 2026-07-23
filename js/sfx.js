@@ -287,6 +287,12 @@
     return V[page] || V[String(page)] || null;
   }
   function hasVoiceForPage(page) { return !!voiceUrlForPage(page); }
+  // v0.10.23: 현재 재생 중인 안내 음성의 길이(ms). 메타데이터 로드 전/음원 없음이면 0.
+  //   game.js 의 음성 종료 자동전환 fallback 타이머가 "음성 길이 + 여유" 로 정확히 대기하도록 노출(읽기 전용).
+  function getVoiceDurationMs() {
+    try { return (voiceEl && isFinite(voiceEl.duration) && voiceEl.duration > 0) ? Math.round(voiceEl.duration * 1000) : 0; }
+    catch (e) { return 0; }
+  }
   // [diag] 페이지 음성 진단 훅 — 재생 동작은 일절 변경하지 않고, 상태만 전역(window.__esloVoiceState)에
   //   기록하고 영상 진단 스토어(window.__esloVideoDiag, game.js)로 라우팅한다. 훅이 없으면 조용히 no-op.
   function voiceDiag(ev, url, extra) {
@@ -404,6 +410,7 @@
     // v0.10.6: 페이지 음성 제어
     playVoiceForPage: playVoiceForPage,
     hasVoiceForPage: hasVoiceForPage,
+    getVoiceDurationMs: getVoiceDurationMs,   // v0.10.23: 음성 종료 자동전환 fallback 용(읽기 전용)
     stopVoice: stopVoice,
     pauseVoice: pauseVoice,
     resumeVoice: resumeVoice,

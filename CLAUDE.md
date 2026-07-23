@@ -14,7 +14,18 @@
 
 ## 현재 버전
 
-**v0.10.21-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+**v0.10.23-beta** (버전은 `config.js`의 `meta.version` 및 `CHANGELOG.md`와 항상 일치시킬 것)
+※ v0.10.23-beta(patch): **속도감 추가 — 안내 음성 1.42배속 + PAGE 6·11 영상 배속(playbackRate) + PAGE 7→8 간헐 멈춤(음성 자동전환 공통 구조) 수정.** **게임 흐름·페이지 순서·문구·디자인·PAGE 12 퀴즈 로직 불변. 영상 안정화 코드(autoplay·muted·must-watch·ended·watchdog·has-video·backdrop-filter·6→7/11→12 자동전환) 리팩터링 안 함.**
+  - 음성: PAGE 1~14 `voice/page01~14.m4a`를 **원본(git `ddb0ce9` 1.0배속) 기준 1.42배속**으로 재인코딩(v0.10.22의 1.4배속 대체, `atempo=1.42` 피치 보존, 원본에서 1회 → 이중 열화 없음). 파일명·`config.voice`·`sfx.js` 재생 불변. 예: page01 4.41→3.11s, page06 6.80→4.79s, page11 5.85→4.12s.
+  - 영상 배속: `scenes.js` residue(PAGE6) `videoRate:1.35`·biodegradeInfo(PAGE11) `videoRate:1.4`. `game.js renderVideo` 가 재생 시작 시점(loadedmetadata·play·playing)에만 `v.playbackRate` 적용하는 **추가 리스너**로만 구현(기존 재생 경로 불변). **재인코딩 미채택**(사이니지 인코딩 파손 위험). playbackRate 는 Tizen 이 무시해도 1.0 재생(graceful degradation)이라 재생 실패로 안 이어짐. **문제 재발 시 videoRate=1.0 으로 즉시 원복.** 검증: PAGE6 재생 중 rate=1.35, PAGE11 rate=1.4, must-watch·ended 자동전환 유지. (실기기 최종 검증 권장.)
+  - PAGE 7→8 멈춤 수정(공통 구조): PAGE 5·7·10·13 은 음성 `ended` 로만 자동전환 → autoplay 거부/Tizen ended 누락 시 기존 `armVoiceWatchdog`(잠금만 해제)로는 **멈춤**(PAGE13은 안전망도 없었음). → idempotent `autoAdvance` 로 통일 + **음성 길이 인지 fallback 타이머**(`SFX.getVoiceDurationMs` 신설 + `길이+BUFFER(1400)`, 미상 시 상한 9s) 추가. 정상 `ended` 가 먼저 이기고 `clearScene` 가 fallback 취소 → 중복/건너뜀 없음(index 가드 이중 보호). `VOICE_HARD_TIMEOUT`/`armVoiceWatchdog` 제거, `VOICE_FALLBACK_PROBE/BUFFER/MAX` 도입.
+  - 타이밍: v0.10.22 값(전환 220·카드 240·여운 300·효과음 150ms·엔딩 애니) 검토 후 유지(추가 축소 시 깜빡임·효과음 잘림 우려).
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.10.23-beta`. 신규 자산 없음(음성 파일 교체만).
+※ v0.10.22-beta(patch): **전체 속도감 개선 — 안내 음성 1.4배속 재인코딩 + 여운·전환·엔딩 등장 딜레이 단축.** 현장 "게임이 느리다" 피드백 반영. **게임 흐름·페이지 구성·문구·정답/오답 로직·자동 전환 규칙·영상(has-video) 재생·드래그 판정 전부 불변, "속도"만 조정.**
+  - 음성: PAGE 1~14 `assets/audio/voice/page01~14.m4a`를 **원본(1.0배속) 기준 1.4배속**으로 재인코딩(기존 1.2배속). **원본 소스는 git 커밋 `ddb0ce9`(v0.10.6 무손실 추출)** → 이중 열화 없이 1회 재인코딩. ffmpeg `atempo=1.4`(피치 보존, 재생 배속 코드 조작 아님) → 삼성 사이니지(Tizen) 톤 왜곡 없음(v0.10.11 1.2배속과 동일 방식). 파일명·`config.voice` 매핑·`sfx.js` 재생·음성 종료 자동 전환(PAGE 5·7·10·13) 불변. 예: page01 4.41→3.15s, page05 6.39→4.56s, page13 5.41→3.88s. 재인코딩은 `ffmpeg-static`(스크래치 임시 설치, 프로젝트 미오염).
+  - 딜레이(`game.js`): `AUTO_NEXT_DELAY` 450→300ms, `VOICE_SFX_GAP` 250→150ms, PAGE 13 순차 등장 `STEP` 300→180ms. 자동 전환은 여전히 완료 이벤트/음성 종료 기준(규칙 불변).
+  - 애니메이션(`css/game.css`): `.screen` 전환 300→220ms, `cardIn` 320→240ms, PAGE 13/14 엔딩 `revealPop` 520→360·`rewardTitlePop` 540→380·`rewardFadeScale` 520/240→360/160·`rewardFadeUp` 480/560→340/360ms.
+  - `sw.js` `CACHE_NAME`=`eslo-game-v0.10.22-beta`(변경된 음성 새 캐싱). 신규 자산 없음(기존 음성 파일 교체만).
 ※ v0.10.21-beta(minor): **관리자 대시보드 개편(기본 비번 `0000`·비번 변경·간소화·한국시간 날짜별 통계·일 마감/CSV 다운로드) + PAGE 12 `선택` 딥블루화·손가락 확대.** 게임 진행/자동전환/영상/음성/PAGE12 정답·오답 로직·PAGE13 이동 전부 불변.
   - 비밀번호: `config.admin.password` 기본 `'0000'`. 변경분은 LocalStorage `eslo_admin_pw_v1`(통계와 별도 키)에만 저장 → 통계 초기화·일 마감과 무관하게 유지. `admin.js` `effectivePassword()`(저장분 우선, 없으면 config), 4자리 숫자 규칙, 대시보드 접이식 `설정`에서 현재/새/확인 검증 후 변경. **서버 인증 아님(클라이언트 접근 방지용).**
   - 통계 v2(`analytics.js`): 단일 전역 카운터 → `byDate[YYYY-MM-DD]{plays,completes,completeTimeMs,correct,wrong,errors,closed,closedAt,closedAtMs,updatedAt}` + `totals`(전체 누적) + `legacy`(v1 날짜미상 완료 보존). 날짜키=**Asia/Seoul**(Intl `en-CA`, UTC 오차 방지). **완료는 시작일 기준**(자정 넘김 대응). v1→v2 **1회 마이그레이션**(playsByDate→byDate 이관, 미상 완료는 legacy, 오늘에 합산 안 함). 손상 데이터 방어(`try/catch`→defaults).

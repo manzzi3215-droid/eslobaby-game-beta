@@ -378,15 +378,18 @@
   //   - setTimer 로 예약 → clearScene(모든 네비게이션 진입점: 다음/이전/처음으로/goToStep/renderScene) 시 자동 취소.
   //   - autoNextScheduled 로 장면당 1회 보장(중복 이벤트로 2페이지 이상 건너뜀 방지).
   //   - 발화 시 여전히 같은 장면인지 + busy/영상잠금 아님을 재확인(수동 이동과 경쟁 방지).
-  var AUTO_NEXT_DELAY = 450;             // 완료 후 짧은 여운(ms)
+  var AUTO_NEXT_DELAY = 300;             // v0.10.22: 완료 후 여운 단축(450→300) — 속도감 개선
   // v0.10.8: 영상 재생 워치독 — 최종 안전망(HARD_TIMEOUT 까지 미시작 시 gate 만 해제, 영구 갇힘 방지).
   //   터치 안내(fallback)는 자동재생이 실제로 모두 실패(onSourceFail)한 경우에만 표시하며, 단순 타임아웃으로는 표시하지 않는다.
   var VIDEO_HARD_TIMEOUT = 12000;
-  // v0.10.14: 음성 종료 자동 전환(PAGE 5·7·10) 안전망 — 재생 실패 등으로 ended 가 오지 않을 때
-  //   이 시간 후 잠금만 해제(자동 이동 X, 수동 이동 허용)해 영구 갇힘 방지. 정상 음성(≤~8s)보다 충분히 김.
-  var VOICE_HARD_TIMEOUT = 12000;
+  // v0.10.23: 음성 종료 자동 전환(PAGE 5·7·10·13) 안전망 — autoplay 거부/Tizen media 이벤트 누락으로
+  //   음성 ended 가 오지 않아도 "음성 길이 + 여유" 후 자동 이동을 보장(PAGE 7 간헐 멈춤 해결).
+  //   정상 ended 가 항상 먼저 이기도록 BUFFER 를 두고, 길이 미상 시 MAX 상한만 사용(음성을 자르지 않음).
+  var VOICE_FALLBACK_PROBE  = 500;    // 음성 시작 후 길이(메타데이터)를 읽기까지 짧게 대기
+  var VOICE_FALLBACK_BUFFER = 1400;   // 음성 길이에 더하는 여유(정상 ended 가 fallback 보다 먼저 발생)
+  var VOICE_FALLBACK_MAX    = 9000;   // 길이 미상 시 절대 상한(정상 나레이션 ≤~5s 보다 충분히 김)
   // v0.10.6: 페이지 음성 종료 후 울음/웃음 효과음까지의 간격(자연스러운 순차)
-  var VOICE_SFX_GAP = 250;
+  var VOICE_SFX_GAP = 150;   // v0.10.22: 음성 종료 후 효과음 간격 단축(250→150)
 
   // v0.10.6/0.10.14: 페이지 진입 시 해당 PAGE(=index+1) 음성 1회 재생.
   //   PAGE 5 = 경보 알람 → (알람 종료) 안내 음성 → (음성 종료) PAGE 6 자동 이동.
@@ -397,18 +400,24 @@
     var myIndex = index;
     var hasVoiceApi = window.SFX && window.SFX.playVoiceForPage;
 
-    // v0.10.14: 음성 종료 시 다음 페이지 자동 이동(PAGE 5·7·10). 잠금 해제 후 이동, 늦은 ended/중복 이동 차단.
+    // v0.10.14/0.10.23: 음성 종료 시 다음 페이지 자동 이동(PAGE 5·7·10·13). 한 번만 실행되도록 idempotent 처리.
+    //   index 가드 + goNext 자체 가드 + clearScene 의 타이머 취소로 "중복 이동·페이지 건너뜀"을 원천 차단.
     var autoAdvance = function () {
-      if (index !== myIndex) return;         // 이미 이탈/재진입 → 이전 진입의 늦은 ended 무시
+      if (index !== myIndex) return;         // 이미 이탈/재진입/이미 이동 → 무시(ended·fallback 중복 방지)
       voiceGateLocked = false;               // 이 페이지 잠금 해제 후 이동(goNext 통과)
-      if (!paused && !busy) goNext();         // goNext 자체 가드로 중복 이동 방지(한 페이지만)
+      if (!paused && !busy) goNext();         // goNext 자체 가드로도 중복 이동 방지(한 페이지만)
+      else updateCtrlButtons();               // 정지/전환 중이면 최소한 잠금 해제만 반영(수동 이동 허용)
     };
-    // 오디오 실패(재생 거부·로드 실패 등)로 음성 ended 가 오지 않을 때의 안전망:
-    //   일정 시간 후에도 잠금이 남아 있으면 잠금만 해제(자동 이동은 안 함) → 영구 갇힘 방지, 수동 이동 허용.
-    function armVoiceWatchdog() {
-      setTimer(function () {
-        if (index === myIndex && voiceGateLocked) { voiceGateLocked = false; updateCtrlButtons(); }
-      }, VOICE_HARD_TIMEOUT);
+    // v0.10.23: ended 안전망 — autoplay 거부/Tizen media 이벤트 누락으로 음성 ended 가 오지 않아도 자동 이동 보장.
+    //   음성 시작 직후 실제 길이를 읽어 "길이 + BUFFER" 뒤에 autoAdvance 예약(정상 ended 가 항상 먼저 이김).
+    //   정상 종료 시: ended → autoAdvance → goNext → clearScene 가 이 타이머까지 취소(중복 없음).
+    function armVoiceAdvanceFallback() {
+      setTimer(function () {                          // 메타데이터 로드 대기 후 실제 길이로 fallback 확정
+        if (index !== myIndex) return;
+        var d = (window.SFX && window.SFX.getVoiceDurationMs) ? window.SFX.getVoiceDurationMs() : 0;
+        var ms = d > 0 ? Math.min(VOICE_FALLBACK_MAX, d + VOICE_FALLBACK_BUFFER) : VOICE_FALLBACK_MAX;
+        setTimer(function () { if (index === myIndex) autoAdvance(); }, ms);
+      }, VOICE_FALLBACK_PROBE);
     }
 
     if (page === 5) {
@@ -417,22 +426,20 @@
         if (index !== myIndex) return;       // 알람 중 이탈 시 음성 미재생
         var ok = hasVoiceApi ? window.SFX.playVoiceForPage(5, autoAdvance) : false;
         if (!ok) { voiceGateLocked = false; updateCtrlButtons(); }   // 음원/API 없음 → 갇힘 방지(수동 이동 허용)
+        else armVoiceAdvanceFallback();       // v0.10.23: 음성 시작 후 안전망 예약(길이 인지 후 확정)
       };
       if (window.SFX && window.SFX.playAlarm) window.SFX.playAlarm(startVoice5);
       else startVoice5();                    // 알람 API 없으면 바로 음성
-      armVoiceWatchdog();
       return;
     }
 
-    var afterVoice = null;
-    if (page === 7 || page === 10) afterVoice = autoAdvance;   // v0.10.14: 음성 종료 → 다음 자동 이동
-    // v0.10.11: PAGE 13 은 안내 음성이 끝난 뒤에만 PAGE 14 로 자동 전환(audio ended 기준, 타이머 미사용).
-    if (page === 13) afterVoice = function () { if (index === myIndex && !paused && !busy && !videoGateLocked) goNext(); };
+    // v0.10.14/0.10.23: 음성 종료 → 다음 자동 이동(PAGE 7·10·13). 전부 idempotent autoAdvance 로 통일.
+    var afterVoice = (page === 7 || page === 10 || page === 13) ? autoAdvance : null;
 
     var played = hasVoiceApi ? window.SFX.playVoiceForPage(page, afterVoice) : false;
-    if (page === 7 || page === 10) {
+    if (page === 7 || page === 10 || page === 13) {
       if (!played) { voiceGateLocked = false; updateCtrlButtons(); }   // 음원 없음 → 갇힘 방지(수동 이동 허용)
-      else armVoiceWatchdog();
+      else armVoiceAdvanceFallback();          // v0.10.23: ended 누락 대비 안전망(정상 종료 시 clearScene 이 취소)
     }
   }
   //   delay 미지정 시 기본 여운(드래그/영상). v0.10.2: PAGE 13은 rewardHold(약 2초) 유지 후 전환.
@@ -688,7 +695,7 @@
         body.appendChild(group);
 
         // 순차 등장: 요소마다 등장 지연(step) 부여. CSS revealPop(both) 로 지연 중엔 숨김 유지.
-        var STEP = 300;                     // v0.10.3: 요소 간 등장 간격(ms) — 제품 소개 느낌으로 조금 더 여유롭게
+        var STEP = 180;                     // v0.10.22: 요소 간 등장 간격 단축(300→180) — 엔딩 속도감 개선
         revealEls.forEach(function (elm, i) { elm.style.animationDelay = (i * STEP) + 'ms'; });
 
         // v0.10.11: PAGE 14 자동 전환은 타이머가 아니라 "PAGE 13 안내 음성 종료(audio ended)" 시점에만 발생.
@@ -1051,6 +1058,17 @@
           v.setAttribute('muted', ''); v.setAttribute('playsinline', ''); v.setAttribute('webkit-playsinline', '');
           v.setAttribute('autoplay', ''); v.setAttribute('preload', 'auto'); v.setAttribute('aria-hidden', 'true');
           vwrap.appendChild(v);
+
+          // v0.10.23: 영상 재생 배속(scene.videoRate) — 안내 음성 종료 시점과 영상 종료를 가깝게 맞춰 빈 시간 단축.
+          //   재생이 실제 시작되는 시점(들)에만 배속을 적용 → 기존 autoplay/play()/ended/gate/has-video 경로는 일절 불변.
+          //   삼성 Flip Pro(Tizen)가 배속을 무시하면 1.0(정상 속도)로 재생될 뿐 재생 실패로 이어지지 않음(graceful degradation).
+          //   현장에서 영상 끊김/멈춤이 재발하면 scenes.js 의 videoRate 를 1.0 으로 되돌리면 즉시 원복.
+          if (scene.videoRate && scene.videoRate > 0) {
+            var applyRate = function () { try { if (v.playbackRate !== scene.videoRate) v.playbackRate = scene.videoRate; } catch (_) {} };
+            v.addEventListener('loadedmetadata', applyRate);
+            v.addEventListener('play', applyRate);
+            v.addEventListener('playing', applyRate);
+          }
 
           var playbackStarted = false, retriedSrc = false, canplaySeen = false, fallbackEl = null, srcIdx = -1;
           var t0 = Date.now();   // [diag] 렌더 시작 기준 상대시각(dt) 계산용

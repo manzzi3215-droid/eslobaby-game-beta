@@ -66,6 +66,7 @@
     //   기존 skin/붉은원/계면이 제거. 문구는 residueVideoLead + 강조 residueVideoEmph.
     { id: 'residue', type: 'video', phase: 1,
       video: 'profVideo', videoFallback: 'profVideoLo',   // v0.10.7: 1차 실패 시 2차 보수 소스로 교체
+      videoRate: 1.35,   // v0.10.23: 재생 배속(6.38s→~4.7s, 안내 음성 4.68s 와 맞춤). Flip Pro 미지원 시 자동으로 1.0 재생(안전). 문제 시 1.0 으로 되돌림.
       requireEnd: true, autoNext: true,   // v0.9.3 잠금 + v0.9.4 종료 후 Page7 자동 전환
       hideNext: true,   // v0.10.13: 영상 종료 자동 이동 → 카드 내부 다음 버튼 숨김(이전 버튼은 유지)
       lead: T.scenes.residueVideoLead, emph: T.scenes.residueVideoEmph,
@@ -107,6 +108,7 @@
     //   Page6과 동일하게 requireEnd → 영상이 끝나야 다음으로 이동 가능.
     { id: 'biodegradeInfo', type: 'video', phase: 4,
       video: 'bioVideo', videoFallback: 'bioVideoLo',   // v0.10.7: 1차 실패 시 2차 보수 소스로 교체
+      videoRate: 1.4,    // v0.10.23: 재생 배속(7.38s→~5.3s). 음성 4.02s 보다 길지만 "지나치게 빠름" 방지 위해 보수적. Flip Pro 미지원 시 1.0 재생(안전).
       requireEnd: true, autoNext: true,   // v0.9.3 잠금 + v0.9.4 종료 후 Page12 자동 전환
       hideNext: true,   // v0.10.13: 영상 종료 자동 이동 → 카드 내부 다음 버튼 숨김(이전 버튼은 유지)
       lead: T.scenes.bioLead, emph: T.scenes.bioEmph, emphClass: 'key-emph' },
